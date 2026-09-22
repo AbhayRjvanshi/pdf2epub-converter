@@ -1,0 +1,11 @@
+# Core pipeline
+pymupdf>=1.24,<2          # PDF parsing: text dict/rawdict, drawings, rasterisation
+ebooklib>=0.18            # EPUB3 container assembly
+lxml>=4.9                 # tolerant XHTML repair and re-serialisation
+
+# Optional Tier 2 providers (install whichever you use)
+# openai>=1.30
+# anthropic>=0.34
+
+# Development / test
+pytest>=7.4
