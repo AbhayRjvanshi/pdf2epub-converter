@@ -24,7 +24,7 @@ import math
 import re
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Callable
+from typing import Any, Callable
 
 try:
     import pymupdf as fitz
@@ -42,11 +42,19 @@ MIN_TOKENS_FOR_LEXICAL = 30     # below this a page is too short to judge
 STOPWORD_HIT_FLOOR = 0.08       # real English prose sits at 0.35-0.50
 FONT_SIGMA_THRESHOLD = 3.5
 ORDER_JUMP_DY = -20.0
+# Decision #17: retain this point-based transition test; columnar layouts get
+# a separate page-relative co-occurrence signal rather than changing its behavior.
 ORDER_JUMP_DX = 50.0
 VECTOR_DENSITY_THRESHOLD = 20
 RASTER_DPI = 150
 FURNITURE_BAND = 0.10   # top/bottom 10%: headers, footers, folios
 MIN_LINE_CHARS = 4      # a lone folio is not a reading-order signal
+COLUMNAR_GUTTER_FRACTION = 0.18
+COLUMNAR_MIN_LINE_CHARS = 15
+COLUMNAR_MIN_ROWS = 3
+COLUMNAR_X_CLUSTER_FRACTION = 0.02
+COLUMNAR_ROW_OVERLAP = 0.50
+COLUMNAR_PENALTY = 20
 
 
 class RoutingTarget(Enum):
@@ -66,6 +74,7 @@ class PageConfidenceReport:
     dictionary_hit_rate: float = 0.0
     font_variance: float = 0.0     # population std-dev of span sizes
     order_violations: int = 0
+    columnar_pairs: int = 0
     vector_count: int = 0
     penalties: dict[str, int] = field(default_factory=dict)
     reasons: list[str] = field(default_factory=list)
@@ -208,6 +217,77 @@ def count_order_violations(blocks: list[dict], page_height: float = 0.0) -> int:
     return violations
 
 
+def count_columnar_pairs(
+    blocks: list[dict], page_width: float, page_height: float = 0.0
+) -> int:
+    """Count repeated, same-row text pairs separated into stable columns."""
+    if page_width <= 0:
+        return 0
+
+    lines: list[tuple[float, float, float, float]] = []
+    top_limit = page_height * FURNITURE_BAND if page_height else 0.0
+    bottom_limit = page_height * (1.0 - FURNITURE_BAND) if page_height else float("inf")
+
+    for block in blocks:
+        for line in block.get("lines", []):
+            text = "".join(span.get("text", "") for span in line.get("spans", [])).strip()
+            bbox = line.get("bbox", ())
+            if len(text) < COLUMNAR_MIN_LINE_CHARS or len(bbox) != 4:
+                continue
+            x0, y0, x1, y1 = (float(value) for value in bbox)
+            if x1 <= x0 or y1 <= y0:
+                continue
+            if page_height and (y0 < top_limit or y1 > bottom_limit):
+                continue
+            lines.append((x0, y0, x1, y1))
+    lines.sort(key=lambda item: item[1])
+
+    candidates: list[tuple[float, float, float, float]] = []
+    min_spread = page_width * COLUMNAR_GUTTER_FRACTION
+    for index, first in enumerate(lines):
+        for second in lines[index + 1 :]:
+            if second[1] > first[3]:
+                break
+            overlap = min(first[3], second[3]) - max(first[1], second[1])
+            min_height = min(first[3] - first[1], second[3] - second[1])
+            if min_height <= 0 or overlap < min_height * COLUMNAR_ROW_OVERLAP:
+                continue
+            if not (first[2] <= second[0] or second[2] <= first[0]):
+                continue
+            if abs(first[0] - second[0]) < min_spread:
+                continue
+            left, right = (first, second) if first[0] < second[0] else (second, first)
+            row_y = (max(first[1], second[1]) + min(first[3], second[3])) / 2.0
+            candidates.append((left[0], right[0], row_y, min_height))
+
+    x_tolerance = max(8.0, page_width * COLUMNAR_X_CLUSTER_FRACTION)
+    clusters: list[dict[str, Any]] = []
+    for left_x, right_x, row_y, row_height in candidates:
+        matches = [
+            cluster
+            for cluster in clusters
+            if abs(cluster["left_x"] - left_x) <= x_tolerance
+            and abs(cluster["right_x"] - right_x) <= x_tolerance
+        ]
+        if matches:
+            cluster = min(
+                matches,
+                key=lambda c: abs(c["left_x"] - left_x) + abs(c["right_x"] - right_x),
+            )
+        else:
+            cluster = {"left_x": left_x, "right_x": right_x, "rows": []}
+            clusters.append(cluster)
+
+        row_tolerance = max(2.0, row_height * COLUMNAR_ROW_OVERLAP)
+        if all(abs(existing_y - row_y) > row_tolerance for existing_y in cluster["rows"]):
+            cluster["rows"].append(row_y)
+            count = len(cluster["rows"])
+            cluster["left_x"] += (left_x - cluster["left_x"]) / count
+            cluster["right_x"] += (right_x - cluster["right_x"]) / count
+
+    return max((len(cluster["rows"]) for cluster in clusters), default=0)
+
+
 def build_layout_digest(page: "fitz.Page") -> list[dict]:
     """Compact JSONL-shaped payload: coordinates + typography, not flat text."""
     digest: list[dict] = []
@@ -248,12 +328,23 @@ def render_page_raster(page: "fitz.Page", dpi: int = RASTER_DPI) -> bytes:
 
 
 def score_page_layout(
-    blocks: list[dict], vector_count: int, page_height: float = 0.0
+    blocks: list[dict],
+    vector_count: int,
+    page_height: float = 0.0,
+    page_width: float = 0.0,
+    columnar_pairs: int | None = None,
 ) -> tuple[int, dict, float, int]:
     sigma = weighted_font_sigma(blocks)
     violations = count_order_violations(blocks, page_height)
+    if columnar_pairs is None:
+        columnar_pairs = count_columnar_pairs(blocks, page_width, page_height)
 
-    penalties: dict[str, int] = {"font_variance": 0, "reading_order": 0, "vector_density": 0}
+    penalties: dict[str, int] = {
+        "font_variance": 0,
+        "reading_order": 0,
+        "columnar_cooccurrence": 0,
+        "vector_density": 0,
+    }
 
     if sigma > FONT_SIGMA_THRESHOLD:
         penalties["font_variance"] = min(35, int((sigma - FONT_SIGMA_THRESHOLD) * 12))
@@ -261,6 +352,8 @@ def score_page_layout(
         # 20 (not 15) per violation: at 15 a single genuine two-column jump
         # lands on exactly 85 and slips back into the deterministic path.
         penalties["reading_order"] = min(45, violations * 20)
+    if columnar_pairs >= COLUMNAR_MIN_ROWS:
+        penalties["columnar_cooccurrence"] = COLUMNAR_PENALTY
     if vector_count > VECTOR_DENSITY_THRESHOLD:
         penalties["vector_density"] = min(
             30, int((vector_count - VECTOR_DENSITY_THRESHOLD) * 1.5)
@@ -300,8 +393,11 @@ def evaluate_page(
             raster_bytes=render_page_raster(page) if build_payloads else None,
         )
 
+    page_width = float(page.rect.width)
+    page_height = float(page.rect.height)
+    columnar_pairs = count_columnar_pairs(blocks, page_width, page_height)
     score, penalties, sigma, violations = score_page_layout(
-        blocks, vector_count, float(page.rect.height)
+        blocks, vector_count, page_height, page_width, columnar_pairs
     )
 
     reasons = [f"{k}:-{v}" for k, v in penalties.items() if v]
@@ -322,6 +418,7 @@ def evaluate_page(
         dictionary_hit_rate=round(sanity.hit_rate, 3),
         font_variance=round(sigma, 2),
         order_violations=violations,
+        columnar_pairs=columnar_pairs,
         vector_count=vector_count,
         penalties=penalties,
         reasons=reasons or ["clean"],

@@ -231,6 +231,7 @@ def test_report_only_writes_nothing(fixture_pdfs, tmp_path, capsys):
     assert not out.exists()
     printed = capsys.readouterr().out
     assert "tier2-vision" in printed and "score" in printed
+    assert "columns" in printed
 
 
 def test_skip_validation_short_circuits(fixture_pdfs, tmp_path):

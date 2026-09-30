@@ -107,6 +107,89 @@ def test_two_column_jump_is_counted():
     assert cr.count_order_violations(blocks, page_height=680.0) == 1
 
 
+def _text_line(x, y, text, width=140.0):
+    return {"bbox": (x, y, x + width, y + 12), "spans": [{"text": text, "size": 10.0}]}
+
+
+def test_columnar_signal_routes_interleaved_emission_to_tier2(fixture_pdfs):
+    doc = fitz.open(fixture_pdfs["interleaved_two_column"])
+    report = cr.evaluate_page(doc[0], 1)
+    assert report.order_violations == 0
+    assert report.columnar_pairs >= cr.COLUMNAR_MIN_ROWS
+    assert report.penalties["columnar_cooccurrence"] == cr.COLUMNAR_PENALTY
+    assert report.target is RoutingTarget.TIER2_LLM_DIGEST
+    doc.close()
+
+
+def test_columnar_signal_uses_page_relative_gutter_and_penalizes_repeated_rows():
+    blocks = [
+        {"lines": [_text_line(54, 100 + row * 14, "left column line with enough text"),
+                    _text_line(250, 100 + row * 14, "right column line with enough text")]}
+        for row in range(4)
+    ]
+    assert cr.count_columnar_pairs(blocks, 440.0, 680.0) == 4
+    assert cr.count_columnar_pairs(blocks, 1600.0, 680.0) == 0
+    score, penalties, _, _ = cr.score_page_layout(
+        blocks, vector_count=0, page_height=680.0, page_width=440.0
+    )
+    assert penalties["columnar_cooccurrence"] == cr.COLUMNAR_PENALTY
+    assert score < cr.TIER1_THRESHOLD
+
+
+def test_columnar_signal_does_not_flag_numeric_tables_or_short_toc_folios():
+    numeric = [
+        {"lines": [_text_line(54, 100 + row * 18, "123 456"),
+                    _text_line(270, 100 + row * 18, "2024") ]}
+        for row in range(5)
+    ]
+    toc = [
+        {"lines": [_text_line(54, 100 + row * 18, "A sufficiently long section title"),
+                    _text_line(350, 100 + row * 18, str(row + 1), width=20)]}
+        for row in range(5)
+    ]
+    assert cr.count_columnar_pairs(numeric, 440.0, 680.0) == 0
+    assert cr.count_columnar_pairs(toc, 440.0, 680.0) == 0
+
+
+def test_columnar_signal_excludes_furniture_band_pairs():
+    blocks = [
+        {"lines": [_text_line(54, 20 + row * 14, "Running header publication"),
+                    _text_line(270, 20 + row * 14, "Volume four edition")]}
+        for row in range(4)
+    ]
+    assert cr.count_columnar_pairs(blocks, 440.0, 680.0) == 0
+
+
+def test_single_indented_column_does_not_trigger_columnar_signal():
+    quote_and_code = [
+        {"lines": [_text_line(110, 100 + row * 14, "A long indented quotation line") ]}
+        for row in range(4)
+    ]
+    assert cr.count_columnar_pairs(quote_and_code, 440.0, 680.0) == 0
+    score, penalties, _, _ = cr.score_page_layout(
+        quote_and_code, vector_count=0, page_height=680.0, page_width=440.0
+    )
+    assert score >= cr.TIER1_THRESHOLD
+    assert penalties["columnar_cooccurrence"] == 0
+
+
+def test_centered_title_and_figure_caption_pages_remain_tier1(clean_doc):
+    doc = fitz.open()
+    page = doc.new_page(width=440, height=680)
+    page.insert_text((82, 80), "A Centered Publication Title", fontsize=18)
+    page.insert_text((54, 130), "This body contains sufficient ordinary prose for routing.", fontsize=10)
+    page.insert_text((54, 145), "The following body line remains in the same text column.", fontsize=10)
+    page.insert_text((54, 160), "A third line helps establish ordinary single-column flow.", fontsize=10)
+    report = cr.evaluate_page(page, 1)
+    assert report.columnar_pairs == 0
+    assert report.target is RoutingTarget.TIER1_HEURISTIC
+    doc.close()
+
+    figure_report = cr.evaluate_page(clean_doc[3], 4)
+    assert figure_report.columnar_pairs == 0
+    assert figure_report.target is RoutingTarget.TIER1_HEURISTIC
+
+
 # ---------------------------------------------------------------------------
 # End-to-end routing on real fixtures
 # ---------------------------------------------------------------------------

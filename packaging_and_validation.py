@@ -22,6 +22,7 @@ import re
 import subprocess
 import uuid
 import zipfile
+import xml.etree.ElementTree as ET
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field, replace
 from html import escape
@@ -347,6 +348,7 @@ p.small { font-size: 0.85em; text-indent: 0; color: #444; }
 pre { background: #f4f4f4; padding: 0.8em; overflow-x: auto; white-space: pre-wrap;
       font-family: monospace; font-size: 0.9em; }
 code { font-family: monospace; }
+.tbl { max-width: 100%; overflow-x: auto; }
 figure { margin: 1em 0; text-align: center; }
 figure img { max-width: 100%; height: auto; }
 figcaption { font-size: 0.85em; color: #555; }
@@ -361,6 +363,24 @@ blockquote { margin: 1em 2em; font-style: italic; }
 # and turns into an EMPTY chapter - a silent, total content loss. Only body
 # level markup is passed in.
 CHAPTER_TEMPLATE = "<body>\n{body}\n</body>"
+
+
+def _prepare_chapter_body(elements: list[StreamElement]) -> str:
+    body = "\n".join(element.render() for element in elements) or "<p></p>"
+    try:
+        ET.fromstring(f"<root>{body}</root>")
+        return body
+    except ET.ParseError:
+        from tier2_llm_handler import sanitize_and_validate_xhtml
+
+        recovered = sanitize_and_validate_xhtml(body)
+        if elements and not recovered.strip():
+            raise ValueError("XHTML sanitization emptied a non-empty chapter")
+        try:
+            ET.fromstring(f"<root>{recovered}</root>")
+        except ET.ParseError as exc:
+            raise ValueError(f"chapter body is not well-formed XHTML: {exc}") from exc
+        return recovered
 
 
 def relative_href(from_file: str, to_file: str) -> str:
@@ -506,7 +526,7 @@ def build_epub_publication(
 
     for idx, (chap_title, elements) in enumerate(segments, start=1):
         file_name = f"XHTML/chapter_{idx:03d}.xhtml"
-        body = "\n".join(e.render() for e in elements) or "<p></p>"
+        body = _prepare_chapter_body(elements)
         chap = epub.EpubHtml(
             title=chap_title,
             file_name=file_name,

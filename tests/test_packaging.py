@@ -288,6 +288,50 @@ def test_chapter_content_is_not_silently_dropped(tmp_path):
     assert b"Distinctive body sentence." in bodies
 
 
+def test_malformed_stream_content_is_recovered_before_epub_insertion(tmp_path):
+    broken = StreamElement(
+        ElementType.PARAGRAPH,
+        "p",
+        "Recover this <strong>important text",
+        page_num=0,
+    )
+    out = tmp_path / "recovered.epub"
+    pk.build_epub_publication([broken], str(out))
+    with zipfile.ZipFile(out) as zf:
+        chapter = next(name for name in zf.namelist() if name.endswith("chapter_001.xhtml"))
+        body = zf.read(chapter).decode("utf-8")
+    assert "Recover this" in body and "important text" in body
+
+
+def test_malformed_stream_that_recovers_to_empty_fails_loudly(tmp_path, monkeypatch):
+    import tier2_llm_handler
+
+    broken = StreamElement(ElementType.PARAGRAPH, "p", "broken <strong>body", page_num=0)
+    monkeypatch.setattr(tier2_llm_handler, "sanitize_and_validate_xhtml", lambda _body: "")
+    with pytest.raises(ValueError, match="emptied a non-empty chapter"):
+        pk.build_epub_publication([broken], str(tmp_path / "empty.epub"))
+
+
+def test_table_blocks_render_with_overflow_wrapper(tmp_path):
+    table = StreamElement(
+        ElementType.BLOCK,
+        "table",
+        "<tr><td>wide table data</td></tr>",
+    )
+    assert table.render() == (
+        '<div class="tbl"><table><tr><td>wide table data</td></tr></table></div>'
+    )
+    assert ".tbl { max-width: 100%; overflow-x: auto; }" in pk.DEFAULT_CSS
+    out = tmp_path / "table-wrapper.epub"
+    pk.build_epub_publication([table], str(out))
+    with zipfile.ZipFile(out) as zf:
+        chapter = next(name for name in zf.namelist() if name.endswith("chapter_001.xhtml"))
+        body = zf.read(chapter)
+        css = zf.read("EPUB/styles/stylesheet.css").decode("utf-8")
+    assert b'<div class="tbl"><table>' in body
+    assert ".tbl { max-width: 100%; overflow-x: auto; }" in css
+
+
 def test_mimetype_is_first_and_stored(tmp_path):
     out = tmp_path / "m.epub"
     pk.build_epub_publication([para("x")], str(out))

@@ -123,6 +123,8 @@ class StreamElement:
         if self.element_type is ElementType.CODE_BLOCK:
             return f"<pre{self._id_attr()}><code>{self.content}</code></pre>"
         cls = f' class="{self.css_class}"' if self.css_class else ""
+        if self.element_type is ElementType.BLOCK and self.tag.lower() == "table":
+            return f'<div class="tbl"><table{self._id_attr()}{cls}>{self.content}</table></div>'
         return f"<{self.tag}{self._id_attr()}{cls}>{self.content}</{self.tag}>"
 
     def _id_attr(self) -> str:
@@ -329,7 +331,6 @@ class ClassifiedLine:
     bbox: tuple[float, float, float, float]
     size: float
     block_id: int
-    indent_chars: int = 0
     block_margin: float = 0.0
     first_word_width: float = 0.0
 
@@ -436,7 +437,6 @@ def classify_page(page: "fitz.Page", profile: DocumentFontProfile) -> list[Class
         if block.get("type") != 0:
             continue
         block_id = block.get("number", 0)
-        block_bbox = tuple(block["bbox"])
         block_lines = merge_baseline_fragments(block["lines"])
         margin = block_right_margin([line["bbox"][2] for line in block_lines])
 
@@ -475,8 +475,6 @@ def classify_page(page: "fitz.Page", profile: DocumentFontProfile) -> list[Class
                 line_html = coalesce_inline_tags("".join(pieces))
 
             line_bbox = tuple(line["bbox"])
-            char_w = max(dominant["size"] * 0.6, 1.0)
-            indent = max(0, int(round((line_bbox[0] - block_bbox[0]) / char_w)))
 
             out.append(
                 ClassifiedLine(
@@ -489,7 +487,6 @@ def classify_page(page: "fitz.Page", profile: DocumentFontProfile) -> list[Class
                     bbox=line_bbox,
                     size=dominant["size"],
                     block_id=block_id,
-                    indent_chars=indent,
                     block_margin=margin,
                     first_word_width=first_word_width(spans, texts),
                 )
@@ -649,7 +646,6 @@ def build_paragraphs(
                 bbox=(buffer.bbox[0], buffer.bbox[1], line.bbox[2], line.bbox[3]),
                 size=buffer.size,
                 block_id=buffer.block_id,
-                indent_chars=buffer.indent_chars,
             )
             buffer_plain = buffer.raw_text
             buffer_last_bbox = line.bbox  # critical: advance the trailing edge
@@ -766,7 +762,11 @@ def extract_images(
 def _collect_code_blocks(
     units: list[ClassifiedLine], page_index: int, line_height: float
 ) -> list[StreamElement]:
-    """Fold consecutive monospace lines into one <pre>, indentation intact."""
+    """Fold consecutive monospace lines into one <pre>, indentation intact.
+
+    The 0.6×font-size character-width estimate is appropriate here because
+    every buffered line is monospace; it is intentionally not used for prose.
+    """
     out: list[StreamElement] = []
     buf: list[ClassifiedLine] = []
 

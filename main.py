@@ -366,8 +366,8 @@ def _embed_visual_page(
 
 
 def _print_routing_table(reports: list[PageConfidenceReport]) -> None:
-    print("\n  page | score | target        | sigma | order | vectors | reason")
-    print("  -----+-------+---------------+-------+-------+---------+-------------------")
+    print("\n  page | score | target        | sigma | order | columns | vectors | reason")
+    print("  -----+-------+---------------+-------+-------+---------+---------+-------------------")
     for r in reports:
         target = {
             RoutingTarget.TIER1_HEURISTIC: "tier1",
@@ -377,7 +377,7 @@ def _print_routing_table(reports: list[PageConfidenceReport]) -> None:
         print(
             f"  {r.page_num:>4} | {r.score:>5} | {target:<13} | "
             f"{r.font_variance:>5.2f} | {r.order_violations:>5} | "
-            f"{r.vector_count:>7} | {','.join(r.reasons)}"
+            f"{r.columnar_pairs:>7} | {r.vector_count:>7} | {','.join(r.reasons)}"
         )
 
 

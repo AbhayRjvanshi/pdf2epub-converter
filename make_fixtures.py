@@ -268,6 +268,19 @@ def build_two_column_page(path: str | Path) -> str:
     return str(path)
 
 
+def build_interleaved_two_column_page(path: str | Path) -> str:
+    """Emit matching left/right rows alternately to defeat backward-Y checks."""
+    doc = fitz.open()
+    p = doc.new_page(width=PAGE_W, height=PAGE_H)
+    for i, (left, right) in enumerate(zip(LEFT_COLUMN, RIGHT_COLUMN)):
+        y = 110.0 + i * LINE_H
+        p.insert_text((MARGIN_X, y), left, fontname="helv", fontsize=BODY_SIZE)
+        p.insert_text((235.0, y), right, fontname="helv", fontsize=BODY_SIZE)
+    doc.save(str(path))
+    doc.close()
+    return str(path)
+
+
 def build_scanned_page(path: str | Path) -> str:
     doc = fitz.open()
     p = doc.new_page(width=PAGE_W, height=PAGE_H)
@@ -295,6 +308,9 @@ def build_all(out_dir: str | Path) -> dict[str, str]:
         "clean_book": build_clean_book(out / "clean_book.pdf"),
         "single_column": build_single_column_page(out / "single_column.pdf"),
         "two_column": build_two_column_page(out / "two_column.pdf"),
+        "interleaved_two_column": build_interleaved_two_column_page(
+            out / "interleaved_two_column.pdf"
+        ),
         "scanned": build_scanned_page(out / "scanned.pdf"),
         "no_heading": build_no_heading_doc(out / "no_heading.pdf"),
     }
