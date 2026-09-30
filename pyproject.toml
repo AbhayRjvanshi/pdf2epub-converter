@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pdf2epub"
+dynamic = ["version"]
+description = "Hybrid PDF to EPUB3 converter with deterministic and optional AI-assisted extraction"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+dependencies = [
+    "pymupdf>=1.24,<2",
+    "ebooklib>=0.18",
+    "lxml>=4.9",
+    "tomli>=2.0; python_version < '3.11'",
+    "tomli-w>=1.0",
+]
+
+[project.optional-dependencies]
+openai = ["openai>=1.30"]
+anthropic = ["anthropic>=0.34"]
+keyring = ["keyring>=24"]
+dev = ["pytest>=7.4", "build"]
+
+[project.scripts]
+pdf2epub = "pdf2epub.__main__:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "pdf2epub.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
