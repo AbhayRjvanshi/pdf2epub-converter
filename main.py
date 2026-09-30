@@ -29,7 +29,9 @@ import re
 import sys
 import tempfile
 import time
+from collections import Counter
 from dataclasses import replace
+from html import unescape
 from pathlib import Path
 from typing import Any, Callable
 
@@ -70,6 +72,7 @@ PASSTHROUGH_BLOCKS = {
 # cover and embedded directly; at or above it, the document is treated as a
 # scan that actually wants OCR (when a provider is configured).
 VISION_BYPASS_RATIO = 0.10
+MIN_REPAIR_TEXT_RETENTION = 0.60
 
 
 # ---------------------------------------------------------------------------
@@ -252,6 +255,63 @@ def parse_xhtml_to_stream_elements(
                 )
             )
     return elements
+
+
+def _strip_unpacked_image_refs(xhtml: str, packaged_images: set[str]) -> str:
+    """Remove model-generated image references that packaging cannot resolve."""
+    from lxml import etree
+    from lxml import html as lhtml
+
+    root = lhtml.fragment_fromstring(xhtml, create_parent="div")
+    for image in list(root.iter("img")):
+        src = image.get("src", "")
+        image_prefix = "../images/"
+        filename = src[len(image_prefix) :] if src.startswith(image_prefix) else ""
+        if filename and "/" not in filename and "\\" not in filename and filename in packaged_images:
+            continue
+        parent = image.getparent()
+        if parent is None:
+            continue
+        parent.remove(image)
+        if (
+            isinstance(parent.tag, str)
+            and parent.tag.lower() == "figure"
+            and not "".join(parent.itertext()).strip()
+            and not parent.xpath(".//img")
+            and parent.getparent() is not None
+        ):
+            parent.getparent().remove(parent)
+    return "".join(
+        etree.tostring(child, encoding="unicode", method="xml") for child in root
+    )
+
+
+def _visible_word_counts(elements: list[StreamElement]) -> Counter[str]:
+    text = " ".join(
+        unescape(re.sub(r"<[^>]*>", " ", element.content))
+        for element in elements
+        if element.element_type is not ElementType.IMAGE
+    )
+    return Counter(re.findall(r"\w+", text.casefold(), flags=re.UNICODE))
+
+
+def _repair_preserves_content(
+    original: list[StreamElement], candidate: list[StreamElement]
+) -> bool:
+    if not candidate:
+        return False
+    had_headings = any(e.element_type is ElementType.HEADING for e in original)
+    has_headings = any(e.element_type is ElementType.HEADING for e in candidate)
+    if had_headings and not has_headings:
+        return False
+
+    original_words = _visible_word_counts(original)
+    total_words = sum(original_words.values())
+    if not total_words:
+        return bool(_visible_word_counts(candidate))
+    candidate_words = _visible_word_counts(candidate)
+    retained_words = sum((original_words & candidate_words).values())
+    return retained_words / total_words >= MIN_REPAIR_TEXT_RETENTION
 
 
 def _embed_visual_page(
@@ -469,6 +529,7 @@ def run_pipeline(
                     layout_digest=r.layout_digest,
                     raster_bytes=r.raster_bytes,
                     page_width=float(doc[r.page_index].rect.width),
+                    vision=r.target is RoutingTarget.TIER2_VISION_OCR,
                 )
             for start in range(0, len(llm_reports), batch_size):
                 window = llm_reports[start : start + batch_size]
@@ -561,7 +622,15 @@ def run_pipeline(
             if report.passed:
                 break
             say(f"            self-repair pass {attempt}/{max_repair_attempts}")
-            unified = _repair_stream(unified, report, handler, tier2_requests, say)
+            unified = _repair_stream(
+                unified,
+                report,
+                handler,
+                tier2_requests,
+                say,
+                doc=doc,
+                page_reports={r.page_index: r for r in reports},
+            )
             build = packaging.build_epub_publication(
                 stream=unified,
                 output_path=output_epub,
@@ -617,8 +686,10 @@ def _repair_stream(
     handler: Tier2Handler,
     tier2_requests: dict[int, Tier2Request],
     say: Callable,
+    doc: Any = None,
+    page_reports: dict[int, PageConfidenceReport] | None = None,
 ) -> list[StreamElement]:
-    """Re-sanitise every element; escalate pages named by the validator."""
+    """Re-sanitise the stream and safely replace only affected Tier 2 pages."""
     repaired = [
         replace(e, content=tier2_llm_handler.sanitize_and_validate_xhtml(e.content))
         if e.element_type is not ElementType.IMAGE
@@ -626,26 +697,87 @@ def _repair_stream(
         for e in unified
     ]
 
-    error_text = report.raw_logs
-    failing_pages: set[int] = set()
+    failing_chapters: set[int] = set()
     for err in report.structural_errors:
-        m = re.search(r"chapter_(\d+)", err.get("file", ""))
-        if m:
-            failing_pages.update(
-                e.page_num for e in repaired if e.page_num in tier2_requests
-            )
+        match = re.search(r"chapter_(\d+)", err.get("file", ""))
+        if match:
+            failing_chapters.add(int(match.group(1)))
 
-    if failing_pages and handler.llm_client_fn is not None:
-        say(f"            re-prompting Tier 2 pages: {sorted(p + 1 for p in failing_pages)}")
-        for page_idx in sorted(failing_pages):
-            req = tier2_requests.get(page_idx)
-            if req is None:
+    chapters = packaging.segment_chapters(repaired)
+    failing_pages = {
+        element.page_num
+        for chapter_num in failing_chapters
+        if 1 <= chapter_num <= len(chapters)
+        for element in chapters[chapter_num - 1][1]
+        if element.page_num in tier2_requests
+    }
+
+    if not failing_pages or handler.llm_client_fn is None:
+        return repaired
+
+    say(f"            re-prompting Tier 2 pages: {sorted(p + 1 for p in failing_pages)}")
+    packaged_images = {
+        element.image_data.filename
+        for element in repaired
+        if element.element_type is ElementType.IMAGE and element.image_data is not None
+    }
+    replacements: dict[int, list[StreamElement]] = {}
+    page_reports = page_reports or {}
+
+    for page_idx in sorted(failing_pages):
+        req = tier2_requests.get(page_idx)
+        if req is None:
+            continue
+        page_report = page_reports.get(page_idx)
+        try:
+            if doc is not None and page_report is not None:
+                confidence_router.attach_payload(doc[page_idx], page_report)
+                req.layout_digest = page_report.layout_digest
+                req.raster_bytes = page_report.raster_bytes
+
+            fixed = handler.repair_page(req, report.raw_logs)
+            fixed = _strip_unpacked_image_refs(fixed, packaged_images)
+            if not fixed.strip() or not tier2_llm_handler.is_well_formed(fixed)[0]:
+                say(f"            keeping original page {page_idx + 1}: empty/invalid repair")
                 continue
-            fixed = handler.repair_page(req, error_text)
+
             new_elems = parse_xhtml_to_stream_elements(fixed, page_idx)
-            repaired = [e for e in repaired if e.page_num != page_idx] + new_elems
-        repaired.sort(key=lambda e: (e.page_num, e.block_id))
-    return repaired
+            original_text = [
+                element
+                for element in repaired
+                if element.page_num == page_idx and element.element_type is not ElementType.IMAGE
+            ]
+            if not _repair_preserves_content(original_text, new_elems):
+                say(f"            keeping original page {page_idx + 1}: repair lost content")
+                continue
+
+            page_images = [
+                element
+                for element in repaired
+                if element.page_num == page_idx and element.element_type is ElementType.IMAGE
+            ]
+            replacements[page_idx] = new_elems + page_images
+        except Exception as exc:
+            say(f"            keeping original page {page_idx + 1}: repair failed ({exc})")
+        finally:
+            req.layout_digest = None
+            req.raster_bytes = None
+            if page_report is not None:
+                confidence_router.release_payload(page_report)
+
+    if not replacements:
+        return repaired
+
+    rebuilt: list[StreamElement] = []
+    inserted_pages: set[int] = set()
+    for element in repaired:
+        replacement = replacements.get(element.page_num)
+        if replacement is None:
+            rebuilt.append(element)
+        elif element.page_num not in inserted_pages:
+            rebuilt.extend(replacement)
+            inserted_pages.add(element.page_num)
+    return rebuilt
 
 
 # ---------------------------------------------------------------------------

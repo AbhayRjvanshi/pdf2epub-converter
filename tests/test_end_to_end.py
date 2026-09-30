@@ -344,6 +344,110 @@ def test_repair_loop_runs_and_gives_up_cleanly(fixture_pdfs, tmp_path, monkeypat
     assert (tmp_path / "r.epub").exists()  # best effort output is still written
 
 
+def test_repair_preserves_images_order_and_scopes_to_failing_chapter(monkeypatch):
+    original_text = "The original words must remain through every safe repair."
+    image = t1.ImageElement(
+        ext="png",
+        mime_type="image/png",
+        bbox=(10.0, 10.0, 20.0, 20.0),
+        page_num=0,
+        block_id=9,
+        alt_text="diagram",
+        filename="diagram.png",
+        image_bytes=b"png-data",
+    )
+    unified = [
+        t1.StreamElement(t1.ElementType.HEADING, "h1", "Chapter One", page_num=0, level=1),
+        t1.StreamElement(t1.ElementType.PARAGRAPH, "p", original_text, page_num=0),
+        t1.StreamElement(
+            t1.ElementType.IMAGE, "figure", "", page_num=0, block_id=9, image_data=image
+        ),
+        t1.StreamElement(t1.ElementType.HEADING, "h1", "Chapter Two", page_num=1, level=1),
+        t1.StreamElement(t1.ElementType.PARAGRAPH, "p", "Second chapter remains untouched.", page_num=1),
+    ]
+    reqs = {
+        0: driver.Tier2Request(page_num=1, vision=True),
+        1: driver.Tier2Request(page_num=2, layout_digest=[]),
+    }
+    page_reports = {
+        0: cr.PageConfidenceReport(1, 0, 0, cr.RoutingTarget.TIER2_VISION_OCR),
+        1: cr.PageConfidenceReport(2, 1, 0, cr.RoutingTarget.TIER2_LLM_DIGEST),
+    }
+
+    calls = []
+
+    def repair_page(req, error):
+        calls.append((req.page_num, req.is_vision, req.raster_bytes, req.layout_digest))
+        return (
+            "<h1>Chapter One</h1><p>"
+            + original_text
+            + "</p><figure><img src='unpackaged.png'/></figure>"
+        )
+
+    def attach_payload(page, page_report):
+        if page_report.target is cr.RoutingTarget.TIER2_VISION_OCR:
+            page_report.raster_bytes = b"raster"
+        else:
+            page_report.layout_digest = [{"text": "digest"}]
+
+    monkeypatch.setattr(driver.confidence_router, "attach_payload", attach_payload)
+    handler = driver.Tier2Handler(llm_client_fn=lambda *_: "{}")
+    monkeypatch.setattr(handler, "repair_page", repair_page)
+    validation = pk.ValidationReport(
+        True, 0, False, True, {}, False, False,
+        [{"file": "chapter_001.xhtml", "message": "synthetic", "severity": "ERROR"}],
+        "repair this chapter",
+    )
+    repaired = driver._repair_stream(
+        unified,
+        validation,
+        handler,
+        reqs,
+        lambda _message: None,
+        doc=[object(), object()],
+        page_reports=page_reports,
+    )
+
+    assert [call[0] for call in calls] == [1]
+    assert calls[0][1:3] == (True, b"raster")
+    assert reqs[0].is_vision is True  # request provenance survives payload release
+    assert page_reports[0].raster_bytes is None
+    assert page_reports[1].layout_digest is None
+    assert [element.page_num for element in repaired] == [0, 0, 0, 1, 1]
+    assert [element.element_type for element in repaired[:3]] == [
+        t1.ElementType.HEADING,
+        t1.ElementType.PARAGRAPH,
+        t1.ElementType.IMAGE,
+    ]
+    assert repaired[2].image_data is not None
+    assert repaired[2].image_data.filename == "diagram.png"
+    assert all("unpackaged.png" not in element.content for element in repaired)
+    assert "Second chapter remains untouched." in repaired[-1].content
+
+
+def test_empty_repair_keeps_original_page_content(monkeypatch):
+    original = t1.StreamElement(
+        t1.ElementType.PARAGRAPH,
+        "p",
+        "Original page text that must not disappear.",
+        page_num=0,
+    )
+    req = driver.Tier2Request(page_num=1, layout_digest=[])
+
+    validation = pk.ValidationReport(
+        True, 0, False, True, {}, False, False,
+        [{"file": "chapter_001.xhtml", "message": "synthetic", "severity": "ERROR"}],
+        "repair this chapter",
+    )
+    handler = driver.Tier2Handler(llm_client_fn=lambda *_: "{}")
+    monkeypatch.setattr(handler, "repair_page", lambda _req, _error: "")
+    repaired = driver._repair_stream(
+        [original], validation, handler, {0: req}, lambda _message: None
+    )
+    assert len(repaired) == 1
+    assert "Original page text" in repaired[0].content
+
+
 # ---------------------------------------------------------------------------
 # CLI surface
 # ---------------------------------------------------------------------------
