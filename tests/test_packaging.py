@@ -207,6 +207,22 @@ def test_structural_navigation_is_not_claimed_without_headings():
     assert pk.analyse_accessibility([para("body")]).has_structural_navigation is False
 
 
+def test_data_tables_are_detected_without_claiming_a_table_of_contents():
+    table = StreamElement(
+        ElementType.BLOCK,
+        "table",
+        "<tr><td>data</td></tr>",
+    )
+    profile = pk.analyse_accessibility([table])
+    assert profile.has_tables is True
+    assert profile.has_table_of_contents is False
+
+
+def test_table_of_contents_feature_requires_top_level_nav_heading():
+    assert pk.analyse_accessibility([heading("Chapter")]).has_table_of_contents is True
+    assert pk.analyse_accessibility([para("body")]).has_table_of_contents is False
+
+
 def test_metadata_only_asserts_present_features(tmp_path):
     out = tmp_path / "noimg.epub"
     pk.build_epub_publication([heading("One"), para("body")], str(out))
@@ -214,8 +230,23 @@ def test_metadata_only_asserts_present_features(tmp_path):
         opf = next(n for n in zf.namelist() if n.endswith(".opf"))
         xml = zf.read(opf).decode()
     assert "structuralNavigation" in xml
+    assert "tableOfContents" in xml
     assert "alternativeText" not in xml
     assert pk.CONFORMS_TO in xml
+
+
+def test_data_table_does_not_emit_table_of_contents_feature(tmp_path):
+    table = StreamElement(
+        ElementType.BLOCK,
+        "table",
+        "<tr><td>data</td></tr>",
+    )
+    out = tmp_path / "table.epub"
+    pk.build_epub_publication([table], str(out))
+    with zipfile.ZipFile(out) as zf:
+        opf = next(name for name in zf.namelist() if name.endswith(".opf"))
+        xml = zf.read(opf).decode()
+    assert "tableOfContents" not in xml
 
 
 def test_metadata_asserts_alt_text_when_earned(tmp_path):

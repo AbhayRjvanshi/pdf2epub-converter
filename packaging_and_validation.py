@@ -58,6 +58,7 @@ HYPHEN_TAIL_RE = re.compile(r"(\w)-((?:</\w+>)*)\s*$")
 class AccessibilityProfile:
     has_alt_text: bool = False
     has_structural_navigation: bool = False
+    has_table_of_contents: bool = False
     has_reading_order: bool = True
     has_tables: bool = False
     image_count: int = 0
@@ -391,11 +392,17 @@ def analyse_accessibility(elements: list[StreamElement]) -> AccessibilityProfile
     all_alt = bool(images) and all(
         e.image_data is not None and e.image_data.alt_text.strip() for e in images
     )
-    has_tables = any("<table" in e.content.lower() for e in elements)
+    has_tables = any(e.tag.lower() == "table" for e in elements)
+    split_level = choose_split_level(elements)
+    has_table_of_contents = bool(
+        split_level
+        and any(e.element_type is ElementType.HEADING and e.level == split_level for e in headings)
+    )
 
     profile = AccessibilityProfile(
         has_alt_text=all_alt,
         has_structural_navigation=bool(headings),
+        has_table_of_contents=has_table_of_contents,
         has_reading_order=True,
         has_tables=has_tables,
         image_count=len(images),
@@ -421,7 +428,7 @@ def _inject_metadata(book: epub.EpubBook, a11y: AccessibilityProfile) -> None:
         book.add_metadata(
             None, "meta", "alternativeText", {"property": "schema:accessibilityFeature"}
         )
-    if a11y.has_tables:
+    if a11y.has_table_of_contents:
         book.add_metadata(
             None, "meta", "tableOfContents", {"property": "schema:accessibilityFeature"}
         )
