@@ -31,6 +31,8 @@ def test_entrypoint_version_and_stub_exit_codes(capsys):
     assert capsys.readouterr().out.startswith("pdf2epub ")
     assert main([]) == 2
     assert "not implemented" in capsys.readouterr().err
+    assert main(["--help"]) == 0
+    assert "not implemented" in capsys.readouterr().out
 
 
 def test_import_needs_no_engine_or_optional_extras():

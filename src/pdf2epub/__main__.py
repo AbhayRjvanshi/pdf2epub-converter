@@ -17,11 +17,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args in (["--version"], ["-V"]):
         print(f"pdf2epub {__version__}")
         return 0
-    print(
+    message = (
         "pdf2epub: the command-line interface is not implemented yet.\n"
-        "Use `python main.py --help` from the source tree for now.",
-        file=sys.stderr,
+        "Use `python -m pdf2epub.engine.driver --help` for now."
     )
+    if args in (["--help"], ["-h"]):
+        print(message)
+        return 0
+    print(message, file=sys.stderr)
     return 2
 
 
