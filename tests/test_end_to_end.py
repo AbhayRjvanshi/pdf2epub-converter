@@ -272,8 +272,9 @@ def test_model_returning_broken_xhtml_is_repaired(fixture_pdfs, tmp_path):
     import json
 
     def sloppy(system_prompt, payload, image_b64=None):
+        page_count = 1 if image_b64 else json.loads(payload)["page_count"]
         return json.dumps(
-            {"xhtml_pages": ["```xml\n<p>Q&A <strong>unclosed</p>\n```"] * 4}
+            {"xhtml_pages": ["```xml\n<p>Q&A <strong>unclosed</p>\n```"] * page_count}
         )
 
     out = tmp_path / "sloppy.epub"
@@ -294,7 +295,8 @@ def test_cache_makes_a_second_run_free(fixture_pdfs, tmp_path):
 
     def counting(system_prompt, payload, image_b64=None):
         calls["n"] += 1
-        return json.dumps({"xhtml_pages": ["<p>x</p>"] * 4})
+        page_count = 1 if image_b64 else json.loads(payload)["page_count"]
+        return json.dumps({"xhtml_pages": ["<p>x</p>"] * page_count})
 
     cache = tmp_path / "cache"
     _run(fixture_pdfs["clean_book"], tmp_path / "a.epub",

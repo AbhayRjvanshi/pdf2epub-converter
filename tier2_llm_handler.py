@@ -35,7 +35,7 @@ from typing import Any, Callable
 
 log = logging.getLogger("tier2")
 
-SCHEMA_VERSION = "xhtml-pages/v2"
+SCHEMA_VERSION = "xhtml-pages/v3"
 DEFAULT_CACHE_DIR = Path(".cache_llm_epub")
 
 # ---------------------------------------------------------------------------
@@ -224,10 +224,11 @@ class Tier2Request:
     layout_digest: list[dict] | None = None
     raster_bytes: bytes | None = None
     page_width: float = 0.0  # physical page width in points, for the digest fallback
+    vision: bool = False  # persists after large payloads are released
 
     @property
     def is_vision(self) -> bool:
-        return self.raster_bytes is not None
+        return self.vision or self.raster_bytes is not None
 
     def payload_fingerprint(self) -> str:
         if self.is_vision:
@@ -464,8 +465,20 @@ class Tier2Handler:
             return None
         try:
             with path.open("r", encoding="utf-8") as fh:
-                return json.load(fh)["xhtml_pages"]
-        except (json.JSONDecodeError, KeyError, OSError):
+                entry = json.load(fh)
+            pages = entry.get("xhtml_pages") if isinstance(entry, dict) else None
+            if (
+                not isinstance(pages, list)
+                or not pages
+                or any(not isinstance(page, str) or not is_well_formed(page)[0] for page in pages)
+            ):
+                raise ValueError("invalid cached XHTML page list")
+            return pages
+        except (json.JSONDecodeError, KeyError, OSError, UnicodeDecodeError, ValueError, TypeError):
+            try:
+                path.unlink(missing_ok=True)
+            except OSError:
+                pass
             return None
 
     def _cache_write(self, key: str, pages: list[str]) -> None:
@@ -525,11 +538,17 @@ class Tier2Handler:
                 self.temperature,
             )
             cached = self._cache_read(key)
-            if cached:
-                self.stats["cache_hits"] += 1
-                results.append(cached[0])
-                continue
+            if cached is not None:
+                if len(cached) == 1:
+                    self.stats["cache_hits"] += 1
+                    results.append(cached[0])
+                    continue
+                try:
+                    self._cache_path(key).unlink(missing_ok=True)
+                except OSError:
+                    pass
 
+            cache_model_output = self.llm_client_fn is not None
             if self.llm_client_fn is None:
                 self.stats["fallbacks"] += 1
                 html = _vision_fallback(req)
@@ -542,13 +561,17 @@ class Tier2Handler:
                         f"Transcribe page {req.page_num} into XHTML.",
                         img_b64,
                     )
-                    html = sanitize_and_validate_xhtml(pages[0] if pages else "")
+                    if len(pages) != 1:
+                        raise RuntimeError(f"expected one vision page, got {len(pages)}")
+                    html = sanitize_and_validate_xhtml(pages[0])
                 except RuntimeError as exc:
                     log.error("vision page %s failed: %s", req.page_num, exc)
                     self.stats["fallbacks"] += 1
+                    cache_model_output = False
                     html = _vision_fallback(req)
 
-            self._cache_write(key, [html])
+            if cache_model_output and html.strip():
+                self._cache_write(key, [html])
             results.append(html)
         return results
 
@@ -573,15 +596,18 @@ class Tier2Handler:
         payload = self._batch_payload(requests)
         key = get_cache_key(payload, TEXT_SYSTEM_PROMPT, self.model_id, self.temperature)
         cached = self._cache_read(key)
-        if cached and len(cached) == len(requests):
-            self.stats["cache_hits"] += 1
-            return cached
+        if cached is not None:
+            if len(cached) == len(requests):
+                self.stats["cache_hits"] += 1
+                return cached
+            try:
+                self._cache_path(key).unlink(missing_ok=True)
+            except OSError:
+                pass
 
         if self.llm_client_fn is None:
             self.stats["fallbacks"] += len(requests)
-            pages = [_digest_fallback(r) for r in requests]
-            self._cache_write(key, pages)
-            return pages
+            return [_digest_fallback(r) for r in requests]
 
         try:
             raw_pages = self._call_model(TEXT_SYSTEM_PROMPT, payload, None)
@@ -597,27 +623,35 @@ class Tier2Handler:
                 len(raw_pages),
             )
             self.stats["repairs"] += 1
-            pages = [self._process_single_digest(r) for r in requests]
-        else:
-            pages = [sanitize_and_validate_xhtml(p) for p in raw_pages]
+            return [self._process_single_digest(r) for r in requests]
 
-        self._cache_write(key, pages)
+        pages = [sanitize_and_validate_xhtml(p) for p in raw_pages]
+        if all(page.strip() for page in pages):
+            self._cache_write(key, pages)
         return pages
 
     def _process_single_digest(self, req: Tier2Request) -> str:
         payload = self._batch_payload([req])
         key = get_cache_key(payload, TEXT_SYSTEM_PROMPT, self.model_id, self.temperature)
         cached = self._cache_read(key)
-        if cached:
-            self.stats["cache_hits"] += 1
-            return cached[0]
+        if cached is not None:
+            if len(cached) == 1:
+                self.stats["cache_hits"] += 1
+                return cached[0]
+            try:
+                self._cache_path(key).unlink(missing_ok=True)
+            except OSError:
+                pass
         try:
             pages = self._call_model(TEXT_SYSTEM_PROMPT, payload, None)
-            html = sanitize_and_validate_xhtml(pages[0] if pages else "")
+            if len(pages) != 1:
+                raise RuntimeError(f"expected one digest page, got {len(pages)}")
+            html = sanitize_and_validate_xhtml(pages[0])
         except RuntimeError:
             self.stats["fallbacks"] += 1
-            html = _digest_fallback(req)
-        self._cache_write(key, [html])
+            return _digest_fallback(req)
+        if html.strip():
+            self._cache_write(key, [html])
         return html
 
     # -- self-repair -------------------------------------------------------
@@ -636,10 +670,12 @@ class Tier2Handler:
                 pages = self._call_model(prompt, f"Fix page {req.page_num}.", img_b64)
             else:
                 pages = self._call_model(prompt, self._batch_payload([req]), None)
-            return sanitize_and_validate_xhtml(pages[0] if pages else "")
+            if len(pages) != 1 or not pages[0].strip():
+                raise RuntimeError(f"expected one non-empty repair page, got {len(pages)}")
+            return sanitize_and_validate_xhtml(pages[0])
         except RuntimeError:
             self.stats["fallbacks"] += 1
-            return _digest_fallback(req)
+            raise
 
 
 def _strip_json_fences(raw: str) -> str:

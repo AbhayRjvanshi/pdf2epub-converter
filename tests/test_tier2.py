@@ -75,6 +75,62 @@ def test_cache_prevents_a_second_api_call(tmp_path):
     assert out == ["<p>one</p>"]
 
 
+def test_offline_fallbacks_are_not_cached_and_online_model_runs_later(tmp_path):
+    req = digest()
+    offline = Tier2Handler(cache_dir=tmp_path)
+    offline.process_batch([req])
+    assert list(tmp_path.glob("*.json")) == []
+
+    client = fake_client(["<p>online result</p>"])
+    online = Tier2Handler(llm_client_fn=client, cache_dir=tmp_path)
+    assert online.process_batch([req]) == ["<p>online result</p>"]
+    assert len(client.calls) == 1
+
+
+def test_failed_model_fallback_is_not_cached(tmp_path):
+    req = digest()
+    broken = Tier2Handler(
+        llm_client_fn=lambda *_: (_ for _ in ()).throw(ConnectionError("offline")),
+        cache_dir=tmp_path,
+        max_retries=0,
+    )
+    broken.process_batch([req])
+    assert list(tmp_path.glob("*.json")) == []
+
+    client = fake_client(["<p>recovered online</p>"])
+    recovered = Tier2Handler(llm_client_fn=client, cache_dir=tmp_path)
+    assert recovered.process_batch([req]) == ["<p>recovered online</p>"]
+    assert len(client.calls) == 1
+
+
+def test_vision_fallbacks_are_not_cached(tmp_path):
+    req = Tier2Request(page_num=1, raster_bytes=b"\x89PNG-image")
+    offline = Tier2Handler(cache_dir=tmp_path)
+    offline.process_batch([req])
+    assert list(tmp_path.glob("*.json")) == []
+
+    broken = Tier2Handler(
+        llm_client_fn=lambda *_: (_ for _ in ()).throw(ConnectionError("offline")),
+        cache_dir=tmp_path,
+        max_retries=0,
+    )
+    broken.process_batch([req])
+    assert list(tmp_path.glob("*.json")) == []
+
+    client = fake_client(["<p>online OCR</p>"])
+    online = Tier2Handler(llm_client_fn=client, cache_dir=tmp_path)
+    assert online.process_batch([req]) == ["<p>online OCR</p>"]
+    assert len(client.calls) == 1
+
+
+def test_malformed_cache_entry_is_deleted_and_treated_as_miss(tmp_path):
+    handler = Tier2Handler(cache_dir=tmp_path)
+    path = handler._cache_path("bad-entry")
+    path.write_text('{"xhtml_pages": [42]}', encoding="utf-8")
+    assert handler._cache_read("bad-entry") is None
+    assert not path.exists()
+
+
 # ---------------------------------------------------------------------------
 # Batch integrity
 # ---------------------------------------------------------------------------
