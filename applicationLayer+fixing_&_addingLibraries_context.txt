@@ -1,0 +1,206 @@
+PDF2Epub — Definitive Implementation Plan v2.3
+Supersedes v2.2. Merges: the original plan, both review rounds, and the verified results of the third-party architectural audit (accepted findings folded in as Phase 0.7; rejected recommendations documented with reasons in §1). Fixed-layout confirmed out of scope by owner decision. Nothing contested remains.
+PART 0 — Starting state (verified facts)
+- Working converter: 5 engine modules (tier1_classifier.py 882 ln, confidence_router.py 374 ln, tier2_llm_handler.py 666 ln, packaging_and_validation.py 818 ln, main.py 738 ln) + make_fixtures.py + tests/ (5 modules, ~136 collected tests).
+- pytest.ini is correct as-is (testpaths = tests) — do not "fix." Last recorded run: lastfailed = {}. EPUBCheck/Ace absent here → their tests skip by design.
+- Env: Python 3.10.6, pytest 9.1.1, pymupdf 1.28.2 (has built-in page.find_tables()), EbookLib 0.20, lxml 6.1.3, Windows.
+- Tests pin main.py's surface via import main as driver — including monkeypatching driver._embed_visual_page and driver.tier1_classifier.build_page_stream. This is the migration contract.
+- Audit-verified latent defects (all confirmed in code): online-repair payload loss (Phase 0.5); router blind spot for row-interleaved multi-column pages (Phase 0.7); dead indent_chars field (declaration + 2 writes, zero reads); tables render without overflow protection; no well-formedness gate at set_content (upstream sanitizer covers today's paths, but the insertion point itself is unguarded).
+PART 1 — Decision log (settled; do not re-litigate)
+#	Decision	Resolution
+1	Python floor	>=3.10; tomli; python_version < "3.11" + tomli-w
+2	Online self-repair bug	Fix in Phase 0.5, pre-migration
+3	verification_model	Removed from v1
+4	Console command	pdf2epub canonical; PDF2Epub alias optional; --version
+5	Credential default	New CLI provider_id="none" default; named provider + missing credential → clear error; legacy permissive — temporarily, documented
+6	Encrypted credential file	v2 only
+7	Engine relocation	Early, mechanical, shims, before clean-install testing
+8	Model capabilities	Route-specific (digest ≠ vision), derived from routing report
+9	Validation split	L1 request validation (never opens PDF) / L2 preflight (routes + capability-checks)
+10	Offline model rule	provider_id=="none" ⇒ model may be None ⇒ model validation skipped
+11	Credential precedence	explicit → provider env → generic PDF2EPUB_API_KEY (per-provider opt-in only) → keyring → unavailable
+12	Validator states	DISABLED / AVAILABLE / UNAVAILABLE / REQUIRED_BUT_MISSING / FAILED_TO_RUN
+13	Legacy shim	Dual-path (identity alias + __main__ branch)
+14	Product priority	Headless CLI is the ship gate; REPL thin, decoupled, deferrable
+15	Keyring	Optional dep; import guard; any backend error → unavailable, debug-only logging (headless-safe)
+16	Fixed-layout EPUB	Owner-confirmed out of scope for v1/v1.x; remains v2-deferred; image-only pages keep current raster-embed policy
+17	ORDER_JUMP_DX	Stays 50pt — it measures column-start distance (~column width), not gutter width; lowering adds false positives and cannot fix the interleaving blind spot (which fails the backward-Y conjunct). Documented in code comment
+18	Tier-1 tables	v1.x enhancement via pymupdf page.find_tables() (already installed; zero new deps). Camelot rejected (Ghostscript/opencv system chain)
+19	CV layout libraries	LayoutParser/DeepLayout rejected (multi-GB torch chain, slow CPU inference, stale maintenance; inverts the deterministic-gate cost model). Only acceptable form: optional plugin behind the router interface, v2+
+PART 2 — Global policies
+Architecture invariant: CLI/REPL → Application → {Providers, Config, Validators} → Engine. Engine never imports app code; providers/config/validators never import the engine (providers re-declare the LLMClient shape locally as a Protocol). Enforced by a layer-isolation test, not convention.
+Engine-freeze policy: frozen by default. Permitted exception class: additive, default-preserving seams with dedicated regression tests. Five authorized seams:
+#	Seam	Semantics
+S1	run_pipeline(..., validators: tuple[str,...] | None = None)	None = current behavior; ("epubcheck",) = internal+EPUBCheck; () = internal only
+S2	run_pipeline(..., event_cb=None)	PipelineEvent schema; engine wraps callback in try/except — UI bugs never kill conversions
+S3	CancellationToken	checked between pages, Tier-2 batches, repair attempts
+S4	Phase 0.5 repair patch	correctness fix, specced there
+S5	run_pipeline(..., precomputed_reports=None)	provided = skip Phase-3 routing, reuse preflight (feeds vision-bypass ratio + Tier-2 batching unchanged)
+@dataclass(frozen=True)
+class PipelineEvent:
+    type: str  # phase_started | page_progress | tier2_batch_started
+               # | validation_started | repair_started | completed | failed
+    phase: int
+    page_index: int | None
+    total_pages: int | None
+    message: str
+    metadata: dict
+Cancellation flows through the token only. CLI/REPL translates KeyboardInterrupt → token cancel → clean result, session intact.
+Risk model: engine-adjacent phases = engine-low-risk; application layer = application-medium-risk (new user-visible behavior lives there regardless).
+Baseline discipline: record reality — python --version, pytest --version, pytest --collect-only -q, Measure-Command { pytest }, passed/skipped/failed, EPUBCheck/Ace availability. Skips stay skips.
+Gate philosophy: full suite after every phase. If an old engine test fails because an app feature was added, the app change is wrong — full stop.
+PART 3 — Phases
+Phase 0 — Baseline & freeze
+Work: record baseline per §2; pytest tests/test_end_to_end.py -q separately; git ls-files hygiene check (no tracked caches); decide project_context.txt fate (move to design-history or remove; never packaged).
+Outcome: written baseline; every later gate diffs against it.
+Gate: baseline exists.
+Phase 0.5 — Online self-repair: characterize, then fix
+Verified defect (main.py): Phase 4B releases payloads (req.layout_digest/raster_bytes = None); _repair_stream reuses the emptied requests → repair sends layout_digest: []; Tier2Request.is_vision (defined as raster_bytes is not None) flips False → vision pages get the text prompt with an empty digest; empty repair output → parse_xhtml_to_stream_elements("") → [] → page's elements deleted from the book; the matched chapter_(\d+) is unused → any chapter error re-prompts all Tier-2 pages.
+Characterization tests (pin first): digest repair receives non-empty digest; vision repair receives its raster; route type survives release; empty/parse-failed repair output → original elements kept + warning; only failing-chapter pages ∩ Tier-2 pages are re-prompted; order stable; terminates at max_repair_attempts; offline repair unchanged; rebuilt payloads released after repair; repair responses bypass the conversion cache (pinned as deliberate — repair prompts carry validator context).
+Fix (seam S4): _repair_stream(..., doc=doc) (or rebuilder callback) — rebuild via attach_payload, release after; Tier2Request.vision: bool | None = None explicit flag; empty/failed-replacement guard (keep originals); re-prompt scoped via ChapterRecord.page_nums.
+Outcome: repair can only improve or preserve pages; spend scoped to actual failures.
+Gate: full suite + new regression tests green.
+Phase 0.7 — Targeted engine hardening (audit findings)
+Goal: close the audit's one confirmed correctness hole + three cheap verified hardening items. Same rule as 0.5: additive, regression-tested, freeze-exception for correctness only.
+Item 1 — Router columnar co-occurrence signal (correctness; FN≈0 is the router's design goal).
+Problem: count_order_violations needs a backward-Y jump (dy < -20pt). Row-interleaved two-column emission (left-1, right-1, left-2, right-2…) is monotone in Y → zero violations → score 100 → Tier 1 → y-then-x sort reproduces the interleaving → scrambled prose. Block-ordered columns are already caught (test_two_column_jump_is_counted); interleaved emission has no fixture and no test.
+Work: add a signal to confidence_router that counts line pairs with overlapping y-intervals, disjoint x-intervals, and separation above a page-width-relative gutter scale (the digest fallback's normalized-spread logic — TWO_COLUMN_SPREAD_FRACTION = 0.18 — is the reference implementation to crib from); count above a calibrated floor ⇒ penalty pushing below TIER1_THRESHOLD. Extend make_fixtures.py with an interleaved-emission two-column page. Add a code comment documenting decision #17 (why ORDER_JUMP_DX is untouched).
+Edge cases the tests must prove: interleaved two-column page → tier2; block-ordered two-column → still tier2 (existing tests green); clean single-column full pages → still tier1; wide centered title page → tier1 (a title shares no baseline with a body line); single wide indented blockquote or code line → tier1; page with figure + caption → unaffected; furniture band exclusion respected (folios don't fire it); calibration constants grouped at module top.
+Outcome: no known text-layer emission pattern for multi-column pages can reach Tier 1.
+Item 2 — Pre-insertion well-formedness gate (defense-in-depth).
+Problem: build_epub_publication passes the joined chapter body to EpubHtml.set_content with no local check; ebooklib swallows parse errors → empty chapter (the project's own documented war story), and an empty chapter is still well-formed XML — so internal validation can't catch the loss. Today's paths sanitize upstream; the insertion point itself is unguarded against any future leak.
+Work: before set_content: well-formedness-check the assembled body → on failure run it through sanitize_and_validate_xhtml, recheck → still bad or empty despite non-empty input elements → raise (a loud failure the repair loop can route), never swallow.
+Tests: deliberately malformed StreamElement constructed directly (bypassing the sanitizer) → packaging raises/flags, nothing silently emptied; sanitizer-recoverable body → recovered content present in output EPUB; test_chapter_content_is_not_silently_dropped and valid-build tests stay green.
+Item 3 — indent_chars dead code removal.
+Grep-proven: declared (332), written (492), carried (652), read nowhere. The 0.6×size char-width heuristic is monospace-flavored and wrong for proportional text — harmless only because unused. Remove field + computation + carry; add a comment at _collect_code_blocks noting its own 0.6×size use is valid because it only sees monospace pre lines. Allowed mechanical test edit: constructor-signature sync only, if any test builds ClassifiedLine directly — no behavior changes.
+Gate within item: full suite byte-green.
+Item 4 — table overflow hardening.
+Tier-2 <table> passthrough renders against width:100% with no overflow mitigation → horizontal clipping on narrow readers. Wrap table blocks at render time in <div class="tbl">; add .tbl { overflow-x: auto; } to DEFAULT_CSS (keep existing widths). Degrades gracefully where overflow-x is unsupported (behavior = today; old Kindle ignores it — acceptable progressive enhancement).
+Test: a table BLOCK element renders with the wrapper; wrapper + rule present in output EPUB.
+Outcome: the audit's real findings are closed; its two misdiagnosed "fixes" (threshold drop, Tier-1 column sorting) are explicitly rejected with documented reasons.
+Gate: full suite + ~8–10 new tests green.
+Phase 1 — Package skeleton
+Layout (pyproject.toml at repo root): src/pdf2epub/{__init__.py, __main__.py} + {application,cli,providers,config,validators}/__init__.py. pyproject: requires-python=">=3.10"; [tool.setuptools.packages.find] where=["src"]; [project.scripts] pdf2epub="pdf2epub.__main__:main"; deps pymupdf>=1.24,<2, ebooklib>=0.18, lxml>=4.9, tomli (marker), tomli-w; extras openai/anthropic/keyring/dev. __main__.main() -> int stub.
+Tests/edge cases: test_package_imports, test_module_entrypoint_imports; import works without optional extras.
+Gate: these green + full suite green.
+Phase 2 — Mechanical engine relocation
+Move the four pure modules → src/pdf2epub/engine/; main.py → src/pdf2epub/engine/driver.py. Only in-file edits: intra-engine imports → relative. make_fixtures.py stays at root; re-confirm conftest.py imports.
+Root shims: four pure modules = identity aliases (sys.modules[__name__] = _m); main.py = dual-path (identity alias on import; if __name__ == "__main__": raise SystemExit(_driver.main()) for direct execution — the moved driver's own __main__ guard never fires inside the package).
+pytest.ini gains pythonpath = ["src"] (pytest 9.1.1 supports it), so source-tree tests import the package without requiring editable install.
+Compatibility surface (exact maintained list): main, run_pipeline, create_llm_client_adapter, parse_xhtml_to_stream_elements, _embed_visual_page, build_arg_parser, monkeypatch targets tier1_classifier + BLOCK_TAG_TYPES. Zero test-file edits in this phase.
+Tests/edge cases: main is pdf2epub.engine.driver identity; full symbol surface present; monkeypatch propagation (patch on root main must affect the pipeline — the reason star-import copy-shims are forbidden); subprocess python main.py --help and python main.py fixture.pdf --provider none -o x.epub (no in-proc test covers direct invocation today); import from outside repo after wheel install.
+Outcome: engine packaged; every legacy path intact.
+Gate — both modes, now: (a) full suite green unchanged (source tree); (b) wheel smoke: build → fresh venv → install → pdf2epub --help from an arbitrary directory. Editable-install success alone proves nothing.
+Phase 3 — Provider contract + normalized errors
+providers/base.py — ProviderAdapter protocol: provider_id, resolve_models(), validate_credentials() (network; explicit calls only), create_llm_callable(model_id, credential) -> LLMClient. LLMClient re-declared locally as Callable[[str, str, str|None], str] protocol — byte-identical to the engine's seam; no wrappers, no engine import. errors.py: CredentialError / ProviderUnavailableError / ModelNotFoundError / ProviderRequestError / ProviderResponseError — SDK exceptions terminate at the adapter boundary, re-raised normalized with secrets redacted. Ship OfflineProvider + deterministic MockProvider first; prove the app drives the engine through a fake adapter.
+Tests: error mapping per SDK failure class (auth/rate-limit/timeout/malformed JSON); no credential material in any error text; offline provider needs no credential.
+Gate: pytest -q tests/providers; full suite.
+Phase 4 — Adapters, profiles, static catalog, route capabilities
+Two adapter implementations — OpenAIStyleAdapter(base_url, compat), AnthropicStyleAdapter(compat) — extracting today's main.py adapter code verbatim (message shapes, response_format json mode, temperature=0.0, image blocks; Anthropic max_tokens=8192, system param). All OpenAI-compatible providers (OpenRouter/DeepSeek/Moonshot/NVIDIA/Cloudflare/llama-class) = ProviderProfile data over the OpenAI adapter, never cloned files: {provider_id, display_name, api_style, base_url, credential_env_var, allow_generic_key, compat_options(extra_headers, supports_json_mode, model_id_prefix, error_shape), models}.
+ModelDefinition{model_id, display_name, capabilities{text_input, image_input, text_output, structured_output, max_context}, status∈active|experimental|deprecated|retired}; static catalog.py (dataclasses — it's logic, it gets tests); registry.py (get/list, duplicate-registration guard, clean unknown errors); requirements.py: DIGEST{text in/out, structured}, VISION{image in, text out, structured}, HYBRID = both — required set computed from the routing report, never assumed.
+Honesty rules: /provider lists only implemented-and-tested providers (distinguish catalog-entry / adapter-implemented / tested / user-facing). Configured model retired from catalog → warn + require reselection, never crash config load. Keep separate: catalog capability / account availability / runtime verification (explicit, never at startup).
+Tests/edge cases: text-only model accepted for digest-only doc, rejected pre-spend when vision pages exist; mocked-SDK adapter tests (prompt, payload, image shape, model, temperature, structured-output flag, content extraction, each normalized error, missing-SDK → ProviderUnavailableError with install guidance); profile with extra headers; response_format-unsupported profile degrades per compat options; duplicate registration; retired-model config load.
+Outcome: adding a provider = adding data, not code (new adapter only for a genuinely new API family).
+Gate: tests/providers/ green; full suite.
+Phase 5 — Credential resolver
+Chain (explicit): explicit runtime secret → provider env var (OPENAI_API_KEY…) → generic PDF2EPUB_API_KEY (only when profile.allow_generic_key) → OS keyring (service="pdf2epub", username=provider_id) → unavailable. Provider-specific always beats generic — silently shipping a generic key to an arbitrary OpenAI-compatible endpoint is a leak.
+CredentialResolutionResult{credential, source: explicit|environment|keyring|unavailable, provider_id}.
+Keyring boundary (decision #15): optional dep behind find_spec; all keyring interaction boundary-wrapped (KeyringError, backend-init/dbus failures — catch broadly) → unavailable; silent unless debug; never writes stderr on its own.
+Logging rule: never key material / auth headers / raw provider payloads; allowed: provider id, source category, redacted error type.
+Tests: env beats keyring; provider env beats generic; generic ignored without opt-in; keyring mocked (hit / miss / raises → unavailable); keyring absent → unavailable; secret never in captured logs (string scan); explicit-secret path.
+Gate: tests/providers/test_credentials.py; full suite.
+Phase 6 — Configuration manager
+paths.py: one function for config/cache/log dirs (target XDG / macOS / %APPDATA%+%LOCALAPPDATA%; v1 may emit ~/.pdf2epub/ behind this function). manager.py: atomic writes (tmp → os.replace); corrupt TOML → defaults + warning; schema_version + migration steps.
+schema_version = 1
+[application]
+validators_notice = "always"
+[provider]
+name = "openai"
+conversion_model = "gpt-4o"
+[validator]
+epubcheck = true
+ace = true
+[defaults]
+output_directory = "."
+Precedence chain: CLI flag → session → config → default. --skip-validation overrides [validator] prefs per-invocation. --report-only pinned by test: no file written, no model calls (engine already returns pre-Tier-2; this pins it).
+Wiring obligation: service passes resolved cache_dir into the engine and routes logs to the logs dir — otherwise .cache_llm_epub keeps littering CWDs and the setting is cosmetic.
+Tests: first-run creation; round-trip; invalid TOML; unknown provider in config; missing fields → defaults; no API keys in config (scan test); migration; retired-model reselection path.
+Gate: tests/config/; full suite.
+Phase 7 — ConversionRequest / ConversionOptions + two-level validation
+@dataclass(frozen=True)
+class ConversionRequest:
+    pdf_path: Path
+    output_path: Path
+    title: str | None = None        # None → PDF metadata → engine default
+    author: str | None = None       # (keeps the metadata-fallback tests honest)
+    provider_id: str = "none"
+    conversion_model: str | None = None
+    options: ConversionOptions = ConversionOptions()
+
+@dataclass(frozen=True)
+class ConversionOptions:
+    batch_size: int = 4
+    cache_dir: str | None = None
+    max_repair_attempts: int = 2
+    skip_validation: bool = False
+    report_only: bool = False
+    font_sample_pages: int = 160
+    spool_images: bool = True
+    quiet: bool = False
+L1 request validation (never opens the PDF): path exists & is file; output policy (not-a-dir, parent creatable, explicit overwrite/--force semantics — never claims writability it can't prove); provider exists; model-in-catalog only when provider_id != "none"; scalar bounds. Fails before any conversion work.
+L2 document preflight (online only): open PDF → route_document(doc, build_payloads=False) → derive requirement set: tier2_digest > 0 ⇒ DIGEST; vision pages that will actually reach the model (NOT bypassed: offline ⇒ bypassed; online ⇒ bypassed only when vision_ratio < 0.10 and not CMap-corrupted) ⇒ VISION → check selected model before spend; yields cost advisory (Tier-2 counts).
+Memory contract (pinned): preflight holds zero payload bytes. Suite already pins triage laziness (test_payloads_are_lazy_by_default, test_triage_of_a_long_document_holds_no_payloads); add one app-level assertion that all preflight reports have raster_bytes is None and layout_digest is None.
+Tests/edge cases: every L1 failure; offline + model=None accepted; named provider + missing credential → CredentialError; digest-only doc + text-only model → allowed; vision doc + text-only model → clear pre-spend rejection; title=None + metadata-bearing PDF → engine fallback via existing tests.
+Gate: tests/application/test_request.py; full suite.
+Phase 8 — Additive seams (S1, S2, S3, S5)
+Seam	Notes	Edge cases
+S1 validators	threaded into DualValidator.validate()	every combination; enabled-but-absent → skip not fail (current behavior); disabled-and-installed → not invoked
+S2 event_cb	engine wraps each emit in try/except	raising callback → logged, conversion unaffected; None → byte-identical output vs pre-seam
+S3 CancellationToken	checked between pages/batches/repairs	cancel mid-Tier-1, between Tier-2 batches, mid-repair → clean marked-cancelled result, no truncated EPUB, no traceback
+S5 precomputed_reports	provided → skip internal routing; reuse everywhere routing mattered	spy-prove route_document ran once end-to-end via service; None → identical-behavior test
+Cache-key schema untouched (payload bytes hash, not module paths).	 	 
+Gate: per-seam tests; full suite.	 	 
+Phase 9 — ConversionService
+convert(request) -> ConversionResult: L1 validate → resolve credentials (strict; decision #5) → adapter via registry → L2 preflight (online) → run_pipeline(..., precomputed_reports, validators, event_cb, ...) → structured ConversionResult{success, output_path, routing_summary(+bypassed), cost_advisory, chapter_count, validation_report, warnings, error, elapsed_seconds, events}. Legacy result dict attached during transition.
+Interim allowance: service-before-S5 ⇒ double routing tolerated only with a recorded 500-page perf measurement. Permanent rejection: capability checks inside the engine.
+Tests: fake-provider E2E over real fixtures (real engine, no API); offline path touches no client; structured error paths; routing-run-once spy; report_only equivalent → no file, no calls.
+Gate: tests/application/test_conversion_service.py; full suite.
+Phase 10 — Headless CLI (the ship gate; decision #14)
+pdf2epub convert … / doctor / validators / --version. Parity table = acceptance criterion: every legacy flag maps to a DTO field (--no-spool-images → spool_images=False inversion tested explicitly). Exit contract: 0/1/2 as today. CLI calls ConversionService, never main.main.
+Tests: per-flag parsing with mocked service (no conversion in parse tests); arg→request mapping exactness; missing-PDF→2; provider failure→1; --report-only writes nothing; a few real-fixture offline E2E runs incl. output-dir auto-creation.
+Gate: tests/cli/test_headless.py; full suite. This phase's artifact is the product; everything after is additive UX.
+Phase 11 — Strip provider construction from legacy main.py
+engine/driver.create_llm_client_adapter body → lazy delegation to one function in pdf2epub/providers/compat.py holding the permissive semantics (unknown provider/missing key/SDK → warn + None). Acyclic by construction (providers never import engine; layer-isolation test enforces). Legacy permissive vs. new strict divergence = intentional, documented; bridge dies in Phase 16.
+Tests: test_unknown_provider_falls_back_to_offline_mode passes unchanged; no import openai|anthropic anywhere under engine/.
+Gate: full regression suite — this is the regression-critical phase.
+Phase 12 — Session + command layer
+Session: pdf, title/author (None = pending metadata), output, provider, model, validator prefs, last routing plan. Invalidation rules (all tested): provider change → clear model + re-resolve credential; PDF change → re-derive metadata + readiness + drop routing plan; model change → revalidate vs catalog/routes.
+Commands: /help /select /export /provider /model /status /convert /validators /doctor /config /exit — parser × command × session strictly separated (no if/elif shell). /select+/export mutate state only. /provider: getpass hidden input; verification explicit. /model: capability-filtered lists.
+Readiness: READY = PDF ∧ output ∧ (provider=none ∨ (credential ∧ model ∧ model-matches-last-routing)); READY_WITH_PREFLIGHT_REQUIRED when routing unknown — never a false green; NOT_READY lists exact gaps.
+Tests: every invalidation rule; /select missing/relative/absolute PDF, metadata defaults vs explicit; /export existing/missing/unwritable parents; unknown command; empty input; all readiness transitions.
+Gate: tests/application/test_session.py, test_commands.py; full suite.
+Phase 13 — Validator abstraction + onboarding + doctor
+Validator protocol {id, detect() -> ValidatorState, validate(path) -> ValidationResult}; five states (decision #12). Independence without new engine work: app wrappers call the engine's already-separate public methods DualValidator.run_epubcheck(...) / run_daisy_ace(...) directly; S1's tuple governs only the in-pipeline combined gate (validate()). No wrapper may claim independence while running both.
+Onboarding: startup notice → show instructions / skip this session / don't show again (persisted). Detect-and-instruct only — no Java/Node auto-install in v1.
+/doctor: Python/pymupdf/ebooklib/lxml importability; SDK presence; credential presence; catalog-vs-route fit; Java/Node/EPUBCheck/Ace presence+version; output dir; config health — OK/WARN/FAIL/OPTIONAL. No network by default; credential verification explicit-flag-only. System commands mocked in tests.
+Tests: present-but-times-out → FAILED_TO_RUN (distinct from UNAVAILABLE); malformed Ace report → graceful; enabled-but-missing + --skip-validation → not consulted; "don't show again" persists, "skip" doesn't.
+Gate: tests/validators/, test_doctor.py; full suite.
+Phase 14 — REPL (thin, decoupled, deferrable)
+input → dispatcher → exit flag; the loop knows nothing about conversion. /convert = session → request → validate → preflight → service with event_cb → live progress (phase/page/batch/validation) → result. Ctrl-C → token cancel → clean stop, session intact, partial artifacts stated; EOF → clean exit. REPL slippage never blocks the headless release.
+Tests: simulated input for every command; unknown/empty; Ctrl-C mid-mocked-conversion; EOF; /convert builds the exact expected request (mocked service); session survives cancellation.
+Gate: tests/cli/test_interactive.py; full suite.
+Phase 15 — Distribution
+python -m build → fresh venv → pip install dist\*.whl → from outside the repo: --help, --version, offline convert, REPL smoke. Windows reality: venv executables under Scripts\, not bin/ — scripts/docs must not assume Unix paths. CI matrix OS × Python 3.10–3.13 — verify per-interpreter dependency support when authoring, never assume. Levels: L1 unit every commit; L2 integration (SDKs/keyring/Java/Node mocked; real app wiring); L3 real-fixture E2E; real-provider tests secret-gated, never in normal CI.
+Gate: clean-install matrix green.
+Phase 16 — Cleanup
+Remove root shims only after import+packaging gates pass; legacy main.py → documented decision (compat shim re-exporting headless main, or retirement noting the credential-policy break); providers/compat.py dies with it. Test relocation last, one module at a time, suite green between moves → tests/{engine,application,providers,validators,cli,config,package}/; distribution tests renamed tests/packaging/test_distribution.py (kills the test_packaging.py collision); confirm make_fixtures.py imports after each move.
+Gate: final full suite; final clean-install.
+PART 4 — Test architecture
+Levels: L1 unit (no network/binaries; every commit) · L2 app integration (SDKs/keyring/Java/Node mocked; real service/session/CLI wiring) · L3 E2E (real fixtures, real engine, fake Tier-2; opt-in secret-gated provider tests).
+Safety properties under active test: zero-payload preflight; monkeypatch propagation through shims; layer isolation; no secrets in logs/config; repair never deletes content; interleaved-column pages never reach Tier 1; packaging never silently empties a chapter.
+Scalability properties: new provider = data profile; new validator = protocol + registration; new command = parser entry + command class; engine evolution = seams or nothing; config evolves by schema_version migrations; model churn by catalog lifecycle.
+PART 5 — Deferred to v2 (parked, scoped)
+Dynamic model discovery (graceful offline fallback); semantically-defined verification-model job before any field returns; encrypted credential fallback (proper KEK/KDF or none); fixed-layout EPUB (owner-confirmed out of scope; re-opens only by owner decision); optional CV layout plugin behind the router (evaluate docling/surya class tools then, not layoutparser); Tier-1 find_tables() deterministic table extraction (v1.x enhancement — earlier than the rest); footnote linking; OutputOptions split.
+PART 6 — Execution order
+0 baseline → 0.5 repair fix → 0.7 hardening → 1 skeleton → 2 relocation (+wheel smoke) → 3 provider contract → 4 adapters/catalog/capabilities → 5 credentials → 6 config → 7 DTOs+two-level validation → 8 seams → 9 ConversionService → 10 headless CLI (ship) → 11 legacy strip → 12 session/commands → 13 validators/doctor → 14 REPL → 15 distribution/CI → 16 cleanup.
+First actions on your word: Phase 0 baseline run → Phase 0.5 characterization tests → fix.
