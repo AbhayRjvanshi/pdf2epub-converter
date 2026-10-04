@@ -22,7 +22,7 @@ import pytest
 from ebooklib import epub
 
 import confidence_router as cr
-import main as driver
+import driver as driver
 import make_fixtures as mf
 import packaging_and_validation as pk
 import tier1_classifier as t1
