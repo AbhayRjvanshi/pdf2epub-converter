@@ -31,14 +31,20 @@ class PreflightResult:
     warnings: list[str] = field(default_factory=list)
     cost_advisory: str = ""
     reports: tuple = ()  # payload-free; feeds Phase 8 S5
+    # document_error marks read-time failures (corrupt, encrypted, empty) so
+    # callers can class them as input errors; capability problems appear
+    # only in ``problems``.
+    document_error: str | None = None
 
     @property
     def ok(self) -> bool:
-        return not self.problems
+        return not self.problems and self.document_error is None
 
 
 def _failure(message: str) -> PreflightResult:
-    return PreflightResult(0, {}, frozenset(), 0, problems=[message])
+    return PreflightResult(
+        0, {}, frozenset(), 0, problems=[message], document_error=message
+    )
 
 
 def preflight(request: ConversionRequest, *, registry) -> PreflightResult:

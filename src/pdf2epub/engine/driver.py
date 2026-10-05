@@ -363,20 +363,29 @@ def _embed_visual_page(
 # ---------------------------------------------------------------------------
 
 
-def _print_routing_table(reports: list[PageConfidenceReport]) -> None:
-    print("\n  page | score | target        | sigma | order | columns | vectors | reason")
-    print("  -----+-------+---------------+-------+-------+---------+---------+-------------------")
+def format_routing_table(reports: Sequence[PageConfidenceReport]) -> str:
+    """Pure per-page routing table shared by the legacy printer and the
+    application layer's CLI/REPL formatters."""
+    lines = [
+        "  page | score | target        | sigma | order | columns | vectors | reason",
+        "  -----+-------+---------------+-------+-------+---------+---------+-------------------",
+    ]
     for r in reports:
         target = {
             RoutingTarget.TIER1_HEURISTIC: "tier1",
             RoutingTarget.TIER2_LLM_DIGEST: "tier2-digest",
             RoutingTarget.TIER2_VISION_OCR: "tier2-vision",
         }[r.target]
-        print(
+        lines.append(
             f"  {r.page_num:>4} | {r.score:>5} | {target:<13} | "
             f"{r.font_variance:>5.2f} | {r.order_violations:>5} | "
             f"{r.columnar_pairs:>7} | {r.vector_count:>7} | {','.join(r.reasons)}"
         )
+    return "\n".join(lines)
+
+
+def _print_routing_table(reports: list[PageConfidenceReport]) -> None:
+    print("\n" + format_routing_table(reports))
 
 
 def run_pipeline(

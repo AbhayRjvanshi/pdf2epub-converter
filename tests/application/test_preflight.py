@@ -90,6 +90,23 @@ def test_corrupt_pdf_is_reported(tmp_path):
     assert any("cannot open PDF" in p for p in result.problems)
 
 
+def test_document_read_failure_is_marked_as_a_document_error(tmp_path):
+    bad = tmp_path / "bad.pdf"
+    bad.write_bytes(b"this is definitely not a PDF file")
+    result = preflight(make_request(bad, tmp_path), registry=REGISTRY)
+    assert not result.ok
+    assert result.document_error is not None
+    assert "cannot open PDF" in result.document_error
+    assert any("cannot open PDF" in p for p in result.problems)
+
+
+def test_capability_problem_is_not_a_document_error(fixture_pdfs, tmp_path):
+    request = make_request(fixture_pdfs["scanned"], tmp_path, model="text-only")
+    result = preflight(request, registry=REGISTRY)
+    assert result.document_error is None  # the document read fine
+    assert result.problems
+
+
 def test_cost_advisory_reports_tier2_counts(fixture_pdfs, tmp_path):
     request = make_request(fixture_pdfs["two_column"], tmp_path)
     result = preflight(request, registry=REGISTRY)
