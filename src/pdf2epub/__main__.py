@@ -1,31 +1,16 @@
-"""Console entry point (``pdf2epub`` and ``python -m pdf2epub``).
-
-Phase 1 stub: the real headless CLI arrives in a later phase. Until then the
-engine is still driven through the legacy ``main.py`` in the repository root.
-"""
+"""Console entry point (``pdf2epub`` and ``python -m pdf2epub``)."""
 
 from __future__ import annotations
 
-import sys
 from collections.abc import Sequence
-
-from pdf2epub import __version__
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    args = list(sys.argv[1:] if argv is None else argv)
-    if args in (["--version"], ["-V"]):
-        print(f"pdf2epub {__version__}")
-        return 0
-    message = (
-        "pdf2epub: the command-line interface is not implemented yet.\n"
-        "Use `python -m pdf2epub.engine.driver --help` for now."
-    )
-    if args in (["--help"], ["-h"]):
-        print(message)
-        return 0
-    print(message, file=sys.stderr)
-    return 2
+    # Lazy import keeps this module cheap and dependency-free to import
+    # (the Phase 1 contract); the CLI itself pulls in the engine.
+    from .cli.headless import main as cli_main
+
+    return cli_main(argv)
 
 
 if __name__ == "__main__":

@@ -24,15 +24,13 @@ def test_module_entrypoint_imports():
     assert callable(mod.main)
 
 
-def test_entrypoint_version_and_stub_exit_codes(capsys):
+def test_entrypoint_version_and_exit_codes(capsys):
     from pdf2epub.__main__ import main
 
     assert main(["--version"]) == 0
     assert capsys.readouterr().out.startswith("pdf2epub ")
-    assert main([]) == 2
-    assert "not implemented" in capsys.readouterr().err
+    assert main([]) == 2  # required subcommand missing -> usage + exit 2
     assert main(["--help"]) == 0
-    assert "not implemented" in capsys.readouterr().out
 
 
 def test_import_needs_no_engine_or_optional_extras():
