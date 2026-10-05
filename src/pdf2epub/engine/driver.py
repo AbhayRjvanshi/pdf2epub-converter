@@ -33,7 +33,7 @@ from collections import Counter
 from dataclasses import replace
 from html import unescape
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Sequence
 
 try:
     import pymupdf as fitz
@@ -48,6 +48,8 @@ from .confidence_router import PageConfidenceReport, RoutingTarget
 from .packaging_and_validation import DualValidator, ValidationReport
 from .tier1_classifier import ElementType, StreamElement
 from .tier2_llm_handler import Tier2Handler, Tier2Request
+from .cancellation import CancellationToken, PipelineCancelled
+from .events import PipelineEvent
 
 log = logging.getLogger("pdf2epub")
 
@@ -392,6 +394,10 @@ def run_pipeline(
     verbose: bool = True,
     font_sample_pages: int = 160,
     spool_images: bool = True,
+    validators: tuple[str, ...] | None = None,
+    event_cb: Callable[[PipelineEvent], None] | None = None,
+    cancel_token: CancellationToken | None = None,
+    precomputed_reports: Sequence[PageConfidenceReport] | None = None,
 ) -> dict[str, Any]:
     result: dict[str, Any] = {"success": False, "output": output_epub}
     started = time.monotonic()
@@ -406,11 +412,44 @@ def run_pipeline(
             pct = 100 * done / total
             say(f"            {label}: {done}/{total} ({pct:.0f}%)")
 
+    total_pages: int | None = None
+
+    def emit(
+        event_type: str,
+        phase: int,
+        *,
+        page_index: int | None = None,
+        message: str = "",
+        metadata: dict | None = None,
+    ) -> None:
+        if event_cb is None:
+            return
+        event = PipelineEvent(
+            type=event_type,
+            phase=phase,
+            page_index=page_index,
+            total_pages=total_pages,
+            message=message,
+            metadata=metadata or {},
+        )
+        try:
+            event_cb(event)
+        except Exception as exc:  # a UI bug must never abort a conversion
+            log.warning(
+                "event callback raised (%s); continuing", type(exc).__name__
+            )
+
+    def _check_cancel() -> None:
+        if cancel_token is not None and cancel_token.cancelled:
+            raise PipelineCancelled()
+
     # -- Phase 1/2 ---------------------------------------------------------
     say(f"\n[PHASE 1-2] Opening {pdf_path}")
+    emit("phase_started", 2, message="opening document")
     doc = fitz.open(pdf_path)
     spool: tempfile.TemporaryDirectory | None = None
     try:
+        _check_cancel()
         if doc.needs_pass:
             raise RuntimeError("PDF is password protected; decrypt it first.")
         total_pages = len(doc)
@@ -442,9 +481,24 @@ def run_pipeline(
 
         # -- Phase 3 -------------------------------------------------------
         say("\n[PHASE 3] Triage & routing")
-        reports = confidence_router.route_document(
-            doc, progress=lambda d, t: progress(d, t, "triage")
-        )
+        emit("phase_started", 3)
+        if precomputed_reports is not None:
+            reports = list(precomputed_reports)
+            if len(reports) != total_pages:
+                raise ValueError(
+                    f"precomputed_reports has {len(reports)} pages but the "
+                    f"document has {total_pages}"
+                )
+        else:
+
+            def _triage_progress(done: int, total: int) -> None:
+                _check_cancel()
+                progress(done, total, "triage")
+                emit("page_progress", 3, page_index=done - 1)
+
+            reports = confidence_router.route_document(
+                doc, progress=_triage_progress
+            )
         summary = confidence_router.summarise(reports)
         say(
             f"            tier1={summary['tier1']}  "
@@ -456,6 +510,7 @@ def run_pipeline(
 
         if report_only:
             _print_routing_table(reports)
+            emit("completed", 7, message="report only", metadata={"report_only": True})
             result["success"] = True
             return result
 
@@ -472,11 +527,14 @@ def run_pipeline(
 
         if tier1_indices:
             say(f"\n[PHASE 4A] Tier 1 deterministic engine ({len(tier1_indices)} pages)")
+            emit("phase_started", 4, message="tier1")
             for n, idx in enumerate(tier1_indices, start=1):
+                _check_cancel()
                 page_elements[idx] = tier1_classifier.build_page_stream(
                     doc[idx], profile, idx, spool_dir
                 )
                 progress(n, len(tier1_indices), "tier1")
+                emit("page_progress", 4, page_index=idx, metadata={"label": "tier1"})
 
         handler = Tier2Handler(
             llm_client_fn=llm_adapter, model_id=model_id, cache_dir=cache_dir
@@ -485,6 +543,7 @@ def run_pipeline(
 
         if tier2_reports:
             say(f"\n[PHASE 4B] Tier 2 AI engine ({len(tier2_reports)} pages)")
+            emit("phase_started", 4, message="tier2")
 
             # The routing decision lives in confidence_router so the engine
             # and the application preflight cannot drift apart.
@@ -514,7 +573,13 @@ def run_pipeline(
                     vision=r.target is RoutingTarget.TIER2_VISION_OCR,
                 )
             for start in range(0, len(llm_reports), batch_size):
+                _check_cancel()
                 window = llm_reports[start : start + batch_size]
+                emit(
+                    "tier2_batch_started",
+                    4,
+                    metadata={"start": start, "count": len(window)},
+                )
                 # Build payloads only for this window, then drop them. Holding
                 # every raster for a 500 page scan is what kills the process.
                 batch = []
@@ -551,10 +616,17 @@ def run_pipeline(
                     len(llm_reports),
                     "tier2",
                 )
+                emit(
+                    "page_progress",
+                    4,
+                    page_index=window[-1].page_index,
+                    metadata={"label": "tier2"},
+                )
             result["tier2_stats"] = dict(handler.stats)
 
         # -- Phase 5 -------------------------------------------------------
         say("\n[PHASE 5] Merging unified document stream")
+        emit("phase_started", 5)
         unified: list[StreamElement] = []
         for idx in range(total_pages):
             unified.extend(page_elements.get(idx, []))
@@ -569,6 +641,7 @@ def run_pipeline(
 
         # -- Phase 6 -------------------------------------------------------
         say("\n[PHASE 6] Packaging EPUB3")
+        emit("phase_started", 6)
         build = packaging.build_epub_publication(
             stream=unified,
             output_path=output_epub,
@@ -592,18 +665,30 @@ def run_pipeline(
         # -- Phase 7 -------------------------------------------------------
         if skip_validation:
             say("\n[PHASE 7] Validation skipped")
+            emit("completed", 7, message="validation skipped", metadata={"skipped": True})
             result["success"] = True
             return result
 
         say("\n[PHASE 7] Validation gate")
+        emit("validation_started", 7)
         validator = DualValidator()
-        report = validator.validate(output_epub)
+
+        def _validate(path: str) -> ValidationReport:
+            # default None keeps the original call signature exactly, so
+            # existing monkeypatched validators keep working unchanged
+            if validators is None:
+                return validator.validate(path)
+            return validator.validate(path, enabled=validators)
+
+        report = _validate(output_epub)
 
         for attempt in range(1, max_repair_attempts + 1):
             _print_validation(report, attempt, say)
             if report.passed:
                 break
+            _check_cancel()
             say(f"            self-repair pass {attempt}/{max_repair_attempts}")
+            emit("repair_started", 7, metadata={"attempt": attempt})
             unified = _repair_stream(
                 unified,
                 report,
@@ -621,7 +706,7 @@ def run_pipeline(
                 page_heights=page_heights,
             )
             result["build"] = build
-            report = validator.validate(output_epub)
+            report = _validate(output_epub)
         else:
             _print_validation(report, max_repair_attempts + 1, say)
 
@@ -630,8 +715,15 @@ def run_pipeline(
         if not report.passed:
             say("\n[WARNING] Validation still failing after repair attempts.")
             say(report.raw_logs[:4000])
+            emit("failed", 7, message="validation failed")
         else:
             say(f"\n[SUCCESS] {output_epub}  ({time.monotonic() - started:.1f}s)")
+            emit("completed", 7, message="success")
+        return result
+    except PipelineCancelled:
+        result["cancelled"] = True
+        result["success"] = False
+        emit("cancelled", 0, message="conversion cancelled")
         return result
     finally:
         if spool is not None:
@@ -643,6 +735,11 @@ def run_pipeline(
 
 
 def _print_validation(report: ValidationReport, attempt: int, say: Callable) -> None:
+    def note(name: str, available: bool) -> str:
+        if name in report.disabled:
+            return " (disabled)"
+        return "" if available else " (not installed - skipped)"
+
     say(f"\n            --- validation attempt {attempt} ---")
     say(
         f"            structural : {'PASS' if report.structural_passed else 'FAIL'} "
@@ -651,13 +748,13 @@ def _print_validation(report: ValidationReport, attempt: int, say: Callable) -> 
     say(
         f"            epubcheck  : "
         f"{'PASS' if report.epubcheck_passed else 'FAIL'}"
-        f"{'' if report.epubcheck_available else ' (not installed - skipped)'}"
+        f"{note('epubcheck', report.epubcheck_available)}"
         f" errors={report.epubcheck_errors}"
     )
     say(
         f"            daisy ace  : "
         f"{'PASS' if report.ace_passed else 'FAIL'}"
-        f"{'' if report.ace_available else ' (not installed - skipped)'}"
+        f"{note('ace', report.ace_available)}"
         f" {report.ace_violations or ''}"
     )
 
