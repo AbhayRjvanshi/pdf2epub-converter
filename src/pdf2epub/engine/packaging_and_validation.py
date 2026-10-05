@@ -24,6 +24,7 @@ import uuid
 import zipfile
 import xml.etree.ElementTree as ET
 from collections import Counter, defaultdict
+from collections.abc import Iterable
 from dataclasses import dataclass, field, replace
 from html import escape
 from pathlib import Path
@@ -110,6 +111,7 @@ class ValidationReport:
     structural_passed: bool
     structural_errors: list[dict]
     raw_logs: str
+    disabled: list[str] = field(default_factory=list)
 
     @property
     def passed(self) -> bool:
@@ -805,17 +807,47 @@ class DualValidator:
         return passed, violations, json.dumps(violations), True
 
     # -- combined ----------------------------------------------------------
-    def validate(self, epub_path: str) -> ValidationReport:
+    def validate(
+        self, epub_path: str, enabled: Iterable[str] | None = None
+    ) -> ValidationReport:
+        """Structural check plus the selected external validators.
+
+        ``enabled=None`` runs every external validator (current behavior);
+        a tuple/list selects a subset -- ``("epubcheck",)`` runs EPUBCheck
+        only, ``()`` runs the internal check only. The internal structural
+        check always runs; disabled tools are recorded in ``disabled`` and
+        contribute ``passed=True, available=False`` so ``passed`` stays
+        coherent (decision D1).
+        """
         structural = internal_structure_check(epub_path)
         hard = [e for e in structural if e["severity"] in ("ERROR", "FATAL")]
-        ep_passed, ep_errs, ep_log, ep_avail = self.run_epubcheck(epub_path)
-        ace_passed, ace_viols, ace_log, ace_avail = self.run_daisy_ace(epub_path)
 
+        run_all = enabled is None
+        selected = set() if run_all else set(enabled)
+        disabled = (
+            []
+            if run_all
+            else [name for name in ("epubcheck", "ace") if name not in selected]
+        )
+
+        if run_all or "epubcheck" in selected:
+            ep_passed, ep_errs, ep_log, ep_avail = self.run_epubcheck(epub_path)
+        else:
+            ep_passed, ep_errs, ep_avail = True, 0, False
+            ep_log = "EPUBCheck disabled for this run."
+
+        if run_all or "ace" in selected:
+            ace_passed, ace_viols, ace_log, ace_avail = self.run_daisy_ace(epub_path)
+        else:
+            ace_passed, ace_viols, ace_avail = True, {}, False
+            ace_log = "Ace disabled for this run."
+
+        disabled_note = f" (disabled: {', '.join(disabled)})" if disabled else ""
         logs = (
             f"=== Internal structural check ===\n"
             f"{json.dumps(structural[:20], indent=2) if structural else 'clean'}\n\n"
             f"=== EPUBCheck ===\n{ep_log}\n\n"
-            f"=== Ace by DAISY ===\n{ace_log}"
+            f"=== Ace by DAISY ===\n{ace_log}{disabled_note}"
         )
         return ValidationReport(
             epubcheck_passed=ep_passed,
@@ -827,6 +859,7 @@ class DualValidator:
             structural_passed=not hard,
             structural_errors=structural,
             raw_logs=logs,
+            disabled=disabled,
         )
 
 
