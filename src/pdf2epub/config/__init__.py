@@ -9,6 +9,8 @@ from .credentials import (
     resolve_credential,
     resolve_for_profile,
 )
+from .manager import AppConfig, ConfigManager, CURRENT_SCHEMA_VERSION, TOML_MAP
+from .paths import cache_dir, config_dir, config_file, logs_dir
 
 __all__ = [
     "GENERIC_ENV_VAR",
@@ -18,4 +20,12 @@ __all__ = [
     "keyring_store",
     "resolve_credential",
     "resolve_for_profile",
+    "AppConfig",
+    "ConfigManager",
+    "CURRENT_SCHEMA_VERSION",
+    "TOML_MAP",
+    "cache_dir",
+    "config_dir",
+    "config_file",
+    "logs_dir",
 ]
