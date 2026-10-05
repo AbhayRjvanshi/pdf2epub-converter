@@ -172,6 +172,26 @@ class ConversionService:
                 elapsed_seconds=time.monotonic() - started,
             )
 
+        # -- spend cap: checked after preflight, before any provider work --
+        # (report-only already returned above, so it is exempt by design)
+        cap = request.options.max_tier2_pages
+        if cap is not None:
+            tier2_pages = (
+                pre.routing_summary.get("tier2_digest", 0)
+                + pre.routing_summary.get("tier2_vision", 0)
+            )
+            if tier2_pages > cap:
+                return ConversionResult(
+                    success=False,
+                    config_errors=[
+                        f"tier-2 pages ({tier2_pages}) exceed --max-tier2-pages "
+                        f"({cap}); raise the cap or inspect with --report-only"
+                    ],
+                    warnings=warnings,
+                    preflight=pre,
+                    elapsed_seconds=time.monotonic() - started,
+                )
+
         # -- provider callable (offline maps to None, never a fake) -------
         llm_adapter = None
         if request.provider_id != "none":

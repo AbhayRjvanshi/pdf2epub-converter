@@ -22,6 +22,7 @@ class ConversionOptions:
     spool_images: bool = True
     quiet: bool = False  # presentation concern, accepted here in v1
     overwrite: bool = False  # decision A1: refuse to clobber by default
+    max_tier2_pages: int | None = None  # spend cap; None = uncapped
 
 
 @dataclass(frozen=True)

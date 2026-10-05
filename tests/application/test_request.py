@@ -217,3 +217,11 @@ def test_require_provider_false_skips_provider_credentials_and_model(tmp_path):
     )
     assert lenient.ok
     assert lenient.credential is None
+
+
+def test_negative_spend_cap_is_a_config_error(tmp_path):
+    options = ConversionOptions(max_tier2_pages=-1)
+    assessment = validate_request(
+        make_request(tmp_path, options=options), registry=REGISTRY, environ={}
+    )
+    assert any("max_tier2_pages" in e for e in assessment.config_errors)

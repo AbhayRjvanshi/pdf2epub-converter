@@ -82,6 +82,8 @@ def validate_request(
         config_errors.append("max_repair_attempts must be >= 0")
     if options.font_sample_pages < 1:
         config_errors.append("font_sample_pages must be >= 1")
+    if options.max_tier2_pages is not None and options.max_tier2_pages < 0:
+        config_errors.append("max_tier2_pages must be >= 0")
 
     # -- provider / credentials / model (report-only skips all of this) ----
     adapter = None

@@ -360,3 +360,59 @@ def test_exit_code_mapping():
     assert ConversionResult(success=False, cancelled=True).exit_code == 130
     assert ConversionResult(success=False, input_errors=["x"]).exit_code == 2
     assert ConversionResult(success=False, config_errors=["x"]).exit_code == 1
+
+
+# -- Tier-2 spend cap --------------------------------------------------------
+
+def test_tier2_spend_cap_blocks_before_any_provider_work(
+    fixture_pdfs, tmp_path, monkeypatch
+):
+    calls = _record_pipeline(monkeypatch)
+    service = ConversionService(registry=_registry_with_mock(), environ={})
+    result = service.convert(
+        _request(
+            fixture_pdfs["two_column"], tmp_path,
+            options=ConversionOptions(max_tier2_pages=0),
+        )
+    )
+    assert not result.success
+    assert any("max-tier2-pages" in e for e in result.config_errors)
+    assert result.exit_code == 1
+    assert calls == []  # the engine never ran
+
+
+def test_tier2_spend_cap_allows_when_within_limit(fixture_pdfs, tmp_path, monkeypatch):
+    calls = _record_pipeline(monkeypatch)
+    service = ConversionService(registry=_registry_with_mock(), environ={})
+    result = service.convert(
+        _request(
+            fixture_pdfs["two_column"], tmp_path,
+            options=ConversionOptions(max_tier2_pages=100),
+        )
+    )
+    assert result.success
+    assert calls  # the engine ran
+
+
+def test_tier2_spend_cap_is_uncapped_by_default(fixture_pdfs, tmp_path):
+    service = ConversionService(registry=_registry_with_mock(), environ={})
+    result = service.convert(
+        _request(
+            fixture_pdfs["two_column"], tmp_path,
+            options=ConversionOptions(skip_validation=True),
+        )
+    )
+    assert result.success
+
+
+def test_tier2_spend_cap_exempts_report_only(fixture_pdfs, tmp_path, monkeypatch):
+    calls = _record_pipeline(monkeypatch)
+    service = ConversionService(registry=_registry_with_mock(), environ={})
+    result = service.convert(
+        _request(
+            fixture_pdfs["scanned"], tmp_path,
+            options=ConversionOptions(report_only=True, max_tier2_pages=0),
+        )
+    )
+    assert result.success and result.report_only
+    assert calls == []
