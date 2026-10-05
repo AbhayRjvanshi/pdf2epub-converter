@@ -80,3 +80,48 @@ def test_normalized_error_degrades_to_deterministic_fallback(tmp_path):
     assert "line on page 3" in pages[0]
     # v3 cache discipline: failed calls must leave nothing behind
     assert list(tmp_path.glob("*.json")) == []
+
+
+def test_registry_adapter_callable_drives_the_real_engine(tmp_path, monkeypatch):
+    """Production path: build_registry -> adapter -> bare LLMClient -> engine.
+
+    Only the callable crosses into the engine; no adapter object, profile
+    or SDK type does.
+    """
+    import sys
+    import types
+
+    from pdf2epub.providers.registry import build_registry
+
+    class _Client:
+        def __init__(self, **kwargs):
+            self.chat = types.SimpleNamespace(
+                completions=types.SimpleNamespace(create=self._create)
+            )
+
+        def _create(self, **kwargs):
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(
+                        message=types.SimpleNamespace(
+                            content=json.dumps(
+                                {"xhtml_pages": ["<p>engine driven</p>"]}
+                            )
+                        )
+                    )
+                ]
+            )
+
+    module = types.ModuleType("openai")
+    module.OpenAI = _Client
+    monkeypatch.setitem(sys.modules, "openai", module)
+
+    adapter = build_registry().get("openai")
+    client = adapter.create_llm_callable("gpt-4o", "sk-test")
+    assert callable(client)
+    assert not isinstance(client, type(adapter))
+
+    handler = Tier2Handler(llm_client_fn=client, cache_dir=tmp_path)
+    pages = handler.process_batch(_requests(9))
+    assert len(pages) == 1
+    assert "engine driven" in pages[0]

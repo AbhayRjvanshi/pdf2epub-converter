@@ -1,5 +1,6 @@
 """Phase 3: normalized error taxonomy, status classification, redaction."""
 
+import types
 from urllib.parse import quote
 
 from pdf2epub.providers.errors import (
@@ -10,6 +11,8 @@ from pdf2epub.providers.errors import (
     ProviderResponseError,
     ProviderUnavailableError,
     error_from_status,
+    extract_retry_after,
+    map_sdk_error,
     normalize_error,
     redact_secret,
 )
@@ -92,3 +95,47 @@ def test_provider_error_is_the_common_base():
         ProviderResponseError,
     ):
         assert issubclass(cls, ProviderError)
+
+
+class _FakeSDKError(Exception):
+    def __init__(self, status_code=None, message="", headers=None):
+        super().__init__(message)
+        if status_code is not None:
+            self.status_code = status_code
+        if headers is not None:
+            self.response = types.SimpleNamespace(headers=headers)
+
+
+def test_map_sdk_error_classifies_by_status_attribute():
+    assert isinstance(map_sdk_error(_FakeSDKError(401, "no")), CredentialError)
+    assert isinstance(map_sdk_error(_FakeSDKError(503, "down")), ProviderUnavailableError)
+
+
+def test_map_sdk_error_degrades_without_status():
+    wrapped = map_sdk_error(ValueError("boom"))
+    assert isinstance(wrapped, ProviderUnavailableError)
+    assert "ValueError" in str(wrapped)
+
+
+def test_map_sdk_error_honours_retry_after_header():
+    err = _FakeSDKError(429, "slow down", headers={"retry-after": "5"})
+    mapped = map_sdk_error(err)
+    assert isinstance(mapped, ProviderRequestError)
+    assert mapped.retryable is True
+    assert mapped.retry_after == 5.0
+
+
+def test_map_sdk_error_redacts_url_embedded_secret():
+    key = "sk-live-supersecret"
+    err = _FakeSDKError(401, f"GET https://api.test/v1?key={key} rejected")
+    mapped = map_sdk_error(err, secret=key)
+    assert isinstance(mapped, CredentialError)
+    assert key not in str(mapped)
+    assert "***" in str(mapped)
+
+
+def test_extract_retry_after_handles_absent_garbled_values():
+    assert extract_retry_after(_FakeSDKError(429, "x")) is None
+    assert extract_retry_after(_FakeSDKError(429, "x", headers={})) is None
+    garbled = _FakeSDKError(429, "x", headers={"retry-after": "tomorrow"})
+    assert extract_retry_after(garbled) is None

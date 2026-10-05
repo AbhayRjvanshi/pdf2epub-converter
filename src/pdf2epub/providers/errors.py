@@ -119,3 +119,41 @@ def normalize_error(exc: BaseException, *, secret: str | None = None) -> Provide
     if secret:
         message = redact_secret(message, secret)
     return ProviderUnavailableError(message)
+
+
+def extract_retry_after(exc: BaseException) -> float | None:
+    """Best-effort Retry-After extraction from an SDK/httpx response."""
+    response = getattr(exc, "response", None)
+    headers = getattr(response, "headers", None)
+    if headers is None:
+        return None
+    for name in ("retry-after", "Retry-After"):
+        try:
+            value = headers.get(name)
+        except Exception:
+            return None
+        if value:
+            try:
+                return float(value)
+            except (TypeError, ValueError):
+                return None
+    return None
+
+
+def map_sdk_error(exc: BaseException, *, secret: str | None = None) -> ProviderError:
+    """Map an SDK exception to a normalized provider error.
+
+    Works by attribute, never by importing SDK exception types: any
+    exception exposing ``status_code`` is classified by
+    :func:`error_from_status` (with ``Retry-After`` honoured); everything
+    else degrades to :func:`normalize_error`'s unavailable default.
+    """
+    status = getattr(exc, "status_code", None)
+    if isinstance(status, int):
+        return error_from_status(
+            status,
+            f"{type(exc).__name__}: {exc}",
+            secret=secret,
+            retry_after=extract_retry_after(exc),
+        )
+    return normalize_error(exc, secret=secret)
