@@ -66,11 +66,8 @@ PASSTHROUGH_BLOCKS = {
     "table", "blockquote", "aside", "ul", "ol", "dl", "figure", "section", "div", "hr"
 }
 
-# Dual-policy threshold for genuinely visual (no-text-layer) pages: below this
-# share of the document, a vision page is treated as an isolated plate/photo/
-# cover and embedded directly; at or above it, the document is treated as a
-# scan that actually wants OCR (when a provider is configured).
-VISION_BYPASS_RATIO = 0.10
+# Tier-2 routing policy (which pages reach the model) lives in
+# confidence_router.plan_tier2_routing -- one source shared with preflight.
 MIN_REPAIR_TEXT_RETENTION = 0.60
 
 
@@ -489,35 +486,21 @@ def run_pipeline(
         if tier2_reports:
             say(f"\n[PHASE 4B] Tier 2 AI engine ({len(tier2_reports)} pages)")
 
-            # Dual-policy gate for genuinely visual (no-text-layer) pages.
-            # Offline, OCR is impossible either way, so always take the
-            # raster. Online, only bypass the model when visual pages are a
-            # small minority of an otherwise text-dominant book (isolated
-            # plates/photos/covers) - never when they make up a large share
-            # of the document, which means the document is a scan that
-            # actually wants OCR. cmap_corrupted pages (real, corrupted text)
-            # always go to the model when one is configured, regardless of
-            # ratio - they are not "just an image".
+            # The routing decision lives in confidence_router so the engine
+            # and the application preflight cannot drift apart.
             is_online = llm_adapter is not None
-            vision_ratio = summary["tier2_vision"] / total_pages if total_pages else 0.0
-            bypass_ok = (not is_online) or (vision_ratio < VISION_BYPASS_RATIO)
+            plan = confidence_router.plan_tier2_routing(
+                reports, total_pages, is_online
+            )
 
-            llm_reports: list[PageConfidenceReport] = []
-            bypassed = 0
-            for r in tier2_reports:
-                if (
-                    r.target is RoutingTarget.TIER2_VISION_OCR
-                    and not r.cmap_corrupted
-                    and bypass_ok
-                ):
-                    confidence_router.attach_payload(doc[r.page_index], r)
-                    page_elements[r.page_index] = _embed_visual_page(
-                        r, doc[r.page_index], spool_dir
-                    )
-                    confidence_router.release_payload(r)
-                    bypassed += 1
-                else:
-                    llm_reports.append(r)
+            for r in plan.bypass:
+                confidence_router.attach_payload(doc[r.page_index], r)
+                page_elements[r.page_index] = _embed_visual_page(
+                    r, doc[r.page_index], spool_dir
+                )
+                confidence_router.release_payload(r)
+            llm_reports = list(plan.handler)
+            bypassed = plan.bypassed_vision
             if bypassed:
                 say(f"            {bypassed} visual page(s) embedded directly (no OCR)")
             result["tier2_bypassed"] = bypassed

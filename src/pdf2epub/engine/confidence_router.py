@@ -469,3 +469,77 @@ def summarise(reports: list[PageConfidenceReport]) -> dict[str, int]:
         else:
             out["tier2_vision"] += 1
     return out
+
+
+# ---------------------------------------------------------------------------
+# Tier 2 routing policy (single source of truth)
+# ---------------------------------------------------------------------------
+
+# Below this share of the document, online vision pages are treated as
+# isolated plates/photos/covers and embedded directly rather than sent for
+# OCR; at or above it the document is a scan that actually wants the model.
+VISION_BYPASS_RATIO = 0.10
+
+
+@dataclass(frozen=True)
+class RoutingPlan:
+    """Per-page fate for every Tier-2 page, decided in one place."""
+
+    bypass: tuple[PageConfidenceReport, ...]   # vision pages embedded directly
+    handler: tuple[PageConfidenceReport, ...]  # digest + non-bypassed vision
+    required_routes: frozenset[str]            # subset of {"digest", "vision"}
+    bypassed_vision: int
+
+
+def plan_tier2_routing(
+    reports: list[PageConfidenceReport],
+    total_pages: int,
+    online: bool,
+) -> RoutingPlan:
+    """Decide which Tier-2 pages reach the model and which are embedded.
+
+    The single source of truth shared by the engine driver (Phase 4B) and
+    the application preflight, so the two can never disagree about which
+    routes a selected model must support.
+
+    * digest pages always reach the handler;
+    * a vision page is embedded directly iff we are offline, or online when
+      it is not CMap-corrupted and vision pages are a small minority of the
+      document. Offline CMap-corrupted pages embed too -- previously they
+      fell through to the "no OCR configured" placeholder instead of their
+      raster.
+    * ``required_routes`` is meaningful only online: it names the routes any
+      non-bypassed page needs, and is empty offline (no model is consulted).
+    """
+    tier2 = [r for r in reports if not r.is_tier1]
+    vision_count = sum(
+        1 for r in tier2 if r.target is RoutingTarget.TIER2_VISION_OCR
+    )
+    ratio = vision_count / total_pages if total_pages else 0.0
+
+    bypass: list[PageConfidenceReport] = []
+    handler: list[PageConfidenceReport] = []
+    required: set[str] = set()
+
+    for report in tier2:
+        if report.target is RoutingTarget.TIER2_VISION_OCR:
+            embed = (not online) or (
+                not report.cmap_corrupted and ratio < VISION_BYPASS_RATIO
+            )
+            if embed:
+                bypass.append(report)
+            else:
+                handler.append(report)
+                if online:
+                    required.add("vision")
+        else:
+            handler.append(report)
+            if online:
+                required.add("digest")
+
+    return RoutingPlan(
+        bypass=tuple(bypass),
+        handler=tuple(handler),
+        required_routes=frozenset(required),
+        bypassed_vision=len(bypass),
+    )
