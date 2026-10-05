@@ -176,3 +176,44 @@ def test_ok_property_reflects_errors(tmp_path):
         environ={},
     )
     assert good.ok is False  # missing pdf
+
+
+def test_report_only_skips_output_validation_and_creation(tmp_path):
+    out = tmp_path / "nested" / "deep" / "out.epub"
+    request = make_request(
+        tmp_path, output_path=out, options=ConversionOptions(report_only=True)
+    )
+    assessment = validate_request(request, registry=REGISTRY, environ={})
+    assert assessment.ok
+    assert not out.parent.exists()  # no mkdir side effect in a dry run
+
+
+def test_report_only_ignores_an_existing_output(tmp_path):
+    out = tmp_path / "out.epub"
+    out.write_bytes(b"existing")
+    request = make_request(
+        tmp_path, output_path=out, options=ConversionOptions(report_only=True)
+    )
+    assessment = validate_request(request, registry=REGISTRY, environ={})
+    assert assessment.ok  # no overwrite refusal for a dry run
+
+
+def test_report_only_still_requires_the_pdf(tmp_path):
+    request = make_request(
+        tmp_path,
+        pdf_path=tmp_path / "missing.pdf",
+        options=ConversionOptions(report_only=True),
+    )
+    assessment = validate_request(request, registry=REGISTRY, environ={})
+    assert any("input not found" in e for e in assessment.input_errors)
+
+
+def test_require_provider_false_skips_provider_credentials_and_model(tmp_path):
+    request = make_request(tmp_path, provider_id="martian", conversion_model=None)
+    strict = validate_request(request, registry=REGISTRY, environ={})
+    assert strict.config_errors  # unknown provider and/or missing model
+    lenient = validate_request(
+        request, registry=REGISTRY, environ={}, require_provider=False
+    )
+    assert lenient.ok
+    assert lenient.credential is None

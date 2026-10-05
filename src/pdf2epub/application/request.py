@@ -35,8 +35,16 @@ def validate_request(
     registry,
     explicit_secret: str | None = None,
     environ: Mapping[str, str] | None = None,
+    require_provider: bool = True,
 ) -> RequestAssessment:
-    """Check everything that does not require opening the document."""
+    """Check everything that does not require opening the document.
+
+    ``require_provider=False`` is used by report-only dry runs: provider,
+    credential and model checks are skipped because a dry run never spends.
+    Report-only also skips output validation entirely -- nothing is
+    written, so validation stays side-effect free (no mkdir, no overwrite
+    refusal). PDF input checks always run.
+    """
     input_errors: list[str] = []
     config_errors: list[str] = []
     warnings: list[str] = []
@@ -49,21 +57,22 @@ def validate_request(
     elif not pdf.is_file():
         input_errors.append(f"input is not a file: {pdf}")
 
-    # -- input: output -----------------------------------------------------
-    out = request.output_path
-    if out.is_dir():
-        input_errors.append(f"output path is a directory: {out}")
-    else:
-        try:
-            out.parent.mkdir(parents=True, exist_ok=True)
-        except OSError as exc:
-            input_errors.append(
-                f"cannot create output directory {out.parent}: {exc}"
-            )
-        if out.exists() and not request.options.overwrite:
-            input_errors.append(
-                f"output already exists (pass --force to overwrite): {out}"
-            )
+    # -- input: output (skipped for report-only: nothing is written) -------
+    if not request.options.report_only:
+        out = request.output_path
+        if out.is_dir():
+            input_errors.append(f"output path is a directory: {out}")
+        else:
+            try:
+                out.parent.mkdir(parents=True, exist_ok=True)
+            except OSError as exc:
+                input_errors.append(
+                    f"cannot create output directory {out.parent}: {exc}"
+                )
+            if out.exists() and not request.options.overwrite:
+                input_errors.append(
+                    f"output already exists (pass --force to overwrite): {out}"
+                )
 
     # -- scalar bounds -----------------------------------------------------
     options = request.options
@@ -74,47 +83,48 @@ def validate_request(
     if options.font_sample_pages < 1:
         config_errors.append("font_sample_pages must be >= 1")
 
-    # -- provider / credentials / model ------------------------------------
+    # -- provider / credentials / model (report-only skips all of this) ----
     adapter = None
-    try:
-        adapter = registry.get(request.provider_id)
-    except KeyError as exc:
-        config_errors.append(exc.args[0] if exc.args else str(exc))
+    if require_provider:
+        try:
+            adapter = registry.get(request.provider_id)
+        except KeyError as exc:
+            config_errors.append(exc.args[0] if exc.args else str(exc))
 
-    if adapter is not None:
-        if request.provider_id == "none":
-            if request.conversion_model:
-                warnings.append(
-                    "conversion_model is ignored for the offline provider"
-                )
-        else:
-            profile = getattr(adapter, "profile", None)
-            if profile is None:
-                warnings.append(
-                    f"provider {request.provider_id!r} exposes no credential "
-                    "profile; credentials were not resolved"
-                )
-            else:
-                credential = resolve_for_profile(
-                    profile, explicit_secret=explicit_secret, environ=environ
-                )
-                if credential.source == "unavailable":
-                    config_errors.append(
-                        f"no credential for provider {request.provider_id!r}: "
-                        f"set {profile.credential_env_var} or configure it via "
-                        "`pdf2epub`"
+        if adapter is not None:
+            if request.provider_id == "none":
+                if request.conversion_model:
+                    warnings.append(
+                        "conversion_model is ignored for the offline provider"
                     )
-                elif credential.warning:
-                    warnings.append(credential.warning)
-
-            if not request.conversion_model:
-                config_errors.append(
-                    f"provider {request.provider_id!r} requires a conversion_model"
-                )
             else:
-                resolution = resolve_model(adapter, request.conversion_model)
-                if resolution.warning:
-                    warnings.append(resolution.warning)
+                profile = getattr(adapter, "profile", None)
+                if profile is None:
+                    warnings.append(
+                        f"provider {request.provider_id!r} exposes no credential "
+                        "profile; credentials were not resolved"
+                    )
+                else:
+                    credential = resolve_for_profile(
+                        profile, explicit_secret=explicit_secret, environ=environ
+                    )
+                    if credential.source == "unavailable":
+                        config_errors.append(
+                            f"no credential for provider {request.provider_id!r}: "
+                            f"set {profile.credential_env_var} or configure it via "
+                            "`pdf2epub`"
+                        )
+                    elif credential.warning:
+                        warnings.append(credential.warning)
+
+                if not request.conversion_model:
+                    config_errors.append(
+                        f"provider {request.provider_id!r} requires a conversion_model"
+                    )
+                else:
+                    resolution = resolve_model(adapter, request.conversion_model)
+                    if resolution.warning:
+                        warnings.append(resolution.warning)
 
     return RequestAssessment(
         input_errors=input_errors,
