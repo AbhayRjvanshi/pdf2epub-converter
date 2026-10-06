@@ -3,13 +3,15 @@
 The bridge exists only for the legacy CLI's documented fallback contract:
 unknown provider / missing key / missing SDK -> None. It delegates to the
 same Phase 4 adapters the application layer uses, so it carries no wire
-code of its own. The engine SDK-free pins are appended in the follow-up
-commit that switches the engine onto this bridge.
+code of its own. The engine-SDK-free pins prove the engine's only edge to
+the provider layer is this single lazy delegation.
 """
 
 import os
+import subprocess
 import sys
 import types
+from pathlib import Path
 
 import pytest
 
@@ -113,3 +115,35 @@ def test_valid_key_and_sdk_returns_a_working_callable(monkeypatch):
     client = create_legacy_llm_client("openai", "gpt-4o")
     assert callable(client)
     assert client("SYS", "payload") == '{"xhtml_pages": ["<p>ok</p>"]}'
+
+
+# -- engine SDK-free pins (one lazy delegation edge is the sole exception) ---
+
+def test_importing_the_engine_pulls_no_sdk_and_no_providers():
+    src = Path(__file__).resolve().parent.parent / "src"
+    code = (
+        "import sys, importlib;"
+        "importlib.import_module('pdf2epub.engine.driver');"
+        "bad = [m for m in ('openai', 'anthropic', 'pdf2epub.providers')"
+        "       if m in sys.modules"
+        "       or any(x.startswith(m + '.') for x in sys.modules)];"
+        "sys.exit(1 if bad else 0)"
+    )
+    proc = subprocess.run(
+        [sys.executable, "-c", code],
+        env={**os.environ, "PYTHONPATH": str(src)},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode == 0, proc.stderr
+
+
+def test_engine_source_contains_no_sdk_imports():
+    import pdf2epub.engine as engine_pkg
+
+    engine_dir = Path(engine_pkg.__file__).parent
+    for path in engine_dir.glob("*.py"):
+        text = path.read_text(encoding="utf-8")
+        assert "import openai" not in text, path.name
+        assert "import anthropic" not in text, path.name

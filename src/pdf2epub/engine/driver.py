@@ -81,82 +81,17 @@ MIN_REPAIR_TEXT_RETENTION = 0.60
 def create_llm_client_adapter(
     provider: str = "openai", model: str = "gpt-4o"
 ) -> Callable[[str, str, str | None], str] | None:
-    """Return a client fn, or None to run Tier 2 in deterministic mock mode."""
-    env_key = {"openai": "OPENAI_API_KEY", "anthropic": "ANTHROPIC_API_KEY"}.get(provider)
-    api_key = os.getenv(env_key) if env_key else None
-    if not api_key:
-        log.warning(
-            "No %s in environment - Tier 2 runs in offline fallback mode.", env_key
-        )
-        return None
+    """Legacy permissive factory; delegates to ``providers.compat``.
 
-    if provider == "openai":
-        try:
-            from openai import OpenAI
-        except ImportError:
-            log.error("pip install openai  (falling back to offline mode)")
-            return None
-        client = OpenAI(api_key=api_key)
+    This is the single, temporary engine -> providers edge, imported
+    lazily so importing the engine pulls neither the provider layer nor
+    any SDK. It preserves the historical contract (permissive fallback to
+    offline mode) and is scheduled for deletion in Phase 16 along with the
+    root shims.
+    """
+    from ..providers.compat import create_legacy_llm_client
 
-        def openai_adapter(system_prompt: str, payload: str, image_b64: str | None = None) -> str:
-            if image_b64:
-                content: Any = [
-                    {"type": "text", "text": payload},
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": f"data:image/png;base64,{image_b64}"},
-                    },
-                ]
-            else:
-                content = payload
-            resp = client.chat.completions.create(
-                model=model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": content},
-                ],
-                response_format={"type": "json_object"},
-                temperature=0.0,
-            )
-            return resp.choices[0].message.content or "{}"
-
-        return openai_adapter
-
-    if provider == "anthropic":
-        try:
-            import anthropic
-        except ImportError:
-            log.error("pip install anthropic  (falling back to offline mode)")
-            return None
-        client = anthropic.Anthropic(api_key=api_key)
-
-        def anthropic_adapter(system_prompt: str, payload: str, image_b64: str | None = None) -> str:
-            blocks: list[dict] = []
-            if image_b64:
-                blocks.append(
-                    {
-                        "type": "image",
-                        "source": {
-                            "type": "base64",
-                            "media_type": "image/png",
-                            "data": image_b64,
-                        },
-                    }
-                )
-            blocks.append({"type": "text", "text": payload})
-            resp = client.messages.create(
-                model=model,
-                max_tokens=8192,
-                temperature=0.0,
-                system=system_prompt,
-                messages=[{"role": "user", "content": blocks}],
-            )
-            return "".join(b.text for b in resp.content if b.type == "text") or "{}"
-
-        return anthropic_adapter
-
-    log.error("Unknown provider '%s' - offline mode.", provider)
-    return None
+    return create_legacy_llm_client(provider, model)
 
 
 # ---------------------------------------------------------------------------
