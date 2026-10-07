@@ -9,6 +9,17 @@ description = "Hybrid PDF to EPUB3 converter with deterministic and optional AI-
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Text Processing :: Markup :: HTML",
+]
 dependencies = [
     "pymupdf>=1.24,<2",
     "ebooklib>=0.18",
@@ -26,6 +37,9 @@ dev = ["pytest>=7.4", "build"]
 
 [project.scripts]
 pdf2epub = "pdf2epub.__main__:main"
+
+[project.urls]
+Repository = "https://github.com/AbhayRjvanshi/pdf2epub-converter"
 
 [tool.setuptools.dynamic]
 version = { attr = "pdf2epub.__version__" }
