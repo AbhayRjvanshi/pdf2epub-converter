@@ -1,32 +1,25 @@
-"""
-main.py - Hybrid PDF-to-EPUB Converter, end-to-end driver
-=========================================================
+"""End-to-end conversion driver: PDF in, validated EPUB3 out.
 
-Usage
------
-  python main.py book.pdf -o book.epub --title "My Book" --author "A. Name"
-  python main.py book.pdf --report-only          # routing table, no conversion
-  python main.py book.pdf --provider anthropic --model claude-sonnet-4-5
+This module is the engine's pipeline, not an entry point -- the product
+CLIs (``pdf2epub`` and ``pdf2epub interactive``) drive it through
+``application.ConversionService``.
 
 Phases
 ------
-  1  CLI parse, environment pre-flight, API adapter construction
-  2  Document open + global font profiling
-  3  Per-page triage (Module 2)
-  4  Tier 1 heuristic extraction / Tier 2 AI extraction
-  5  Timeline merge into one unified element stream
-  6  Reassembly, chapter segmentation, EPUB3 packaging (Module 4)
-  7  Validation gate + self-repair loop
+  1  Document open + global font profiling
+  2  Per-page triage (Module 2)
+  3  Tier 1 heuristic extraction / Tier 2 AI extraction
+  4  Timeline merge into one unified element stream
+  5  Reassembly, chapter segmentation, EPUB3 packaging (Module 4)
+  6  Validation gate + self-repair loop
 """
 
 from __future__ import annotations
 
-import argparse
 import hashlib
 import logging
 import os
 import re
-import sys
 import tempfile
 import time
 from collections import Counter
@@ -74,28 +67,7 @@ MIN_REPAIR_TEXT_RETENTION = 0.60
 
 
 # ---------------------------------------------------------------------------
-# 1. API adapters
-# ---------------------------------------------------------------------------
-
-
-def create_llm_client_adapter(
-    provider: str = "openai", model: str = "gpt-4o"
-) -> Callable[[str, str, str | None], str] | None:
-    """Legacy permissive factory; delegates to ``providers.compat``.
-
-    This is the single, temporary engine -> providers edge, imported
-    lazily so importing the engine pulls neither the provider layer nor
-    any SDK. It preserves the historical contract (permissive fallback to
-    offline mode) and is scheduled for deletion in Phase 16 along with the
-    root shims.
-    """
-    from ..providers.compat import create_legacy_llm_client
-
-    return create_legacy_llm_client(provider, model)
-
-
-# ---------------------------------------------------------------------------
-# 2. Tier 2 XHTML -> StreamElement normaliser
+# 1. Tier 2 XHTML -> StreamElement normaliser
 # ---------------------------------------------------------------------------
 
 
@@ -294,7 +266,7 @@ def _embed_visual_page(
 
 
 # ---------------------------------------------------------------------------
-# 3. Pipeline
+# 2. Pipeline
 # ---------------------------------------------------------------------------
 
 
@@ -801,93 +773,3 @@ def _repair_stream(
             rebuilt.extend(replacement)
             inserted_pages.add(element.page_num)
     return rebuilt
-
-
-# ---------------------------------------------------------------------------
-# 4. CLI
-# ---------------------------------------------------------------------------
-
-
-def build_arg_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(description="Hybrid PDF-to-EPUB3 converter")
-    p.add_argument("pdf_path", help="input PDF")
-    p.add_argument("-o", "--output", default="output.epub", help="output EPUB path")
-    p.add_argument("--title", default="Untitled Publication")
-    p.add_argument("--author", default="Unknown Author")
-    p.add_argument("--provider", default="openai", choices=["openai", "anthropic", "none"])
-    p.add_argument("--model", default="gpt-4o")
-    p.add_argument("--batch-size", type=int, default=4)
-    p.add_argument("--cache-dir", default=".cache_llm_epub")
-    p.add_argument("--max-repair-attempts", type=int, default=2)
-    p.add_argument("--skip-validation", action="store_true")
-    p.add_argument(
-        "--report-only",
-        action="store_true",
-        help="print the routing table and exit without converting",
-    )
-    p.add_argument(
-        "--font-sample-pages",
-        type=int,
-        default=160,
-        help="pages sampled for the typography baseline on large documents",
-    )
-    p.add_argument(
-        "--no-spool-images",
-        action="store_true",
-        help="keep extracted images in RAM instead of a temp directory",
-    )
-    p.add_argument("--quiet", action="store_true")
-    return p
-
-
-def main(argv: list[str] | None = None) -> int:
-    args = build_arg_parser().parse_args(argv)
-    logging.basicConfig(
-        level=logging.WARNING if args.quiet else logging.INFO,
-        format="%(levelname)s %(name)s: %(message)s",
-    )
-
-    pdf = Path(args.pdf_path)
-    if not pdf.exists():
-        print(f"[FATAL] input not found: {pdf}", file=sys.stderr)
-        return 2
-
-    out = Path(args.output)
-    try:
-        out.parent.mkdir(parents=True, exist_ok=True)
-    except OSError as exc:
-        print(f"[FATAL] cannot write to {out.parent}: {exc}", file=sys.stderr)
-        return 2
-
-    adapter = (
-        None
-        if args.provider == "none"
-        else create_llm_client_adapter(args.provider, args.model)
-    )
-
-    try:
-        result = run_pipeline(
-            pdf_path=str(pdf),
-            output_epub=str(out),
-            title=args.title,
-            author=args.author,
-            llm_adapter=adapter,
-            model_id=args.model,
-            batch_size=args.batch_size,
-            skip_validation=args.skip_validation,
-            max_repair_attempts=args.max_repair_attempts,
-            cache_dir=args.cache_dir,
-            report_only=args.report_only,
-            verbose=not args.quiet,
-            font_sample_pages=args.font_sample_pages,
-            spool_images=not args.no_spool_images,
-        )
-    except Exception as exc:
-        print(f"[FATAL] {type(exc).__name__}: {exc}", file=sys.stderr)
-        return 1
-
-    return 0 if result["success"] else 1
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

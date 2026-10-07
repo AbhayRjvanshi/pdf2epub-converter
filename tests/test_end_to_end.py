@@ -22,7 +22,7 @@ import pytest
 from ebooklib import epub
 
 import confidence_router as cr
-import main as driver
+from pdf2epub.engine import driver
 import make_fixtures as mf
 import packaging_and_validation as pk
 import tier1_classifier as t1
@@ -450,43 +450,9 @@ def test_empty_repair_keeps_original_page_content(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# CLI surface
+# CLI surface: covered by tests/cli/test_headless.py (the legacy driver CLI
+# was retired in Phase 16 along with providers.compat).
 # ---------------------------------------------------------------------------
-
-
-def test_cli_returns_zero_on_success(fixture_pdfs, tmp_path):
-    code = driver.main([
-        fixture_pdfs["single_column"], "-o", str(tmp_path / "cli.epub"),
-        "--provider", "none", "--cache-dir", str(tmp_path / "c"), "--quiet",
-    ])
-    assert code == 0
-    assert (tmp_path / "cli.epub").exists()
-
-
-def test_cli_returns_two_for_a_missing_input(tmp_path):
-    assert driver.main([str(tmp_path / "nope.pdf"), "--provider", "none"]) == 2
-
-
-def test_cli_returns_one_on_a_fatal_error(tmp_path):
-    junk = tmp_path / "junk.pdf"
-    junk.write_bytes(b"not a pdf at all")
-    code = driver.main([
-        str(junk), "-o", str(tmp_path / "x.epub"), "--provider", "none", "--quiet",
-    ])
-    assert code == 1
-
-
-def test_cli_report_only(fixture_pdfs, tmp_path, capsys):
-    code = driver.main([
-        fixture_pdfs["clean_book"], "--report-only", "--provider", "none",
-        "-o", str(tmp_path / "unused.epub"),
-    ])
-    assert code == 0
-    assert "tier1" in capsys.readouterr().out
-
-
-def test_unknown_provider_falls_back_to_offline_mode():
-    assert driver.create_llm_client_adapter("nonsense", "m") is None
 
 
 # ---------------------------------------------------------------------------
