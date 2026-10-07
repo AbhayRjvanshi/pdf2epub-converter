@@ -28,16 +28,19 @@ from ..application import (
     ConversionOptions,
     ConversionRequest,
     ConversionService,
+    SessionDeps,
     format_routing_table,
     run_doctor,
 )
+from ..application.session import Session
 from ..config import AppConfig, ConfigManager
 from ..providers.registry import build_registry
 from ..validators import build_validator_registry, status_for, validator_enabled
+from .interactive import Repl
 
 
 def build_parser(provider_choices: Sequence[str] | None = None) -> argparse.ArgumentParser:
-    """The public parser; Phase 13 extends it with doctor/validators."""
+    """The public parser; doctor/validators/interactive subcommands included."""
     parser = argparse.ArgumentParser(
         prog="pdf2epub",
         description="Hybrid PDF to EPUB3 converter.",
@@ -45,7 +48,7 @@ def build_parser(provider_choices: Sequence[str] | None = None) -> argparse.Argu
     parser.add_argument(
         "--version", "-V", action="version", version=f"pdf2epub {__version__}"
     )
-    sub = parser.add_subparsers(dest="command", required=True)
+    sub = parser.add_subparsers(dest="command")
 
     convert = sub.add_parser("convert", help="convert a PDF into an EPUB3")
     convert.add_argument("pdf_path", help="input PDF")
@@ -101,6 +104,7 @@ def build_parser(provider_choices: Sequence[str] | None = None) -> argparse.Argu
         help="contact the configured provider to verify the credential (network)",
     )
     sub.add_parser("validators", help="show the external validator states")
+    sub.add_parser("interactive", help="start the interactive session")
     return parser
 
 
@@ -190,6 +194,38 @@ def _run_validators(args: argparse.Namespace) -> int:
     return 0
 
 
+def _stdin_is_tty() -> bool:
+    return sys.stdin.isatty()
+
+
+def _run_interactive(*, require_tty: bool, parser: argparse.ArgumentParser) -> int:
+    """Interactive session; the bare entry point demands a terminal.
+
+    Piped/scripted sessions never onboard (no config side effects) and are
+    never refused when the `interactive` subcommand was explicit.
+    """
+    is_tty = _stdin_is_tty()
+    if require_tty and not is_tty:
+        parser.print_usage(sys.stderr)
+        print(
+            "pdf2epub: no command given and no terminal detected; use "
+            "`pdf2epub convert ...` or an explicit `pdf2epub interactive`.",
+            file=sys.stderr,
+        )
+        return 2
+
+    config_manager = ConfigManager()
+    session = Session.from_config(config_manager.load())
+    deps = SessionDeps(
+        registry=build_registry(),
+        config_manager=config_manager,
+        service_factory=None,
+        environ=None,
+        validator_registry=build_validator_registry(),
+    )
+    return Repl(session=session, deps=deps, onboarding=is_tty).run()
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     registry = build_registry()
     parser = build_parser(sorted(a.provider_id for a in registry.list()))
@@ -199,12 +235,16 @@ def main(argv: Sequence[str] | None = None) -> int:
         return int(exc.code or 0)
 
     try:
+        if args.command is None:
+            return _run_interactive(require_tty=True, parser=parser)
         if args.command == "convert":
             return _run_convert(args, registry=registry)
         if args.command == "doctor":
             return _run_doctor(args)
         if args.command == "validators":
             return _run_validators(args)
+        if args.command == "interactive":
+            return _run_interactive(require_tty=False, parser=parser)
     except KeyboardInterrupt:
         # CLI-level guard only; token-based cooperative cancellation is
         # the REPL/session work of Phase 14.

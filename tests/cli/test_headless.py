@@ -241,7 +241,8 @@ def test_version_returns_zero(capsys):
     assert capsys.readouterr().out.startswith("pdf2epub ")
 
 
-def test_no_subcommand_returns_two():
+def test_no_subcommand_returns_two(monkeypatch):
+    monkeypatch.setattr(headless, "_stdin_is_tty", lambda: False)
     assert headless.main([]) == 2
 
 
@@ -381,3 +382,53 @@ def test_validators_lists_states(monkeypatch, capsys):
     out = capsys.readouterr().out
     assert "epubcheck" in out and "required_but_missing" in out
     assert "available" in out
+
+
+# -- interactive entry points ------------------------------------------------
+
+class _FakeRepl:
+    kwargs = None
+
+    def __init__(self, **kwargs):
+        _FakeRepl.kwargs = kwargs
+
+    def run(self):
+        return 0
+
+
+def test_bare_invocation_launches_the_repl_with_a_tty(monkeypatch):
+    monkeypatch.setattr(headless, "_stdin_is_tty", lambda: True)
+    monkeypatch.setattr(headless, "Repl", _FakeRepl)
+    monkeypatch.setattr(headless, "ConfigManager", _FakeConfigManager)
+    _FakeRepl.kwargs = None
+    assert headless.main([]) == 0
+    assert _FakeRepl.kwargs is not None
+    assert _FakeRepl.kwargs["onboarding"] is True
+
+
+def test_bare_invocation_without_a_tty_prints_guidance(monkeypatch, capsys):
+    monkeypatch.setattr(headless, "_stdin_is_tty", lambda: False)
+    assert headless.main([]) == 2
+    assert "terminal" in capsys.readouterr().err
+
+
+def test_interactive_subcommand_runs_without_a_tty(monkeypatch):
+    monkeypatch.setattr(headless, "_stdin_is_tty", lambda: False)
+    monkeypatch.setattr(headless, "Repl", _FakeRepl)
+    monkeypatch.setattr(headless, "ConfigManager", _FakeConfigManager)
+    _FakeRepl.kwargs = None
+    assert headless.main(["interactive"]) == 0
+    assert _FakeRepl.kwargs["onboarding"] is False  # piped sessions never onboard
+
+
+def test_interactive_subprocess_piped_session():
+    proc = subprocess.run(
+        [sys.executable, "-m", "pdf2epub", "interactive"],
+        input="/help\n/exit\n",
+        env=_subprocess_env(),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode == 0, proc.stderr
+    assert "Available commands" in proc.stdout
