@@ -20,7 +20,8 @@ INSTALL_INSTRUCTIONS = {
 }
 
 
-def _enabled(validator_id: str, config) -> bool:
+def validator_enabled(validator_id: str, config) -> bool:
+    """The single config -> enabled mapping (one source for every caller)."""
     return {
         "epubcheck": config.epubcheck_enabled,
         "ace": config.ace_enabled,
@@ -31,7 +32,7 @@ def missing_validators(validator_registry, config) -> list[str]:
     """Enabled validators that are not installed."""
     missing = []
     for validator in validator_registry.list():
-        if not _enabled(validator.id, config):
+        if not validator_enabled(validator.id, config):
             continue
         if validator.detect().state is ValidatorState.UNAVAILABLE:
             missing.append(validator.id)

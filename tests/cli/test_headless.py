@@ -313,3 +313,71 @@ def test_subprocess_conversion_through_python_m(fixture_pdfs, tmp_path):
     )
     assert proc.returncode == 0, proc.stderr
     assert out.exists()
+
+
+# -- doctor and validators subcommands ---------------------------------------
+
+def _doctor_report(*checks):
+    from pdf2epub.application import DoctorReport
+    from pdf2epub.application.doctor import CheckResult
+
+    return DoctorReport(checks=[CheckResult(*check) for check in checks])
+
+
+def test_doctor_exits_zero_when_nothing_fails(monkeypatch, capsys):
+    monkeypatch.setattr(
+        headless, "run_doctor", lambda **kwargs: _doctor_report(("python", "OK", "3.10.6"))
+    )
+    monkeypatch.setattr(headless, "ConfigManager", _FakeConfigManager)
+    assert headless.main(["doctor"]) == 0
+    assert "python" in capsys.readouterr().out
+
+
+def test_doctor_exits_one_when_a_check_fails(monkeypatch):
+    monkeypatch.setattr(
+        headless,
+        "run_doctor",
+        lambda **kwargs: _doctor_report(("core packages", "FAIL", "missing: pymupdf")),
+    )
+    monkeypatch.setattr(headless, "ConfigManager", _FakeConfigManager)
+    assert headless.main(["doctor"]) == 1
+
+
+def test_doctor_verify_flag_is_mapped(monkeypatch):
+    captured = {}
+
+    def fake_doctor(**kwargs):
+        captured.update(kwargs)
+        return _doctor_report()
+
+    monkeypatch.setattr(headless, "run_doctor", fake_doctor)
+    monkeypatch.setattr(headless, "ConfigManager", _FakeConfigManager)
+    assert headless.main(["doctor", "--verify-credentials"]) == 0
+    assert captured["verify_credentials"] is True
+
+
+def test_validators_lists_states(monkeypatch, capsys):
+    from pdf2epub.validators.base import DetectionOutcome, ValidatorState
+
+    class _V:
+        def __init__(self, validator_id, state):
+            self.id = validator_id
+            self.display_name = validator_id
+            self._state = state
+
+        def detect(self):
+            return DetectionOutcome(self._state)
+
+    class _VR:
+        def list(self):
+            return [
+                _V("epubcheck", ValidatorState.UNAVAILABLE),
+                _V("ace", ValidatorState.AVAILABLE),
+            ]
+
+    monkeypatch.setattr(headless, "build_validator_registry", lambda: _VR())
+    monkeypatch.setattr(headless, "ConfigManager", _FakeConfigManager)
+    assert headless.main(["validators"]) == 0
+    out = capsys.readouterr().out
+    assert "epubcheck" in out and "required_but_missing" in out
+    assert "available" in out

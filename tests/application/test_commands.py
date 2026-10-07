@@ -443,3 +443,104 @@ def test_real_offline_convert_end_to_end(fixture_pdfs, tmp_path):
     assert not result.failed
     assert (tmp_path / "out.epub").exists()
     assert session.last_routing is not None
+
+
+# -- /doctor and /validators -------------------------------------------------
+
+class _FakeValidator:
+    def __init__(self, validator_id, state):
+        self.id = validator_id
+        self.display_name = validator_id
+        self._state = state
+
+    def detect(self):
+        from pdf2epub.validators.base import DetectionOutcome
+
+        return DetectionOutcome(self._state)
+
+
+class _FakeValidatorRegistry:
+    def __init__(self, *validators):
+        self._validators = list(validators)
+
+    def list(self):
+        return list(self._validators)
+
+
+def test_doctor_command_renders_the_report():
+    deps, _ = make_deps()
+    result = dispatch("/doctor", session=Session(), io=ScriptedIO(), deps=deps)
+    assert not result.failed
+    assert "python" in result.output
+    assert "core packages" in result.output
+
+
+def test_doctor_verify_prompt_is_explicit_and_secret_stays_out(monkeypatch):
+    registry = build_registry()
+    adapter = registry.get("openai")
+    calls = []
+    monkeypatch.setattr(
+        adapter, "validate_credentials", lambda credential: calls.append(credential) or True
+    )
+
+    session = Session()
+    session.select_provider("openai")
+    session.set_explicit_secret("sk-manual")
+    deps = SessionDeps(
+        registry=registry,
+        config_manager=FakeConfigManager(),
+        service_factory=lambda: FakeService(),
+        environ={},
+    )
+
+    declined = dispatch("/doctor", session=session, io=ScriptedIO(lines=["n"]), deps=deps)
+    assert calls == []  # declining never touches the network
+    assert "credential verification" not in declined.output
+
+    accepted = dispatch("/doctor", session=session, io=ScriptedIO(lines=["y"]), deps=deps)
+    assert calls == ["sk-manual"]
+    assert "credential verification" in accepted.output
+    assert "sk-manual" not in accepted.output  # secret hygiene across output
+
+
+def test_validators_command_shows_states():
+    from pdf2epub.validators.base import ValidatorState
+
+    deps, _ = make_deps()
+    deps.validator_registry = _FakeValidatorRegistry(
+        _FakeValidator("epubcheck", ValidatorState.AVAILABLE),
+        _FakeValidator("ace", ValidatorState.UNAVAILABLE),
+    )
+    result = dispatch(
+        "/validators", session=Session(), io=ScriptedIO(lines=["3"]), deps=deps
+    )
+    assert "available" in result.output
+    assert "required_but_missing" in result.output  # ace is enabled by default
+
+
+def test_validators_toggle_persists_without_installing():
+    from pdf2epub.validators.base import ValidatorState
+
+    deps, _ = make_deps()
+    deps.validator_registry = _FakeValidatorRegistry(
+        _FakeValidator("epubcheck", ValidatorState.AVAILABLE),
+    )
+    result = dispatch(
+        "/validators", session=Session(), io=ScriptedIO(lines=["2", "1"]), deps=deps
+    )
+    assert deps.config_manager.saved == [{"validator": {"epubcheck": False}}]
+    assert "disabled" in result.output
+
+
+def test_validators_instructions_do_not_install_or_persist():
+    from pdf2epub.validators.base import ValidatorState
+
+    deps, _ = make_deps()
+    deps.validator_registry = _FakeValidatorRegistry(
+        _FakeValidator("ace", ValidatorState.UNAVAILABLE),
+    )
+    result = dispatch(
+        "/validators", session=Session(), io=ScriptedIO(lines=["1"]), deps=deps
+    )
+    assert "npm install" in result.output  # detect-and-instruct only
+    assert deps.config_manager.saved == []

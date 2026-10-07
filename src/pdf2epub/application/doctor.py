@@ -26,6 +26,7 @@ from ..config.manager import CURRENT_SCHEMA_VERSION
 from ..engine import packaging_and_validation as pk
 from ..providers.requirements import check_model_for_routes, resolve_model
 from ..validators.base import ValidatorState, states_from
+from ..validators.onboarding import validator_enabled
 from ..validators.registry import build_validator_registry
 
 OK = "OK"
@@ -75,13 +76,6 @@ def _probe_version(cmd: list[str], timeout: int = _VERSION_TIMEOUT) -> tuple[boo
     if proc.returncode != 0:
         return False, lines[0] if lines else f"exit {proc.returncode}"
     return True, lines[0] if lines else ""
-
-
-def _validator_enabled(validator_id: str, config) -> bool:
-    return {
-        "epubcheck": config.epubcheck_enabled,
-        "ace": config.ace_enabled,
-    }.get(validator_id, False)
 
 
 # -- the checks --------------------------------------------------------------
@@ -150,7 +144,7 @@ def run_doctor(
 
     # -- external validators ----------------------------------------------
     for validator in validators.list():
-        enabled = _validator_enabled(validator.id, config)
+        enabled = validator_enabled(validator.id, config)
         outcome = validator.detect()
         state = states_from(outcome, enabled=enabled)
         display = {
@@ -204,6 +198,26 @@ def run_doctor(
         )
     elif explicit_secret:
         checks.append(CheckResult("credentials", OK, "manual key (this session)"))
+        if verify_credentials:
+            try:
+                adapter = registry.get(provider_id)
+            except KeyError:
+                adapter = None
+            if adapter is not None:
+                try:
+                    ok = adapter.validate_credentials(explicit_secret)
+                except Exception as exc:
+                    checks.append(
+                        CheckResult("credential verification", WARN, str(exc))
+                    )
+                else:
+                    checks.append(
+                        CheckResult(
+                            "credential verification",
+                            OK if ok else FAIL,
+                            "verified" if ok else "rejected by the provider",
+                        )
+                    )
     else:
         try:
             adapter = registry.get(provider_id)

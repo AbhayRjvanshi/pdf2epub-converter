@@ -15,6 +15,7 @@ from .onboarding import (
     missing_validators,
     should_show_notice,
     show_onboarding,
+    validator_enabled,
 )
 from .registry import ValidatorRegistry, build_validator_registry
 
@@ -33,4 +34,5 @@ __all__ = [
     "show_onboarding",
     "states_from",
     "status_for",
+    "validator_enabled",
 ]

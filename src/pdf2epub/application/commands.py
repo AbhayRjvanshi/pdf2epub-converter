@@ -24,6 +24,14 @@ except ImportError:  # pragma: no cover - legacy alias
 from ..config.credentials import keyring_store, resolve_for_profile
 from ..providers.errors import ProviderError
 from ..providers.requirements import check_model_for_routes, resolve_model
+from ..validators import (
+    INSTALL_INSTRUCTIONS,
+    build_validator_registry,
+    status_for,
+    validator_enabled,
+)
+from ..validators.base import ValidatorState
+from .doctor import run_doctor
 from .session import Readiness, Session
 
 
@@ -57,6 +65,7 @@ class SessionDeps:
     config_manager: object            # .load() / .save() / .path()
     service_factory: Callable         # () -> ConversionService
     environ: Mapping[str, str] | None = None
+    validator_registry: object | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -352,6 +361,83 @@ def _convert(session: Session, io: IO, deps: SessionDeps, args: str) -> CommandR
     else:
         lines.append("conversion failed")
     return CommandResult(output="\n".join(lines), failed=not result.success)
+
+
+@_command("doctor", "inspect the local environment")
+def _doctor(session: Session, io: IO, deps: SessionDeps, args: str) -> CommandResult:
+    validators = deps.validator_registry or build_validator_registry()
+    report = run_doctor(
+        registry=deps.registry,
+        config_manager=deps.config_manager,
+        environ=deps.environ,
+        session=session,
+        validator_registry=validators,
+    )
+    lines = [report.render()]
+
+    credentials_ok = any(
+        check.name == "credentials" and check.state == "OK" for check in report.checks
+    )
+    if credentials_ok:
+        if _yes(io.read_line("Verify provider credentials now? (y/N): ")):
+            verified = run_doctor(
+                registry=deps.registry,
+                config_manager=deps.config_manager,
+                environ=deps.environ,
+                session=session,
+                validator_registry=validators,
+                verify_credentials=True,
+            )
+            lines += [
+                f"{check.name:<22} {check.state:<8} {check.detail}"
+                for check in verified.checks
+                if check.name == "credential verification"
+            ]
+    return CommandResult(output="\n".join(lines))
+
+
+@_command("validators", "inspect and configure external validators")
+def _validators(session: Session, io: IO, deps: SessionDeps, args: str) -> CommandResult:
+    validators = deps.validator_registry or build_validator_registry()
+    config = deps.config_manager.load()
+    entries = validators.list()
+
+    lines = []
+    for index, validator in enumerate(entries, start=1):
+        state = status_for(
+            validator, enabled=validator_enabled(validator.id, config)
+        )
+        lines.append(f"  {index}. {validator.display_name:<14} {state.value}")
+    lines.append("1. Show install instructions")
+    lines.append("2. Toggle a validator's enabled state")
+    lines.append("3. Back")
+
+    choice = io.read_line("Select (1/2/3): ").strip()
+    if choice == "1":
+        for validator in entries:
+            state = status_for(
+                validator, enabled=validator_enabled(validator.id, config)
+            )
+            if state in (
+                ValidatorState.UNAVAILABLE,
+                ValidatorState.REQUIRED_BUT_MISSING,
+            ):
+                lines.append(
+                    f"{validator.id}: "
+                    f"{INSTALL_INSTRUCTIONS.get(validator.id, 'see project docs')}"
+                )
+    elif choice == "2":
+        raw = io.read_line("Toggle which validator? (number): ").strip()
+        if raw.isdigit() and 1 <= int(raw) <= len(entries):
+            target = entries[int(raw) - 1]
+            new_value = not validator_enabled(target.id, config)
+            deps.config_manager.save({"validator": {target.id: new_value}})
+            lines.append(
+                f"{target.display_name}: {'enabled' if new_value else 'disabled'}"
+            )
+        else:
+            lines.append("no validator toggled")
+    return CommandResult(output="\n".join(lines))
 
 
 @_command("config", "show the saved configuration")

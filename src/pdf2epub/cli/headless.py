@@ -29,9 +29,11 @@ from ..application import (
     ConversionRequest,
     ConversionService,
     format_routing_table,
+    run_doctor,
 )
 from ..config import AppConfig, ConfigManager
 from ..providers.registry import build_registry
+from ..validators import build_validator_registry, status_for, validator_enabled
 
 
 def build_parser(provider_choices: Sequence[str] | None = None) -> argparse.ArgumentParser:
@@ -92,6 +94,13 @@ def build_parser(provider_choices: Sequence[str] | None = None) -> argparse.Argu
         "--max-tier2-pages", type=int, default=None,
         help="refuse to convert when more pages than this need the model",
     )
+
+    doctor_parser = sub.add_parser("doctor", help="inspect the local environment")
+    doctor_parser.add_argument(
+        "--verify-credentials", action="store_true",
+        help="contact the configured provider to verify the credential (network)",
+    )
+    sub.add_parser("validators", help="show the external validator states")
     return parser
 
 
@@ -161,6 +170,26 @@ def _run_convert(args: argparse.Namespace, *, registry) -> int:
     return result.exit_code
 
 
+def _run_doctor(args: argparse.Namespace) -> int:
+    report = run_doctor(
+        registry=build_registry(),
+        config_manager=ConfigManager(),
+        verify_credentials=args.verify_credentials,
+    )
+    print(report.render())
+    return 1 if report.failed else 0
+
+
+def _run_validators(args: argparse.Namespace) -> int:
+    config = ConfigManager().load()
+    for validator in build_validator_registry().list():
+        state = status_for(
+            validator, enabled=validator_enabled(validator.id, config)
+        )
+        print(f"  {validator.display_name:<14} {state.value}")
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     registry = build_registry()
     parser = build_parser(sorted(a.provider_id for a in registry.list()))
@@ -172,6 +201,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         if args.command == "convert":
             return _run_convert(args, registry=registry)
+        if args.command == "doctor":
+            return _run_doctor(args)
+        if args.command == "validators":
+            return _run_validators(args)
     except KeyboardInterrupt:
         # CLI-level guard only; token-based cooperative cancellation is
         # the REPL/session work of Phase 14.
