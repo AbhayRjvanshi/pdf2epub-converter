@@ -59,11 +59,15 @@ class CommandResult:
 
 @dataclass
 class SessionDeps:
-    """Every collaborator is injected; tests build fakes."""
+    """Every collaborator is injected; tests build fakes.
+
+    ``service_factory`` may be None when a host (the REPL) supplies its own
+    per-conversion factory; ``/convert`` guards it rather than crashing.
+    """
 
     registry: object
     config_manager: object            # .load() / .save() / .path()
-    service_factory: Callable         # () -> ConversionService
+    service_factory: Callable | None = None
     environ: Mapping[str, str] | None = None
     validator_registry: object | None = None
 
@@ -344,6 +348,9 @@ def _convert(session: Session, io: IO, deps: SessionDeps, args: str) -> CommandR
             output="not ready:\n" + "\n".join(f"  - {gap}" for gap in report.missing),
             failed=True,
         )
+
+    if deps.service_factory is None:
+        return CommandResult(output="no conversion service configured", failed=True)
 
     request = session.build_request()
     service = deps.service_factory()

@@ -46,6 +46,7 @@ class Session:
     explicit_secret: str | None = None  # in-session only
     conversion_model: str | None = None
     overwrite: bool = False
+    quiet: bool = False  # transcript-only switch: options.quiet, never warnings
     last_routing: PreflightResult | None = None
 
     @classmethod
@@ -181,5 +182,5 @@ class Session:
             author=self.author,
             provider_id=self.provider_id or "none",
             conversion_model=self.conversion_model,
-            options=ConversionOptions(overwrite=self.overwrite),
+            options=ConversionOptions(overwrite=self.overwrite, quiet=self.quiet),
         )
