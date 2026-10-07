@@ -18,13 +18,18 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
+import shutil
+import signal
 import subprocess
+import sys
+import tempfile
 import uuid
 import zipfile
 import xml.etree.ElementTree as ET
 from collections import Counter, defaultdict
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field, replace
 from html import escape
 from pathlib import Path
@@ -736,29 +741,108 @@ def _ace_outcome_is_fail(result: dict) -> bool:
     return True  # Ace only lists violations by default
 
 
+def resolve_tool(cmd: str) -> str | None:
+    """The single command-resolution path for detection AND execution.
+
+    ``shutil.which`` is PATHEXT-aware on Windows, so npm-style ``ace.cmd``
+    shims resolve; executing the resolved absolute path avoids the
+    CreateProcess .exe-only fallback that made bare names invisible.
+    """
+    return shutil.which(cmd)
+
+
+def _kill_tree(proc: subprocess.Popen) -> None:
+    """Best-effort whole-tree termination (Java/Node spawn children)."""
+    try:
+        if sys.platform == "win32":
+            subprocess.run(
+                ["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+                capture_output=True,
+                check=False,
+            )
+        else:
+            os.killpg(proc.pid, signal.SIGKILL)
+    except Exception:  # pragma: no cover - fall back to the direct child
+        try:
+            proc.kill()
+        except Exception:
+            pass
+
+
+def _run_with_tree_kill(
+    cmd: list[str], timeout: int
+) -> subprocess.CompletedProcess:
+    """``subprocess.run`` with a timeout that kills the whole process tree.
+
+    A plain timeout only reaps the direct child; EPUBCheck and Ace spawn
+    Java and Node children that would otherwise survive. The tree kill is
+    an implementation detail -- the visible contract is still
+    ``TimeoutExpired`` and the runners' existing "timed out" results.
+    """
+    proc = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        start_new_session=(sys.platform != "win32"),
+    )
+    try:
+        stdout, stderr = proc.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        _kill_tree(proc)
+        stdout, stderr = proc.communicate()
+        raise subprocess.TimeoutExpired(cmd, timeout, output=stdout, stderr=stderr)
+    return subprocess.CompletedProcess(cmd, proc.returncode, stdout, stderr)
+
+
 class DualValidator:
     def __init__(
         self,
-        epubcheck_cmd: str = "epubcheck",
+        epubcheck_cmd: str | Sequence[str] = "epubcheck",
         ace_cmd: str = "ace",
         timeout: int = 300,
     ) -> None:
-        self.epubcheck_cmd = epubcheck_cmd
+        # epubcheck_cmd may be a bare name or an argv list such as
+        # ["java", "-jar", "epubcheck.jar"]; the first token is what resolves.
+        if isinstance(epubcheck_cmd, str):
+            self._epubcheck_argv = [epubcheck_cmd]
+        else:
+            self._epubcheck_argv = list(epubcheck_cmd)
+        self.epubcheck_cmd = epubcheck_cmd  # kept for messages/compat
         self.ace_cmd = ace_cmd
         self.timeout = timeout
+
+    # -- resolution (the single detection+execution path) -------------------
+    def resolved_epubcheck_argv(self) -> list[str] | None:
+        """The resolvable EPUBCheck argv, or None when not installed."""
+        resolved = resolve_tool(self._epubcheck_argv[0])
+        if resolved is None:
+            return None
+        return [resolved, *self._epubcheck_argv[1:]]
+
+    def resolved_ace_cmd(self) -> str | None:
+        """The resolvable Ace command, or None when not installed."""
+        return resolve_tool(self.ace_cmd)
 
     # -- EPUBCheck ---------------------------------------------------------
     def run_epubcheck(self, epub_path: str, work_dir: str | None = None
                       ) -> tuple[bool, int, str, bool]:
-        work = Path(work_dir or Path(epub_path).parent)
-        report_file = work / f"epubcheck_{uuid.uuid4().hex[:8]}.json"
-        cmd = [self.epubcheck_cmd, str(epub_path), "--json", str(report_file), "--quiet"]
-        try:
-            proc = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=self.timeout
+        argv = self.resolved_epubcheck_argv()
+        if argv is None:
+            return (
+                True,
+                0,
+                f"EPUBCheck not installed ('{self._epubcheck_argv[0]}') - skipped.",
+                False,
             )
+        work = Path(work_dir or Path(epub_path).parent)
+        work.mkdir(parents=True, exist_ok=True)
+        report_file = work / f"epubcheck_{uuid.uuid4().hex[:8]}.json"
+        cmd = [*argv, str(epub_path), "--json", str(report_file), "--quiet"]
+        try:
+            proc = _run_with_tree_kill(cmd, self.timeout)
         except FileNotFoundError:
-            return True, 0, f"EPUBCheck not installed ('{self.epubcheck_cmd}') - skipped.", False
+            return True, 0, f"EPUBCheck not installed ('{self._epubcheck_argv[0]}') - skipped.", False
         except subprocess.TimeoutExpired:
             return False, -1, "EPUBCheck timed out.", True
 
@@ -782,12 +866,14 @@ class DualValidator:
     def run_daisy_ace(
         self, epub_path: str, out_dir: str | None = None
     ) -> tuple[bool, dict[str, int], str, bool]:
+        resolved = self.resolved_ace_cmd()
+        if resolved is None:
+            return True, {}, f"Ace not installed ('{self.ace_cmd}') - skipped.", False
         out = Path(out_dir or (Path(epub_path).parent / "ace_report"))
-        cmd = [self.ace_cmd, "--outdir", str(out), "--silent", str(epub_path)]
+        out.mkdir(parents=True, exist_ok=True)
+        cmd = [resolved, "--outdir", str(out), "--silent", str(epub_path)]
         try:
-            proc = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=self.timeout
-            )
+            proc = _run_with_tree_kill(cmd, self.timeout)
         except FileNotFoundError:
             return True, {}, f"Ace not installed ('{self.ace_cmd}') - skipped.", False
         except subprocess.TimeoutExpired:
@@ -808,7 +894,10 @@ class DualValidator:
 
     # -- combined ----------------------------------------------------------
     def validate(
-        self, epub_path: str, enabled: Iterable[str] | None = None
+        self,
+        epub_path: str,
+        enabled: Iterable[str] | None = None,
+        reports_dir: str | None = None,
     ) -> ValidationReport:
         """Structural check plus the selected external validators.
 
@@ -818,6 +907,13 @@ class DualValidator:
         check always runs; disabled tools are recorded in ``disabled`` and
         contribute ``passed=True, available=False`` so ``passed`` stays
         coherent (decision D1).
+
+        Report ownership: with ``reports_dir=None`` reports go to a
+        temporary directory that is removed afterwards; a supplied
+        ``reports_dir`` is caller-owned -- the directory (and anything the
+        caller put in it) is never deleted. Per-runner file behaviour is
+        unchanged: the EPUBCheck JSON is unlinked after a successful parse,
+        the Ace ``report.json`` remains.
         """
         structural = internal_structure_check(epub_path)
         hard = [e for e in structural if e["severity"] in ("ERROR", "FATAL")]
@@ -830,17 +926,36 @@ class DualValidator:
             else [name for name in ("epubcheck", "ace") if name not in selected]
         )
 
-        if run_all or "epubcheck" in selected:
-            ep_passed, ep_errs, ep_log, ep_avail = self.run_epubcheck(epub_path)
+        tmp = None
+        if reports_dir is None:
+            tmp = tempfile.TemporaryDirectory(prefix="pdf2epub_reports_")
+            root = Path(tmp.name)
         else:
-            ep_passed, ep_errs, ep_avail = True, 0, False
-            ep_log = "EPUBCheck disabled for this run."
+            root = Path(reports_dir)
+            root.mkdir(parents=True, exist_ok=True)
 
-        if run_all or "ace" in selected:
-            ace_passed, ace_viols, ace_log, ace_avail = self.run_daisy_ace(epub_path)
-        else:
-            ace_passed, ace_viols, ace_avail = True, {}, False
-            ace_log = "Ace disabled for this run."
+        try:
+            if run_all or "epubcheck" in selected:
+                ep_passed, ep_errs, ep_log, ep_avail = self.run_epubcheck(
+                    epub_path, work_dir=str(root)
+                )
+            else:
+                ep_passed, ep_errs, ep_avail = True, 0, False
+                ep_log = "EPUBCheck disabled for this run."
+
+            if run_all or "ace" in selected:
+                ace_passed, ace_viols, ace_log, ace_avail = self.run_daisy_ace(
+                    epub_path, out_dir=str(root / "ace")
+                )
+            else:
+                ace_passed, ace_viols, ace_avail = True, {}, False
+                ace_log = "Ace disabled for this run."
+        finally:
+            if tmp is not None:
+                try:
+                    tmp.cleanup()
+                except OSError:  # pragma: no cover - Windows file locks
+                    pass
 
         disabled_note = f" (disabled: {', '.join(disabled)})" if disabled else ""
         logs = (

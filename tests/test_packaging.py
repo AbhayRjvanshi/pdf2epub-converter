@@ -374,11 +374,12 @@ def test_epubcheck_warnings_do_not_fail_the_build(tmp_path, monkeypatch):
         stdout = ""
         stderr = ""
 
-    def fake_run(cmd, **kwargs):
+    def fake_run(cmd, timeout):
         Path(cmd[cmd.index("--json") + 1]).write_text(json.dumps(report))
         return FakeProc()
 
-    monkeypatch.setattr(pk.subprocess, "run", fake_run)
+    monkeypatch.setattr(pk, "resolve_tool", lambda cmd: "C:/fake/epubcheck")
+    monkeypatch.setattr(pk, "_run_with_tree_kill", fake_run)
     passed, errors, _, available = pk.DualValidator().run_epubcheck(str(epub_path))
     assert available and passed and errors == 0
 
@@ -394,11 +395,12 @@ def test_epubcheck_errors_do_fail_the_build(tmp_path, monkeypatch):
         stdout = ""
         stderr = ""
 
-    def fake_run(cmd, **kwargs):
+    def fake_run(cmd, timeout):
         Path(cmd[cmd.index("--json") + 1]).write_text(json.dumps(report))
         return FakeProc()
 
-    monkeypatch.setattr(pk.subprocess, "run", fake_run)
+    monkeypatch.setattr(pk, "resolve_tool", lambda cmd: "C:/fake/epubcheck")
+    monkeypatch.setattr(pk, "_run_with_tree_kill", fake_run)
     passed, errors, _, _ = pk.DualValidator().run_epubcheck(str(epub_path))
     assert not passed and errors == 1
 

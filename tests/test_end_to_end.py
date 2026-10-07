@@ -38,9 +38,9 @@ except ImportError:  # pragma: no cover
 # ---------------------------------------------------------------------------
 
 STRICT_VAL = os.getenv("REQUIRE_EPUBCHECK", "0") == "1"
-HAS_EPUBCHECK = shutil.which("epubcheck") is not None
+HAS_EPUBCHECK = pk.resolve_tool("epubcheck") is not None
 STRICT_ACE = os.getenv("REQUIRE_ACE", "0") == "1"
-HAS_ACE = shutil.which("ace") is not None
+HAS_ACE = pk.resolve_tool("ace") is not None
 RUN_SLOW = os.getenv("RUN_SLOW_TESTS", "0") == "1"
 HAS_RESOURCE = resource is not None  # Unix-only; no Windows equivalent used here
 
