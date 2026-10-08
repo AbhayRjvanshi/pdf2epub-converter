@@ -21,11 +21,11 @@ except ImportError:  # pragma: no cover - exercised on Windows CI
 import pytest
 from ebooklib import epub
 
-import confidence_router as cr
+from pdf2epub.engine import confidence_router as cr
 from pdf2epub.engine import driver
 import make_fixtures as mf
-import packaging_and_validation as pk
-import tier1_classifier as t1
+from pdf2epub.engine import packaging_and_validation as pk
+from pdf2epub.engine import tier1_classifier as t1
 
 try:
     import pymupdf as fitz

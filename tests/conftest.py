@@ -14,7 +14,7 @@ try:
 except ImportError:  # pragma: no cover
     import fitz  # noqa: E402
 
-import tier1_classifier as t1  # noqa: E402
+from pdf2epub.engine import tier1_classifier as t1  # noqa: E402
 
 
 @pytest.fixture(scope="session")

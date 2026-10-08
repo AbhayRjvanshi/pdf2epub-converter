@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 from ebooklib import epub
 
-import packaging_and_validation as pk
-from tier1_classifier import ElementType, ImageElement, StreamElement
+from pdf2epub.engine import packaging_and_validation as pk
+from pdf2epub.engine.tier1_classifier import ElementType, ImageElement, StreamElement
 
 PAGE_H = 680.0
 
@@ -304,7 +304,7 @@ def test_malformed_stream_content_is_recovered_before_epub_insertion(tmp_path):
 
 
 def test_malformed_stream_that_recovers_to_empty_fails_loudly(tmp_path, monkeypatch):
-    import tier2_llm_handler
+    from pdf2epub.engine import tier2_llm_handler
 
     broken = StreamElement(ElementType.PARAGRAPH, "p", "broken <strong>body", page_num=0)
     monkeypatch.setattr(tier2_llm_handler, "sanitize_and_validate_xhtml", lambda _body: "")

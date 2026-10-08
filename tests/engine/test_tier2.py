@@ -4,8 +4,8 @@ import json
 
 import pytest
 
-import tier2_llm_handler as t2
-from tier2_llm_handler import Tier2Handler, Tier2Request
+from pdf2epub.engine import tier2_llm_handler as t2
+from pdf2epub.engine.tier2_llm_handler import Tier2Handler, Tier2Request
 
 
 def digest(page_num=1, texts=("Heading", "Body text here")):

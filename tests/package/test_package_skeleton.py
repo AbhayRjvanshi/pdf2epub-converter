@@ -43,7 +43,7 @@ def test_import_needs_no_engine_or_optional_extras():
     )
     from pathlib import Path
 
-    src = Path(__file__).resolve().parent.parent / "src"
+    src = Path(__file__).resolve().parent.parent.parent / "src"
     proc = subprocess.run(
         [sys.executable, "-c", code],
         env={"PYTHONPATH": str(src), "PATH": "", "SYSTEMROOT": "C:\\Windows"},
@@ -57,7 +57,7 @@ def test_import_needs_no_engine_or_optional_extras():
 def test_module_execution_reports_version():
     from pathlib import Path
 
-    src = Path(__file__).resolve().parent.parent / "src"
+    src = Path(__file__).resolve().parent.parent.parent / "src"
     proc = subprocess.run(
         [sys.executable, "-m", "pdf2epub", "--version"],
         env={"PYTHONPATH": str(src), "SYSTEMROOT": "C:\\Windows"},

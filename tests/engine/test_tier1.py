@@ -4,8 +4,8 @@ import re
 
 import pytest
 
-import tier1_classifier as t1
-from tier1_classifier import ElementType
+from pdf2epub.engine import tier1_classifier as t1
+from pdf2epub.engine.tier1_classifier import ElementType
 
 
 # ---------------------------------------------------------------------------

@@ -2,8 +2,8 @@
 
 import pytest
 
-import confidence_router as cr
-from confidence_router import RoutingTarget
+from pdf2epub.engine import confidence_router as cr
+from pdf2epub.engine.confidence_router import RoutingTarget
 
 try:
     import pymupdf as fitz

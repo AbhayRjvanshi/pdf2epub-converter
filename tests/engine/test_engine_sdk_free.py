@@ -14,7 +14,7 @@ from pathlib import Path
 
 
 def test_importing_the_engine_pulls_no_sdk_and_no_providers():
-    src = Path(__file__).resolve().parent.parent / "src"
+    src = Path(__file__).resolve().parent.parent.parent / "src"
     code = (
         "import sys, importlib;"
         "importlib.import_module('pdf2epub.engine.driver');"
