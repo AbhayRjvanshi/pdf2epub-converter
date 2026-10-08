@@ -26,6 +26,7 @@ read past, a wrongly promoted line poisons the chapter split.
 from __future__ import annotations
 
 import re
+from html import escape
 
 __all__ = [
     "structural_heading_level",
@@ -34,6 +35,7 @@ __all__ = [
     "has_side_by_side_neighbour",
     "table_region",
     "in_table_region",
+    "build_table_html",
 ]
 
 # A leading isolated glyph (any bullet art), or an enumerator: "1.",
@@ -219,3 +221,181 @@ def in_table_region(region: tuple[float, float] | None, bbox: tuple) -> bool:
     if region is None:
         return False
     return bbox[1] < region[1] and bbox[3] > region[0]
+
+
+# ---------------------------------------------------------------------------
+# Table reconstruction (remediation Fix 10)
+# ---------------------------------------------------------------------------
+
+_ROW_OVERLAP_FRACTION = 0.3   # of the shorter line: same visual row
+_COLUMN_ALIGN_TOLERANCE = 0.6  # x font sizes: a cell continuation lines up
+
+
+def _same_row(a: tuple, b: tuple) -> bool:
+    overlap = min(a[3], b[3]) - max(a[1], b[1])
+    height = min(a[3] - a[1], b[3] - b[1])
+    return height > 0 and overlap > height * _ROW_OVERLAP_FRACTION
+
+
+def build_table_html(
+    lines: list[dict],
+    *,
+    size_hint: float = 10.0,
+    already_escaped: bool = False,
+) -> str | None:
+    """Semantic table markup from a region's lines, or None.
+
+    Rows are vertical band clusters; distinct x positions within a row
+    are distinct cells. Two rules absorb the shapes real extractors
+    produce without fabricating structure:
+
+    * a single-line row that x-aligns with a cell of the grid row
+      above continues that cell (a wrapped cell);
+    * a single-line row that spans the full column extent is a merged
+      header/footer bar and carries the honest colspan.
+
+    Anything else that leaves the grid ragged returns None -- the
+    caller then preserves the content as prose (the plan's "never
+    fabricate cell relationships" rule).
+
+    ``lines`` carry ``bbox`` and ``text`` plus an optional ``bold``
+    flag; a fully bold first grid row becomes the table head. Text is
+    raw and escaped here exactly once, unless the caller's pipeline
+    already yields escaped XHTML (Tier 1's classified lines).
+
+    Returns ``(markup, strays)``: leading single lines that precede
+    any proven grid row (a caption, a heading above the table) are
+    ejected to ``strays`` so the caller keeps them as prose instead of
+    letting them poison the grid. ``markup`` is None when the grid
+    itself cannot be proven.
+    """
+    if len(lines) < 2:
+        return None, list(lines)
+
+    ordered = sorted(lines, key=lambda d: (d["bbox"][1], d["bbox"][0]))
+    rows: list[list[dict]] = []
+    for ln in ordered:
+        if rows and any(_same_row(prev["bbox"], ln["bbox"]) for prev in rows[-1]):
+            rows[-1].append(ln)
+        else:
+            rows.append([ln])
+    for row in rows:
+        row.sort(key=lambda d: d["bbox"][0])
+
+    # Table vs. columns: cleanly aligned side-by-side lines are exactly
+    # what a two-column article looks like, and the plan forbids
+    # guessing cell relationships the geometry does not prove. A
+    # *staggered* row -- cells whose bands overlap imperfectly, the way
+    # real extracted tables interleave -- is evidence no article
+    # produces, because wrapped prose keeps its column baselines.
+    multi_rows = [r for r in rows if len(r) > 1]
+    if not multi_rows:
+        return None
+    for row in multi_rows:
+        for a, b in zip(row, row[1:]):
+            overlap = min(a["bbox"][3], b["bbox"][3]) - max(a["bbox"][1], b["bbox"][1])
+            height = min(a["bbox"][3] - a["bbox"][1], b["bbox"][3] - b["bbox"][1])
+            if height > 0 and overlap < height * 0.5:
+                break
+        else:
+            continue
+        break
+    else:
+        return None, []  # every pair cleanly aligned: this could be prose columns
+
+    tol = size_hint * _COLUMN_ALIGN_TOLERANCE
+    resolved: list[list[dict]] = []
+    strays: list[dict] = []
+    grid_started = False
+    for row in rows:
+        if len(row) > 1:
+            resolved.append(list(row))
+            grid_started = True
+            continue
+        lone = row[0]
+        if not grid_started:
+            # nothing proven yet: a caption or heading above the grid
+            # goes back to prose rather than poisoning the grid
+            strays.append(lone)
+            continue
+        prev_multi = next(
+            (r for r in reversed(resolved) if len(r) > 1), None
+        )
+        if prev_multi is not None:
+            x0s = [c["bbox"][0] for c in prev_multi]
+            x1s = [c["bbox"][2] for c in prev_multi]
+            # a merged bar spans every column: test before column
+            # continuation, because a spanning line also x-aligns with
+            # the first column
+            if (
+                lone["bbox"][0] <= min(x0s) + tol
+                and lone["bbox"][2] >= max(x1s) - tol
+            ):
+                resolved.append([{**lone, "_span": True}])
+                continue
+            column = next(
+                (
+                    i for i, cell in enumerate(prev_multi)
+                    if abs(lone["bbox"][0] - cell["bbox"][0]) <= tol
+                ),
+                None,
+            )
+            if column is not None:
+                # wrapped cell: continue the cell directly above
+                cell = prev_multi[column]
+                prev_multi[column] = {
+                    **cell,
+                    "text": cell["text"] + " " + lone["text"],
+                    "bbox": (
+                        cell["bbox"][0], cell["bbox"][1],
+                        max(cell["bbox"][2], lone["bbox"][2]),
+                        lone["bbox"][3],
+                    ),
+                }
+                continue
+        resolved.append([lone])  # unexplained: forces the ragged None
+
+    grid = [r for r in resolved if len(r) > 1]
+    if not grid:
+        return None, strays + [c for r in resolved for c in r]
+    width = len(grid[0])
+    if any(len(r) != width for r in grid):
+        return None, strays + [c for r in resolved for c in r]
+    if any(
+        len(row) < 2 and not row[0].get("_span") for row in resolved
+    ):
+        # an unexplained lone line is not a fabricated row; every
+        # selected line returns to prose
+        return None, strays + [c for r in resolved for c in r]
+
+    def _text(cell: dict) -> str:
+        inner = cell["text"].strip()
+        return inner if already_escaped else escape(inner, quote=False)
+
+    first_grid = resolved[0] if len(resolved[0]) > 1 else None
+    header_row = first_grid if (
+        first_grid is not None
+        and len(grid) > 1
+        and all(cell.get("bold") for cell in first_grid)
+    ) else None
+
+    parts: list[str] = []
+    seen_body = False
+    for row in resolved:
+        if row is header_row:
+            cells = "".join(f"<th>{_text(cell)}</th>" for cell in row)
+            parts.append(f"<thead><tr>{cells}</tr></thead>")
+            continue
+        if row[0].get("_span"):
+            parts.append(f'<tr><td colspan="{width}">{_text(row[0])}</td></tr>')
+            seen_body = True
+            continue
+        cells = "".join(f"<td>{_text(cell)}</td>" for cell in row)
+        parts.append(f"<tr>{cells}</tr>")
+        seen_body = True
+    if not parts:
+        return None, strays + [c for r in resolved for c in r]
+    body = "".join(parts)
+    if seen_body and "<tbody>" not in body:
+        body = f"<tbody>{body}</tbody>"
+    return body, strays

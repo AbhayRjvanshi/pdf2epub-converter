@@ -413,6 +413,36 @@ def build_nested_lists_doc(path: str | Path) -> str:
     return str(path)
 
 
+def build_staggered_table_doc(path: str | Path) -> str:
+    """A staggered-cell table page: digest-routed, rebuilt offline (Fix 10).
+
+    The right-hand cells sit 8pt lower than their row partners -- the
+    imperfect band overlap real extracted tables show -- which is the
+    evidence that separates a table from a two-column article. The
+    87pt gutter is past the router's columnar threshold, so the page
+    takes the digest path; offline, the fallback must rebuild the grid
+    instead of flattening it into prose.
+    """
+    doc = fitz.open()
+    p = doc.new_page(width=PAGE_W, height=PAGE_H)
+    p.insert_text((MARGIN_X, 90.0), "Parts Catalog",
+                  fontname="helv", fontsize=BODY_SIZE)
+    rows = [
+        ("Widget frame assembly", "aluminium housing, 12 mm bore"),
+        ("Bolt set with washers", "steel thread, M4 by 16 mm"),
+        ("Panel clip retainers", "nylon quick-release pair"),
+    ]
+    y = 125.0
+    for left, right in rows:
+        p.insert_text((MARGIN_X, y), left, fontname="helv", fontsize=BODY_SIZE)
+        p.insert_text((240.0, y + 8.0), right, fontname="helv", fontsize=BODY_SIZE)
+        y += 30.0
+    put_paragraph(p, MARGIN_X, y + 10, COL_W, greedy_wrap(FIVE_LINE_TEXT, COL_W))
+    doc.save(str(path))
+    doc.close()
+    return str(path)
+
+
 def build_special_chars_doc(path: str | Path) -> str:
     """Ampersands, angle brackets, quotes and a query-string URL.
 
@@ -465,6 +495,7 @@ def build_all(out_dir: str | Path) -> dict[str, str]:
         ),
         "running_header": build_running_header_doc(out / "running_header.pdf"),
         "nested_lists": build_nested_lists_doc(out / "nested_lists.pdf"),
+        "staggered_table": build_staggered_table_doc(out / "staggered_table.pdf"),
         "special_chars": build_special_chars_doc(out / "special_chars.pdf"),
     }
 

@@ -217,3 +217,68 @@ def test_nested_lists_fixture_end_to_end(fixture_pdfs, tmp_path):
     assert "<li>join the frames</li></ul></li>" in body
     assert "</ul></li><li>Train the model" in body
     assert "<li>alpha option</li><li>beta option</li>" in body
+
+
+def test_staggered_table_rebuilds_offline(fixture_pdfs, tmp_path):
+    """Fix 10: a staggered table page becomes a semantic table offline.
+
+    Staggered cells fall under the router's columnar-overlap threshold,
+    so this page legitimately stays on Tier 1 -- where extract_tables
+    rebuilds the proven grid. The geometry a grid cannot explain stays
+    prose (aligned pairs, ragged rows), per the plan's rule.
+    """
+    import zipfile
+
+    from pdf2epub.engine import driver
+
+    out = tmp_path / "table.epub"
+    result = driver.run_pipeline(
+        fixture_pdfs["staggered_table"], str(out),
+        llm_adapter=None, verbose=False, cache_dir=str(tmp_path / "cache"),
+    )
+    assert result["success"] is True
+    build = result["build"]
+    assert build.metrics.tables == 1
+    assert build.a11y.has_tables is True
+    with zipfile.ZipFile(out) as zf:
+        body = "".join(
+            zf.read(n).decode("utf-8")
+            for n in zf.namelist()
+            if n.endswith(".xhtml")
+        )
+    assert "<td>Widget frame assembly</td>" in body
+    assert "<td>aluminium housing, 12 mm bore</td>" in body
+    assert "<td>Bolt set with washers</td>" in body
+    assert "<td>nylon quick-release pair</td>" in body
+    # the surrounding prose survives outside the grid
+    assert "Parts Catalog" in body
+    assert "paying reader" in body
+
+
+def test_digest_fallback_rebuilds_staggered_tables():
+    """The same geometry on a digest-routed page: the offline fallback
+    rebuilds the grid there too (Fix 10, digest seam)."""
+    from pdf2epub.engine.tier2_llm_handler import Tier2Request, _digest_fallback
+
+    def d(line_id, block, bbox, text, bold=False):
+        return {
+            "line_id": line_id, "block_id": block, "bbox": bbox,
+            "size": 10.0, "bold": bold, "italic": False, "text": text,
+        }
+
+    digest = [
+        d(1, 1, (54.0, 90.0, 200.0, 104.0), "Parts Listing"),
+        d(2, 2, (54.0, 120.0, 160.0, 134.0), "Widget frame assembly"),
+        d(3, 2, (240.0, 128.0, 380.0, 142.0), "aluminium housing, 12 mm bore"),
+        d(4, 3, (54.0, 150.0, 160.0, 164.0), "Bolt set with washers"),
+        d(5, 3, (240.0, 158.0, 380.0, 172.0), "steel thread, M4 by 16 mm"),
+        d(6, 4, (54.0, 180.0, 160.0, 194.0), "Panel clip retainers"),
+        d(7, 4, (240.0, 188.0, 380.0, 202.0), "nylon quick-release pair"),
+    ]
+    xhtml = _digest_fallback(
+        Tier2Request(page_num=1, layout_digest=digest, page_width=420.0)
+    )
+    assert "<table>" in xhtml
+    assert "<td>Widget frame assembly</td>" in xhtml
+    assert "<td>nylon quick-release pair</td>" in xhtml
+    assert "<h4>Parts Listing</h4>" in xhtml

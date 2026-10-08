@@ -30,6 +30,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 
 from .heading_signals import (
+    build_table_html,
     in_table_region,
     structural_heading_level,
     table_region,
@@ -900,6 +901,56 @@ def _collect_code_blocks(
     return out
 
 
+def extract_tables(
+    lines: list[ClassifiedLine], profile: DocumentFontProfile, page_index: int
+) -> tuple[list[StreamElement], list[ClassifiedLine]]:
+    """Rebuild proven table grids as BLOCK elements (remediation Fix 10).
+
+    Tier-1 table pages exist: staggered cells fall under the router's
+    columnar-overlap threshold and score high. Only the geometry the
+    strict region proves becomes a table -- aligned pairs stay prose
+    (they are indistinguishable from columns), and a grid the builder
+    cannot explain keeps every line for the paragraph path.
+    """
+    if not lines:
+        return [], lines
+    bboxes = [ln.bbox for ln in lines]
+    sizes = [ln.size for ln in lines]
+    line_height = profile.line_height or (profile.body_size * 1.2)
+    strict = table_region(bboxes, sizes, pad=0.0, overlap_limit=3.0 * line_height)
+    if strict is None:
+        return [], lines
+    table_lines = [
+        ln for ln in lines
+        if in_table_region(strict, ln.bbox) and ln.raw_text.strip()
+    ]
+    if len(table_lines) < 2:
+        return [], lines
+    html, strays = build_table_html(
+        [
+            {"bbox": ln.bbox, "text": ln.text, "bold": ln.bold, "_line": ln}
+            for ln in table_lines
+        ],
+        size_hint=sizes[0] if sizes else 10.0,
+        already_escaped=True,
+    )
+    if html is None:
+        return [], lines
+    table = StreamElement(
+        element_type=ElementType.BLOCK,
+        tag="table",
+        content=html,
+        bbox=(0.0, strict[0], 0.0, strict[1]),
+        page_num=page_index,
+        block_id=-1,
+    )
+    consumed = {id(ln) for ln in table_lines}
+    stray_lines = [d["_line"] for d in strays]
+    rest = [ln for ln in lines if id(ln) not in consumed] + stray_lines
+    rest.sort(key=lambda ln: (round(ln.bbox[1], 1), round(ln.bbox[0], 1)))
+    return [table], rest
+
+
 def build_page_stream(
     page: "fitz.Page",
     profile: DocumentFontProfile,
@@ -907,9 +958,11 @@ def build_page_stream(
     spool_dir: str | None = None,
 ) -> list[StreamElement]:
     lines = classify_page(page, profile)
+    tables, lines = extract_tables(lines, profile, page_index)
     units = build_paragraphs(lines, profile)
     elements = _collect_code_blocks(units, page_index, profile.line_height)
     elements.extend(extract_images(page, page_index, lines, spool_dir))
+    elements.extend(tables)
     # Restore spatial order: images were appended after text.
     elements.sort(key=lambda e: (round(e.bbox[1], 1), round(e.bbox[0], 1)))
     return elements

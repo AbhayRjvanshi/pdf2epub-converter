@@ -34,6 +34,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from .heading_signals import (
+    build_table_html,
     in_table_region,
     structural_heading_level,
     table_region,
@@ -414,6 +415,12 @@ def _digest_fallback(req: Tier2Request) -> str:
     test Tier 1 uses, rewritten against the digest's own bbox fields). Not as
     good as a model, but a real step up from one <p> per raw line, and never
     worse than dropping the page.
+
+    Pages that carry table geometry (the router sends every columnar
+    layout here) get one better still: the region's lines are rebuilt
+    as a semantic table (remediation Fix 10), and only when the
+    geometry proves a grid -- otherwise the prose fallback keeps the
+    content safe.
     """
     digest = req.layout_digest or []
     if not digest:
@@ -426,19 +433,59 @@ def _digest_fallback(req: Tier2Request) -> str:
     ordered = sorted(
         digest, key=lambda d: (_column_of(d, two_col, midpoint), d["bbox"][1], d["bbox"][0])
     )
-    paragraphs = _merge_digest_lines(ordered, two_col, midpoint, line_height, margins)
 
-    out: list[str] = []
+    lh = line_height or (max(d["size"] for d in digest) * 1.2 if digest else 12.0)
     sizes = [d["size"] for d in digest]
+    # the padded region suppresses heading promotion around tables; the
+    # strict (unpadded) extent selects the lines the geometry actually
+    # proves belong to the grid.
+    padded_region = table_region(
+        [d["bbox"] for d in ordered], sizes, pad=lh, overlap_limit=3.0 * lh
+    )
+    strict_region = table_region(
+        [d["bbox"] for d in ordered], sizes, pad=0.0, overlap_limit=3.0 * lh
+    )
+    table_lines = [d for d in ordered if in_table_region(strict_region, d["bbox"])]
+    table_html = None
+    strays: list[dict] = []
+    if strict_region is not None and len(table_lines) >= 2:
+        table_html, strays = build_table_html(
+            table_lines, size_hint=sizes[0] if sizes else 10.0
+        )
+
+    if table_html is not None:
+        selected = {id(d) for d in table_lines}
+        prose = [
+            d for d in ordered if id(d) not in selected
+        ] + strays
+        before, after = [], []
+        for d in prose:
+            (before if d["bbox"][1] < strict_region[0] else after).append(d)
+        head = _merge_digest_lines(before, two_col, midpoint, line_height, margins)
+        tail = _merge_digest_lines(after, two_col, midpoint, line_height, margins)
+        body = _render_digest_paragraphs(head, margins, line_height) \
+            + [f"<table>{table_html}</table>"] \
+            + _render_digest_paragraphs(tail, margins, line_height)
+        return "\n".join(body)
+
+    paragraphs = _merge_digest_lines(ordered, two_col, midpoint, line_height, margins)
+    body = _render_digest_paragraphs(
+        paragraphs, margins, line_height, padded_region=padded_region
+    )
+    return "\n".join(body)
+
+
+def _render_digest_paragraphs(
+    paragraphs: list[dict],
+    margins: dict,
+    line_height: float,
+    padded_region: tuple[float, float] | None = None,
+) -> list[str]:
+    """Merged digest paragraphs -> XHTML block strings (Fix K + Fix 12)."""
+    sizes = [p["size"] for p in paragraphs] or [10.0]
     body = max(set(sizes), key=sizes.count) if sizes else 10.0
     bboxes = [p["bbox"] for p in paragraphs]
-    lh = line_height or (body * 1.2)
-    region = table_region(
-        bboxes,
-        [p["size"] for p in paragraphs],
-        pad=lh,
-        overlap_limit=3.0 * lh,
-    )
+    out: list[str] = []
     for idx, d in enumerate(paragraphs):
         text = escape(d["text"], quote=False)
         ratio = d["size"] / body if body else 1.0
@@ -454,7 +501,9 @@ def _digest_fallback(req: Tier2Request) -> str:
             # model-mediated output stay coherent. Only single-line
             # paragraphs outside the table/column region qualify.
             level = None
-            if d.get("line_count", 1) == 1 and not in_table_region(region, d["bbox"]):
+            if d.get("line_count", 1) == 1 and not in_table_region(
+                padded_region, d["bbox"]
+            ):
                 level = structural_heading_level(
                     d["text"], size=d["size"], body_size=body,
                     bold=bool(d.get("bold")),
@@ -462,7 +511,7 @@ def _digest_fallback(req: Tier2Request) -> str:
             out.append(
                 f"<h{level}>{text}</h{level}>" if level else f"<p>{text}</p>"
             )
-    return "\n".join(out)
+    return out
 
 
 def _vision_fallback(req: Tier2Request) -> str:

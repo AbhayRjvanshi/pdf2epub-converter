@@ -17,6 +17,7 @@ remaining work landed in four stages, one commit per boundary.
 | `7e98b2d` | 2 — chapter policy | `heading_roles` TITLE/MAJOR/MINOR/LEAF inference; chapters split at majors only; single-chapter documents keep full nav; nav lists every heading anchor |
 | `856992c` | 3 — normalizer | `semantic_normalizer`: URL linkification + list reconstruction (ordered/unordered, starts, nesting, page-spanning runs, wrapped tails) |
 | `2ebc68a` | 4 — validation & presentation | `StructureMetrics` + driver quality report; double-escape and nav-fragment structural checks; reflowable CSS (lists, h4–h6, thead, links) + no-page-break audit |
+| (this pass) | 5 — Fix 10, tables | `build_table_html` in `heading_signals` + two seams: Tier-1 `extract_tables` (staggered grids score high and legitimately stay heuristic) and the digest fallback (every columnar layout lands there offline). Fixture: `staggered_table` |
 
 ## Six-page offline repro, end to end
 
@@ -42,16 +43,39 @@ did not (17 deterministic headings, derived title) — at zero API cost.
 
 ## Fix-by-fix disposition
 
-Done in this pass: 2, 4, 5, 6, 7 (role-based), 12 (all three remaining
-hazards), 13, 14, 15, 16 (structural-quality extensions), 17 (fixtures:
-`special_chars`, `nested_lists` + the Phase K set), 19.
+Done in this pass: 2, 4, 5, 6, 7 (role-based), 10 (deterministic grids,
+both reachable seams), 12 (all three remaining hazards), 13, 14, 15, 16
+(structural-quality extensions), 17 (fixtures: `special_chars`,
+`nested_lists`, `staggered_table` + the Phase K set), 19.
 Already satisfied before this pass: 1 (extend, not rebuild — the stream
 *is* the contract), 3, 8, 11, 20.
-Deferred by decision: 10 (Tier-1 table reconstruction — content is
-preserved as text today; Tier-2/Kimi produce semantic tables), 9
-(non-monospace code detection), 18 (visual regression — implemented as
-the structural heuristics of Fix 16 plus the CSS audit test, per the
-agreed "heuristic checks" scope).
+Deferred by decision: 9 (non-monospace code detection), 18 (visual
+regression — implemented as the structural heuristics of Fix 16 plus
+the CSS audit test, per the agreed "heuristic checks" scope).
+
+## Table reconstruction scope (Fix 10)
+
+The builder reconstructs a grid only when the geometry proves it:
+
+* **staggered cells** — side-by-side lines whose vertical bands overlap
+  imperfectly (the shape real extracted tables show) are the evidence
+  that separates a table from a two-column article;
+* **cleanly aligned pairs return None** — they are geometrically
+  indistinguishable from two-column prose, and the plan forbids
+  guessing cell relationships;
+* leading single lines above the grid (captions, headings) are ejected
+  back to prose instead of poisoning the grid;
+* wrapped cells continue their column, spanning bars get an honest
+  `colspan`, a fully bold first grid row becomes `<thead>`, and
+  anything ragged after those explanations keeps every line as prose.
+
+Reached by both deterministic seams: Tier 1 (`extract_tables`) —
+staggered cells fall *under* the router's columnar-overlap threshold
+and legitimately stay heuristic — and the offline digest fallback
+(every columnar layout routes there). The six-page document's own
+table page remains vision-preserved offline by design; the
+`staggered_table` fixture pins the rebuilt grid end to end
+(`tables=1`, `<td>` cells, surrounding prose intact, EPUBCheck clean).
 
 ## Known approximations (deliberate)
 

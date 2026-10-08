@@ -16,6 +16,7 @@ import pytest
 from pdf2epub.engine import tier1_classifier as t1
 from pdf2epub.engine import tier2_llm_handler as t2
 from pdf2epub.engine.heading_signals import (
+    build_table_html,
     has_side_by_side_neighbour,
     in_table_region,
     looks_like_table_row,
@@ -269,3 +270,91 @@ def test_promoted_running_header_is_stripped_as_furniture(fixture_pdfs, tmp_path
     assert "running header text" in build.stripped_furniture
     assert "Running Header Text" not in _body(out)
     assert build.a11y.heading_count == 0
+
+
+# ---------------------------------------------------------------------------
+# Table reconstruction (remediation Fix 10)
+# ---------------------------------------------------------------------------
+
+
+def _tline(x0, y0, x1, y1, text, bold=False):
+    return {"bbox": (x0, y0, x1, y1), "text": text, "bold": bold}
+
+
+def test_staggered_grid_becomes_a_semantic_table():
+    lines = [
+        _tline(54, 100, 130, 114, "Dataset"),
+        _tline(200, 108, 340, 122, "IMDB reviews set"),
+        _tline(54, 140, 130, 154, "Platform"),
+        _tline(200, 148, 340, 162, "Kaggle"),
+    ]
+    html, strays = build_table_html(lines, size_hint=10.0)
+    assert html is not None
+    assert "<td>Dataset</td><td>IMDB reviews set</td>" in html
+    assert "<td>Platform</td><td>Kaggle</td>" in html
+    assert "<tbody>" in html and "<thead>" not in html
+
+
+def test_cleanly_aligned_pairs_stay_prose_columns():
+    # A two-column article is geometrically identical to an aligned
+    # table: the plan forbids guessing cell relationships.
+    lines = [
+        _tline(54, 100, 190, 114, "left column line one"),
+        _tline(210, 100, 350, 114, "right column line one"),
+        _tline(54, 114, 190, 128, "left column line two"),
+        _tline(210, 114, 350, 128, "right column line two"),
+    ]
+    html, _ = build_table_html(lines, size_hint=10.0)
+    assert html is None
+
+
+def test_wrapped_cell_continues_its_column():
+    lines = [
+        _tline(54, 100, 130, 114, "Dataset"),
+        _tline(200, 108, 340, 122, "IMDB reviews set"),
+        _tline(200, 122, 340, 136, "fifty thousand rows"),
+        _tline(54, 140, 130, 154, "Platform"),
+        _tline(200, 148, 340, 162, "Kaggle"),
+    ]
+    html, _ = build_table_html(lines, size_hint=10.0)
+    assert "<td>IMDB reviews set fifty thousand rows</td>" in html
+
+
+def test_spanning_single_line_row_gets_an_honest_colspan():
+    lines = [
+        _tline(54, 100, 130, 114, "Dataset"),
+        _tline(200, 108, 340, 122, "IMDB"),
+        _tline(54, 122, 340, 136, "Merged footer note"),
+        _tline(54, 140, 130, 154, "Platform"),
+        _tline(200, 148, 340, 162, "Kaggle"),
+    ]
+    html, _ = build_table_html(lines, size_hint=10.0)
+    assert '<td colspan="2">Merged footer note</td>' in html
+
+
+def test_bold_first_grid_row_becomes_thead():
+    lines = [
+        _tline(54, 100, 130, 114, "Field", bold=True),
+        _tline(200, 108, 340, 122, "Value", bold=True),
+        _tline(54, 140, 130, 154, "Dataset"),
+        _tline(200, 148, 340, 162, "Kaggle"),
+    ]
+    html, _ = build_table_html(lines, size_hint=10.0)
+    assert "<thead><tr><th>Field</th><th>Value</th></tr></thead>" in html
+
+
+def test_unexplainable_ragged_rows_return_none():
+    lines = [
+        _tline(54, 100, 130, 114, "Dataset"),
+        _tline(200, 108, 340, 122, "IMDB"),
+        _tline(300, 124, 360, 138, "odd fragment"),
+    ]
+    html, _ = build_table_html(lines, size_hint=10.0)
+    assert html is None
+
+
+def test_two_lines_do_not_make_a_table():
+    html, _ = build_table_html(
+        [_tline(54, 100, 130, 114, "a")], size_hint=10.0
+    )
+    assert html is None
