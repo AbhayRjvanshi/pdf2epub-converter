@@ -11,7 +11,7 @@ clean (0 fatals / 0 errors / 0 warnings)**.
 
 > A complete end-to-end manual — installation, every command and flag, the
 > interactive session, credentials, configuration, validation,
-> troubleshooting — lives in [docs/USER_GUIDE.md](docs/USER_GUIDE.md).
+> troubleshooting — lives in [USER_GUIDE.md](USER_GUIDE.md).
 
 ---
 

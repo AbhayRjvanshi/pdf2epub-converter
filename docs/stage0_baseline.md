@@ -1,7 +1,10 @@
 # Stage-0 Frozen Regression Baseline
 
-Offline conversion baseline recorded 2026-10-08, per Phase A of
-[PDF_to_EPUB_Stabilization_and_Fix_Sequencing.md](PDF_to_EPUB_Stabilization_and_Fix_Sequencing.md).
+Offline conversion baseline recorded 2026-10-08 (Phase A of the original
+stabilization sequence; the sequencing plan itself has since been
+retired — its outcome lives in
+[kimi_k3_conversion_record.md](kimi_k3_conversion_record.md) and
+[remediation_record.md](remediation_record.md)).
 
 ## Freeze rule
 
