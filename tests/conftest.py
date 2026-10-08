@@ -3,9 +3,9 @@ from pathlib import Path
 
 import pytest
 
-ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "tests"))
+# The package itself comes from `pythonpath = src` (pytest.ini); this insert
+# only makes the test-side fixture generator importable from any test module.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import make_fixtures  # noqa: E402
 
