@@ -70,6 +70,48 @@ Headings extracted by Kimi do not make Phase K (deterministic Tier-1
 heading signals) obsolete: Tier-1 pages — the majority of any document —
 still emit zero headings offline, and offline mode must not regress.
 
+## Post-Phase K/L/M offline repro (same six-page PDF)
+
+After the deterministic semantic work (Phases K, L, M), the *offline*
+engine reproduces what only the model delivered at Stage 0 — on the
+same source, provider `none`, new output file (the frozen Stage-0
+artifact is untouched):
+
+| Metric | Stage 0 (frozen) | Kimi K3 (Phase H) | Offline after K/L/M |
+|---|---|---|---|
+| headings | 0 | 6 | **17** (deterministic, zero-cost) |
+| dc:title | Untitled Publication | Untitled Publication | **Artificial Intelligence** |
+| chapters | 1 | 2 | 18 |
+| nav | empty | 6 entries | 17 entries, heading-derived |
+| EPUBCheck | skipped | skipped | **PASS, 0 errors** |
+
+All 17 promoted headings are real section headings; the one
+borderline case ('Dataset Details', printed within one line height of
+its table) is conservatively kept as a paragraph, per the plan's
+"prefer paragraph semantics over a bad heading guess" rule. A lone
+code token (`MultinomialNB(alpha=0.5)`) and the table region
+(including merged "Label Value" rows) are correctly rejected; the
+ampersand in 'Netflix Movies & TV Shows Analysis' renders exactly once
+in the navigation (fixed double-escape).
+
+Verification: 17/17 nav entries match the promoted headings;
+`epubcheck : PASS errors=0` (real EPUBCheck 5.1.0, per Phase J).
+
+## Regression corpus policy
+
+Committed (synthetic, in `tests/make_fixtures.py`): text-heavy,
+two-column, interleaved columns, scanned, no-heading, structural
+headings (Phase K classes: lists, bold sentence, table with header +
+split + merged cells), running-header, figure + caption, code, and a
+500-page scale book.
+
+External (never committed; `*.pdf`/`*.epub` are gitignored): the
+six-page source PDF and both EPUB artifacts recorded in
+[stage0_baseline.md](stage0_baseline.md) and this file. The plan's
+Phase Q classes (academic paper, magazine-style, long document,
+poor-quality scan) are collected outside the repository and hashed
+when added.
+
 ## Phase J — real validator results
 
 EPUBCheck 5.1.0 (pinned to match CI) installed into the user's npm
