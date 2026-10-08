@@ -17,7 +17,7 @@ def test_catalog_has_user_facing_openai_and_anthropic():
 
 def test_every_profile_declares_a_known_api_style():
     for profile in PROFILES:
-        assert profile.api_style in {"openai", "anthropic"}, profile.provider_id
+        assert profile.api_style in {"openai", "anthropic", "nvidia"}, profile.provider_id
 
 
 def test_every_model_belongs_to_its_profile():
@@ -36,6 +36,9 @@ def test_shipped_defaults_cover_both_routes():
     claude = _by_id("anthropic").models[0]
     assert claude.model_id == "claude-sonnet-4-5"
     assert supports_digest(claude) and supports_vision(claude)
+
+    for model in _by_id("nvidia").models:
+        assert supports_digest(model) and supports_vision(model)
 
 
 def test_openrouter_is_a_hidden_data_only_entry():

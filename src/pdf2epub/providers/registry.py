@@ -46,10 +46,15 @@ def build_registry(profiles=None) -> Registry:
     """Build the production registry from profiles (data -> adapters)."""
     from .anthropic_style import AnthropicStyleAdapter
     from .catalog import PROFILES
+    from .nvidia_style import NvidiaStyleAdapter
     from .offline import OfflineProvider
     from .openai_style import OpenAIStyleAdapter
 
-    api_styles = {"openai": OpenAIStyleAdapter, "anthropic": AnthropicStyleAdapter}
+    api_styles = {
+        "openai": OpenAIStyleAdapter,
+        "anthropic": AnthropicStyleAdapter,
+        "nvidia": NvidiaStyleAdapter,
+    }
 
     registry = Registry()
     registry.register(OfflineProvider())

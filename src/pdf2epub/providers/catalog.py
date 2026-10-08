@@ -56,6 +56,42 @@ PROFILES: tuple[ProviderProfile, ...] = (
             ),
         ),
     ),
+    # NVIDIA inference endpoints speak the OpenAI chat-completions family
+    # but get a dedicated adapter (api_style "nvidia") so their wire
+    # behavior is owned by one module. supports_json_mode=False is the
+    # conservative default because response_format support varies model
+    # by model on NVIDIA endpoints; prompt discipline carries the envelope.
+    # Both shipped models are vision-eligible: image_input plus the
+    # structured_output guarantee cover the digest and vision routes.
+    ProviderProfile(
+        provider_id="nvidia",
+        display_name="NVIDIA",
+        api_style="nvidia",
+        credential_env_var="NVIDIA_API_KEY",
+        base_url="https://integrate.api.nvidia.com/v1",
+        compat=CompatOptions(
+            supports_json_mode=False,
+        ),
+        models=(
+            ModelDefinition(
+                provider_id="nvidia",
+                model_id="moonshotai/kimi-k3",
+                display_name="Kimi K3",
+                capabilities=ModelCapabilities(
+                    image_input=True, structured_output=True
+                ),
+            ),
+            ModelDefinition(
+                provider_id="nvidia",
+                model_id="deepseek-ai/deepseek-v4.1-flash",
+                display_name="DeepSeek V4.1 Flash",
+                capabilities=ModelCapabilities(
+                    image_input=True, structured_output=True
+                ),
+            ),
+        ),
+        user_facing=True,
+    ),
     # Data-only example of an OpenAI-compatible aggregator: a new provider
     # in a known API family is a catalog entry, never a new file. Hidden
     # from users until its profile is exercised against the live endpoint.
