@@ -31,7 +31,7 @@ import xml.etree.ElementTree as ET
 from collections import Counter, defaultdict
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field, replace
-from html import escape
+from html import escape, unescape
 from pathlib import Path
 
 from ebooklib import epub
@@ -303,6 +303,14 @@ def segment_chapters(
     elements: list[StreamElement],
 ) -> list[tuple[str, list[StreamElement]]]:
     """Split at the shallowest heading level present. Returns (title, elements)."""
+
+    def _display(content: str) -> str:
+        # The content stream is escaped XHTML; display titles (nav, NCX,
+        # chapter <title>) are re-escaped by ebooklib on serialisation,
+        # so the entity must be unescaped exactly once here or every
+        # "&" in a heading renders as "&" in the navigation.
+        return unescape(strip_tags(content)).strip() or "Untitled"
+
     split_level = choose_split_level(elements)
     chapters: list[tuple[str, list[StreamElement]]] = []
     current: list[StreamElement] = []
@@ -317,9 +325,9 @@ def segment_chapters(
         if starts_chapter and current:
             chapters.append((current_title, current))
             current = []
-            current_title = strip_tags(e.content).strip() or "Untitled"
+            current_title = _display(e.content)
         elif starts_chapter:
-            current_title = strip_tags(e.content).strip() or "Untitled"
+            current_title = _display(e.content)
         current.append(e)
 
     if current:
@@ -557,7 +565,7 @@ def build_epub_publication(
         sub_links = [
             epub.Link(
                 f"{file_name}#{e.anchor_id}",
-                strip_tags(e.content).strip() or "Section",
+                unescape(strip_tags(e.content)).strip() or "Section",
                 f"{chap.id}_{e.anchor_id}",
             )
             for e in elements

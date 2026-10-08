@@ -109,6 +109,8 @@ def structural_heading_level(
         return None
     if TRAILING_PUNCT_RE.search(plain):
         return None
+    if len(plain.split()) == 1 and any(c in plain for c in "()={}[]<>"):
+        return None  # a lone code-shaped token (identifier(...), key=value)
     if not (bold or _is_title_like(plain)):
         return None
     return 4

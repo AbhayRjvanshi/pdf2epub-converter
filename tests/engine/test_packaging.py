@@ -155,6 +155,19 @@ def test_chapters_split_at_the_shallowest_heading_level():
     assert len(chapters[0][1]) == 4
 
 
+def test_chapter_titles_unescape_entities_exactly_once():
+    # The stream is escaped XHTML ("&"); nav/NCX/chapter titles are
+    # re-escaped by ebooklib on serialisation, so segmentation must
+    # unescape exactly once -- or every "&" in a heading renders as
+    # "&amp;" in the navigation (Phase M verification defect).
+    stream = [
+        heading("<h1>Netflix &amp; TV</h1>", 1, 0, 90.0),
+        para("a", 0, 120.0),
+    ]
+    chapters = pk.segment_chapters(stream)
+    assert [t for t, _ in chapters] == ["Netflix & TV"]
+
+
 def test_documents_with_only_h2_split_on_h2():
     stream = [heading("A", 2, 0, 90.0), para("x", 0), heading("B", 2, 1, 90.0)]
     assert [t for t, _ in pk.segment_chapters(stream)] == ["A", "B"]

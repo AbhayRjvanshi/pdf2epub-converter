@@ -60,6 +60,8 @@ def test_title_shaped_body_size_lines_promote_to_h4():
         "Read this now.",                         # short emphasized sentence
         "Search keyword, then continue",          # trailing comma is prose
         "the text continues here",                # no case evidence
+        "MultinomialNB(alpha=0.5)",               # lone code-shaped token
+        "train_test_split(test_size=0.2)",        # identifier with arguments
     ],
 )
 def test_prose_and_list_shapes_stay_paragraphs(text):
