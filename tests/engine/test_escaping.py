@@ -134,6 +134,11 @@ def test_special_characters_survive_to_the_epub_exactly_once(
     assert DAM not in body
     # URL text intact, query ampersand single-escaped
     assert "https://example.com/?q=1" + E + "x=2" in body
+    # linkify (Fix 5): every unambiguous URL is an anchor exactly once,
+    # sentence punctuation outside, balanced parens kept
+    assert 'href="https://docs.example.com/guide">https://docs.example.com/guide</a>.' in body
+    assert 'href="https://docs.example.com/tags">https://docs.example.com/tags</a>)' in body
+    assert body.count("href=") >= 3
     # heading text and dc:title both single-escaped at serialisation
     assert ">Rock " + E + " Roll Survey<" in body
     assert "<dc:title>Rock " + E + " Roll Survey</dc:title>" in opf

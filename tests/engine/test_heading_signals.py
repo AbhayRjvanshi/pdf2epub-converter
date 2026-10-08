@@ -253,8 +253,10 @@ def test_structural_fixture_end_to_end(fixture_pdfs, tmp_path):
     for heading in ("Artificial Intelligence", "Dataset", "Project Title", "Objective"):
         assert f">{heading}<" in body
     assert "Field Value" in body and "<h4>Field Value</h4>" not in body
-    # list shapes stay prose
-    assert "1. Count of Movies vs TV Shows" in body
+    # list shapes become semantic lists (remediation Fix 6): the menu
+    # is one ordered list spanning its numbers, the bullets one ul
+    assert "<li>Count of Movies vs TV Shows</li>" in body
+    assert "<li>Fill missing country values with Unknown.</li>" in body
 
 
 def test_promoted_running_header_is_stripped_as_furniture(fixture_pdfs, tmp_path):

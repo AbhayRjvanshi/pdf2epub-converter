@@ -115,6 +115,7 @@ class StreamElement:
     css_class: str = ""
     anchor_id: str = ""
     image_data: ImageElement | None = None
+    attrs: str = ""  # extra opening-tag attributes, e.g. ol start="N"
 
     # -- rendering ---------------------------------------------------------
     def render(self) -> str:
@@ -131,7 +132,7 @@ class StreamElement:
         cls = f' class="{self.css_class}"' if self.css_class else ""
         if self.element_type is ElementType.BLOCK and self.tag.lower() == "table":
             return f'<div class="tbl"><table{self._id_attr()}{cls}>{self.content}</table></div>'
-        return f"<{self.tag}{self._id_attr()}{cls}>{self.content}</{self.tag}>"
+        return f"<{self.tag}{self._id_attr()}{cls}{self.attrs}>{self.content}</{self.tag}>"
 
     def _id_attr(self) -> str:
         return f' id="{self.anchor_id}"' if self.anchor_id else ""

@@ -40,6 +40,7 @@ log = logging.getLogger("packaging")
 
 from .tier1_classifier import ElementType, StreamElement, strip_tags
 from .heading_roles import MAJOR, infer_heading_depths
+from .semantic_normalizer import normalize_semantics
 
 # ---------------------------------------------------------------------------
 # Tunables
@@ -527,6 +528,13 @@ def build_epub_publication(
         clean_stream, furniture, welds = process_element_stream(stream, page_heights)
     else:
         clean_stream, furniture, welds = list(stream), [], 0
+
+    # The deterministic normalization boundary (remediation Fix 4):
+    # after welding (so items split across pages are whole) and before
+    # packaging (so segmentation, navigation and metrics all consume
+    # normalized semantics). Only stream evidence is used, never
+    # invented content.
+    clean_stream = normalize_semantics(clean_stream)
 
     assign_anchor_ids(clean_stream)
     a11y = analyse_accessibility(clean_stream)

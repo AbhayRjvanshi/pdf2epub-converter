@@ -322,11 +322,11 @@ def build_structural_headings_doc(path: str | Path) -> str:
         y = put_paragraph(p, MARGIN_X, y, COL_W, greedy_wrap(FIVE_LINE_TEXT, COL_W)) + 12
     for item in ("1. Count of Movies vs TV Shows", "2. Titles added per year", "11. Quit"):
         p.insert_text((MARGIN_X, y), item, fontname="helv", fontsize=BODY_SIZE)
-        y += LINE_H
+        y += LINE_H + 6  # list items are separate lines, not a wrapped paragraph
     y += 8
     for item in ("- Fill missing country values with Unknown.", "- Drop rows missing dates."):
         p.insert_text((MARGIN_X, y), item, fontname="helv", fontsize=BODY_SIZE)
-        y += LINE_H
+        y += LINE_H + 6
     p.insert_text(
         (MARGIN_X, y + 16), "This fragment matters deeply.",
         fontname="hebo", fontsize=BODY_SIZE,
@@ -399,6 +399,8 @@ def build_special_chars_doc(path: str | Path) -> str:
     lines = [
         'Tom & Jerry said 5 > 3 and 2 < 4, "quoted".',
         "See https://example.com/?q=1&x=2 for details.",
+        "Docs live at https://docs.example.com/guide.",
+        "Try the reference (see https://docs.example.com/tags) for help.",
         "Emphasis & nuance:",
     ]
     y = 120.0
