@@ -14,6 +14,7 @@ from pdf2epub.application import ConversionResult, PreflightResult, dispatch
 from pdf2epub.application.commands import SessionDeps
 from pdf2epub.application.session import Session
 from pdf2epub.config import AppConfig
+from pdf2epub.providers.errors import ProviderUnavailableError
 from pdf2epub.providers.registry import build_registry
 
 
@@ -254,22 +255,26 @@ def test_provider_uses_an_environment_credential():
     assert "Using credential from environment" in io.text
 
 
-def test_provider_manual_secret_keyring_and_save():
+def test_provider_manual_secret_verifies_then_keyring_and_save(monkeypatch):
     stored = []
+    registry = build_registry()
+    monkeypatch.setattr(
+        registry.get("openai"), "validate_credentials", lambda credential: True
+    )
+    monkeypatch.setattr(
+        commands,
+        "keyring_store",
+        lambda provider, secret: stored.append((provider, secret)) or True,
+    )
 
-    io = ScriptedIO(lines=["2", "n", "y", "y"], secrets=["sk-manual"])
+    io = ScriptedIO(lines=["2", "y", "y", "y"], secrets=["sk-manual"])
     session = Session()
     deps, _ = make_deps(environ={})
-    monkeypatch_store = lambda provider, secret: stored.append((provider, secret)) or True
-
-    original = commands.keyring_store
-    commands.keyring_store = monkeypatch_store
-    try:
-        result = dispatch("/provider", session=session, io=io, deps=deps)
-    finally:
-        commands.keyring_store = original
+    deps.registry = registry
+    result = dispatch("/provider", session=session, io=io, deps=deps)
 
     assert not result.failed
+    assert "Credentials verified." in io.text
     assert session.explicit_secret == "sk-manual"
     assert session.credential.source == "explicit"
     assert stored == [("openai", "sk-manual")]
@@ -277,8 +282,90 @@ def test_provider_manual_secret_keyring_and_save():
     assert "sk-manual" not in io.text  # secret never reaches output
 
 
+def _no_store_prompts(io):
+    return [p for p in io.prompts if "Store in OS keyring" in p]
+
+
+def test_provider_declined_verification_keeps_the_key_session_only(monkeypatch):
+    stored = []
+    monkeypatch.setattr(
+        commands,
+        "keyring_store",
+        lambda provider, secret: stored.append((provider, secret)) or True,
+    )
+    io = ScriptedIO(lines=["2", "n", "n"], secrets=["sk-manual"])
+    session = Session()
+    deps, _ = make_deps(environ={})
+    result = dispatch("/provider", session=session, io=io, deps=deps)
+
+    assert not result.failed
+    assert session.explicit_secret == "sk-manual"  # usable, this session only
+    assert session.credential.source == "explicit"
+    assert stored == []
+    assert "only verified credentials" in io.text
+    assert _no_store_prompts(io) == []  # the persistence prompt never appears
+
+
+def test_provider_rejected_credential_is_never_stored(monkeypatch):
+    stored = []
+    registry = build_registry()
+    monkeypatch.setattr(
+        registry.get("openai"), "validate_credentials", lambda credential: False
+    )
+    monkeypatch.setattr(
+        commands,
+        "keyring_store",
+        lambda provider, secret: stored.append((provider, secret)) or True,
+    )
+    io = ScriptedIO(lines=["2", "y", "n"], secrets=["sk-manual"])
+    session = Session()
+    deps = SessionDeps(
+        registry=registry,
+        config_manager=FakeConfigManager(),
+        service_factory=lambda: FakeService(),
+        environ={},
+    )
+    result = dispatch("/provider", session=session, io=io, deps=deps)
+
+    assert not result.failed
+    assert "Credentials rejected." in io.text
+    assert "only verified credentials" in io.text
+    assert stored == []
+    assert _no_store_prompts(io) == []
+
+
+def test_provider_unreachable_verification_never_stores(monkeypatch):
+    stored = []
+    registry = build_registry()
+
+    def unreachable(credential):
+        raise ProviderUnavailableError("could not reach provider")
+
+    monkeypatch.setattr(registry.get("openai"), "validate_credentials", unreachable)
+    monkeypatch.setattr(
+        commands,
+        "keyring_store",
+        lambda provider, secret: stored.append((provider, secret)) or True,
+    )
+    io = ScriptedIO(lines=["2", "y", "n"], secrets=["sk-manual"])
+    session = Session()
+    deps = SessionDeps(
+        registry=registry,
+        config_manager=FakeConfigManager(),
+        service_factory=lambda: FakeService(),
+        environ={},
+    )
+    result = dispatch("/provider", session=session, io=io, deps=deps)
+
+    assert not result.failed
+    assert "verification failed" in io.text
+    assert "only verified credentials" in io.text
+    assert stored == []
+    assert _no_store_prompts(io) == []
+
+
 def test_provider_change_clears_the_manual_secret():
-    io = ScriptedIO(lines=["2", "n", "n", "n", "1"], secrets=["sk-manual"])
+    io = ScriptedIO(lines=["2", "n", "n", "1"], secrets=["sk-manual"])
     session = Session()
     deps, _ = make_deps(environ={})
 

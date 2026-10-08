@@ -247,6 +247,7 @@ def _provider(session: Session, io: IO, deps: SessionDeps, args: str) -> Command
         session.refresh_credential(deps.registry, environ=deps.environ)
 
     answer = io.read_line("Verify credentials now? (y/N): ").strip()
+    verified = False
     if _yes(answer):
         credential_value = session.explicit_secret or (
             session.credential.credential if session.credential else None
@@ -256,10 +257,16 @@ def _provider(session: Session, io: IO, deps: SessionDeps, args: str) -> Command
         except ProviderError as exc:
             io.write(f"verification failed: {exc}")
         else:
+            verified = ok
             io.write("Credentials verified." if ok else "Credentials rejected.")
 
     if session.explicit_secret:
-        if _yes(io.read_line("Store in OS keyring for later sessions? (y/N): ").strip()):
+        if not verified:
+            # The keyring only ever receives a verified credential: an
+            # unverified key must never overwrite a stored one, and a
+            # declined verification keeps the key session-only.
+            io.write("Not stored: only verified credentials can be persisted.")
+        elif _yes(io.read_line("Store in OS keyring for later sessions? (y/N): ").strip()):
             stored = keyring_store(chosen, session.explicit_secret)
             io.write("Stored in keyring." if stored else "Keyring unavailable; not stored.")
 
