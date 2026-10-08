@@ -85,6 +85,27 @@ def test_explicit_title_overrides_pdf_metadata(fixture_pdfs, tmp_path):
     assert book.get_metadata("DC", "title")[0][0] == "My Own Title"
 
 
+def test_first_page_heading_supplies_title_when_metadata_is_absent(
+    fixture_pdfs, tmp_path
+):
+    out = tmp_path / "t.epub"
+    _run(fixture_pdfs["structural_headings"], out)
+    book = epub.read_epub(str(out))
+    # tier 3 of the chain: no embedded metadata, so the document's
+    # opening heading names it (stabilization plan, Phase L)
+    assert book.get_metadata("DC", "title")[0][0] == "Artificial Intelligence"
+
+
+def test_documents_without_heading_or_metadata_keep_the_sentinel(
+    fixture_pdfs, tmp_path
+):
+    out = tmp_path / "t.epub"
+    _run(fixture_pdfs["no_heading"], out)
+    book = epub.read_epub(str(out))
+    # conservative fallback: never invent a title (Phase L)
+    assert book.get_metadata("DC", "title")[0][0] == "Untitled Publication"
+
+
 def test_content_survives_the_round_trip(fixture_pdfs, tmp_path):
     out = tmp_path / "rt.epub"
     _run(fixture_pdfs["clean_book"], out)

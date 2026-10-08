@@ -395,6 +395,12 @@ def run_pipeline(
             )
             say("            no text layer found - every page will go to vision/OCR")
 
+        if title == "Untitled Publication":
+            candidate = _first_page_title_candidate(doc, profile)
+            if candidate:
+                title = candidate
+                say(f"            title from first-page heading: {title!r}")
+
         # -- Phase 3 -------------------------------------------------------
         say("\n[PHASE 3] Triage & routing")
         emit("phase_started", 3)
@@ -648,6 +654,68 @@ def run_pipeline(
             except OSError:  # pragma: no cover
                 pass
         doc.close()
+
+
+def _first_page_title_candidate(doc, profile) -> str | None:
+    """The document's opening heading on page one, or None (Phase L).
+
+    Tier three of the title chain (explicit -> embedded metadata ->
+    this -> the sentinel): a PDF without an embedded title usually
+    names itself in its first heading. Deliberately conservative --
+
+    * furniture-scale text above the heading is ignored, but body text
+      above it disqualifies: that heading names a section, not the
+      publication;
+    * a heading crammed into the top 8% of the page is a running
+      header, not a title;
+    * an adjacent second heading line joins the first (titles split
+      across lines), then the 120-character cap has the final word.
+
+    The heading stays in the content stream untouched: a title is
+    metadata, never an instruction to re-tag an h1.
+    """
+    try:
+        lines = tier1_classifier.classify_page(doc[0], profile)
+    except Exception:
+        return None
+    if not lines:
+        return None
+    page_height = float(doc[0].rect.height or 0.0)
+
+    def _plain(line) -> str:
+        return re.sub(r"\s+", " ", packaging.strip_tags(line.text)).strip()
+
+    seen_body = False
+    for i, ln in enumerate(lines):
+        text = _plain(ln)
+        if not text:
+            continue
+        if ln.tag == "small":
+            continue  # furniture-scale text is never a title candidate
+        if not ln.tag.startswith("h"):
+            seen_body = True
+            continue
+        # the first heading decides, for better or worse
+        if seen_body:
+            return None
+        if page_height and (ln.bbox[1] / page_height) < 0.08:
+            return None
+        parts = [text]
+        j = i + 1
+        while (
+            j < len(lines)
+            and lines[j].tag.startswith("h")
+            and (lines[j].bbox[1] - lines[j - 1].bbox[3]) < profile.line_height * 1.5
+            and len(" ".join(parts)) < 120
+        ):
+            nxt = _plain(lines[j])
+            if not nxt:
+                break
+            parts.append(nxt)
+            j += 1
+        candidate = " ".join(parts).strip()
+        return candidate if 0 < len(candidate) <= 120 else None
+    return None
 
 
 def _print_validation(report: ValidationReport, attempt: int, say: Callable) -> None:

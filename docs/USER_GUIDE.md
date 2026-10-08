@@ -280,8 +280,9 @@ the pipeline repairs and re-validates, up to `--max-repair-attempts`
 ### Metadata fallback
 
 Title and author resolve in this order: your `--title`/`--author` flag →
-the PDF's own metadata → engine defaults (`Untitled Publication` /
-`Unknown Author`).
+the PDF's own metadata → the document's first-page opening heading
+(only when it is the first content on page one and not a running
+header) → engine defaults (`Untitled Publication` / `Unknown Author`).
 
 ---
 
