@@ -9,6 +9,10 @@ reflects what the file actually contains.
 Verified on a 500-page book: **11.7 s wall, 95 MB peak RSS, EPUBCheck 5.1.0
 clean (0 fatals / 0 errors / 0 warnings)**.
 
+> A complete end-to-end manual — installation, every command and flag, the
+> interactive session, credentials, configuration, validation,
+> troubleshooting — lives in [docs/USER_GUIDE.md](docs/USER_GUIDE.md).
+
 ---
 
 ## Install
