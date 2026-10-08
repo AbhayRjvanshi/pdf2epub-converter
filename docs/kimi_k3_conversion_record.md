@@ -19,7 +19,7 @@ output:        stage-kimi-k3.epub (kept outside the repository)
 
 Packaging: 78 stream elements, **2 chapters**, 0 cross-page welds, 0
 furniture lines stripped. Validation: structural PASS; EPUBCheck/Ace
-skipped (not yet installed — installed and run in Phase J below).
+skipped at conversion time, then run for real in Phase J below.
 
 ## Phase I — comparison against frozen Stage 0
 
@@ -69,3 +69,32 @@ measurably better content retention. The live Kimi path is validated.
 Headings extracted by Kimi do not make Phase K (deterministic Tier-1
 heading signals) obsolete: Tier-1 pages — the majority of any document —
 still emit zero headings offline, and offline mode must not regress.
+
+## Phase J — real validator results
+
+EPUBCheck 5.1.0 (pinned to match CI) installed into the user's npm
+global bin via a `java -jar` wrapper; both artifacts validated through
+the project's validator abstraction:
+
+| EPUB | fatals | errors | warnings | infos |
+|---|---|---|---|---|
+| stage0.epub (frozen baseline) | 0 | 0 | 0 | 0 |
+| stage-kimi-k3.epub | 0 | 0 | 0 | 0 |
+
+Both EPUBs are fully EPUBCheck-clean.
+
+The renderer now reports `SKIPPED (not installed)` / `SKIPPED
+(disabled)` instead of `PASS (not installed - skipped)` — a rendering
+change only; `ValidationReport` fields and exit semantics are
+unchanged. Installing a real EPUBCheck also exposed that two
+missing-validator tests patched `subprocess.run`, a seam the runner
+never uses (`Popen` in `_run_with_tree_kill`); they now patch
+`resolve_tool`, the resolution path the engine actually consults, and
+hold with or without validators installed.
+
+Ace by DAISY: deferred in this environment. The local npm
+`allow-scripts` policy blocks the Electron/Puppeteer postinstall steps
+Ace requires; the broken partial install was removed. The plan's DoD
+requires Ace "where supported"; CI keeps Ace deferred by design
+(Decision B). To enable locally: approve the npm postinstall scripts
+for `@daisy/ace`, reinstall, and run `pytest -k ace`.

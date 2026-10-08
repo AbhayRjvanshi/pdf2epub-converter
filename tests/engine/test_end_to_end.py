@@ -314,13 +314,50 @@ def test_cache_makes_a_second_run_free(fixture_pdfs, tmp_path):
 
 
 def test_missing_validators_do_not_fail_the_run(fixture_pdfs, tmp_path, monkeypatch):
-    def missing(cmd, **kwargs):
-        raise FileNotFoundError(cmd[0])
-
-    monkeypatch.setattr(pk.subprocess, "run", missing)
+    # Absence is simulated at the resolution seam the engine actually
+    # consults (resolve_tool -> shutil.which). Patching subprocess.run
+    # never engaged once a real EPUBCheck was installed locally: the
+    # runner spawns via Popen, so resolution short-circuits first.
+    monkeypatch.setattr(pk, "resolve_tool", lambda cmd: None)
     result = _run(fixture_pdfs["single_column"], tmp_path / "nv.epub")
     assert result["success"]
     assert result["validation"].epubcheck_available is False
+    assert result["validation"].ace_available is False
+
+
+def test_validation_rendering_distinguishes_skipped_from_pass():
+    def report(*, available, disabled=()):
+        return pk.ValidationReport(
+            epubcheck_passed=True,
+            epubcheck_errors=0,
+            epubcheck_available=available,
+            ace_passed=True,
+            ace_violations={},
+            ace_available=available,
+            structural_passed=True,
+            structural_errors=[],
+            raw_logs="",
+            disabled=list(disabled),
+        )
+
+    # A tool that never ran is a skip, never a pass (rendering only:
+    # the report's own passed flag keeps decision D1 coherence).
+    assert report(available=False).passed is True
+
+    lines: list = []
+    driver._print_validation(report(available=False), 1, lines.append)
+    text = "\n".join(lines)
+    assert "SKIPPED (not installed)" in text
+    assert "PASS (not installed" not in text
+    assert "structural : PASS" in text  # the check that ran still passes
+
+    lines = []
+    driver._print_validation(
+        report(available=True, disabled=["ace"]), 1, lines.append
+    )
+    text = "\n".join(lines)
+    assert "SKIPPED (disabled)" in text
+    assert "PASS (disabled)" not in text
 
 
 def test_repair_loop_runs_and_gives_up_cleanly(fixture_pdfs, tmp_path, monkeypatch):

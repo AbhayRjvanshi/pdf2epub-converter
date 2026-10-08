@@ -651,10 +651,15 @@ def run_pipeline(
 
 
 def _print_validation(report: ValidationReport, attempt: int, say: Callable) -> None:
-    def note(name: str, available: bool) -> str:
+    def status(name: str, passed: bool, available: bool) -> str:
+        # A tool that never ran cannot pass: absence and disablement are
+        # honest skips, not verdicts. The report's own *_passed/*_available
+        # fields and the exit semantics are unchanged by this rendering.
         if name in report.disabled:
-            return " (disabled)"
-        return "" if available else " (not installed - skipped)"
+            return "SKIPPED (disabled)"
+        if not available:
+            return "SKIPPED (not installed)"
+        return "PASS" if passed else "FAIL"
 
     say(f"\n            --- validation attempt {attempt} ---")
     say(
@@ -663,14 +668,12 @@ def _print_validation(report: ValidationReport, attempt: int, say: Callable) -> 
     )
     say(
         f"            epubcheck  : "
-        f"{'PASS' if report.epubcheck_passed else 'FAIL'}"
-        f"{note('epubcheck', report.epubcheck_available)}"
+        f"{status('epubcheck', report.epubcheck_passed, report.epubcheck_available)}"
         f" errors={report.epubcheck_errors}"
     )
     say(
         f"            daisy ace  : "
-        f"{'PASS' if report.ace_passed else 'FAIL'}"
-        f"{note('ace', report.ace_available)}"
+        f"{status('ace', report.ace_passed, report.ace_available)}"
         f" {report.ace_violations or ''}"
     )
 

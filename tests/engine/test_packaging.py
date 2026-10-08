@@ -409,10 +409,9 @@ def test_missing_validators_degrade_gracefully(tmp_path, monkeypatch):
     epub_path = tmp_path / "x.epub"
     pk.build_epub_publication([para("x")], str(epub_path))
 
-    def missing(cmd, **kwargs):
-        raise FileNotFoundError(cmd[0])
-
-    monkeypatch.setattr(pk.subprocess, "run", missing)
+    # Same seam as the end-to-end test: absence means the resolution
+    # path returns None, not a failed subprocess spawn.
+    monkeypatch.setattr(pk, "resolve_tool", lambda cmd: None)
     report = pk.DualValidator().validate(str(epub_path))
     assert report.epubcheck_available is False
     assert report.ace_available is False
