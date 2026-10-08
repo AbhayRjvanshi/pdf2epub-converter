@@ -381,7 +381,25 @@ CHAPTER_TEMPLATE = "<body>\n{body}\n</body>"
 
 
 def _prepare_chapter_body(elements: list[StreamElement]) -> str:
-    body = "\n".join(element.render() for element in elements) or "<p></p>"
+    # Empty content never reaches the EPUB (remediation Fix 13): a blank
+    # paragraph is meaningless whitespace, but images and void separators
+    # carry their meaning in the wrapper, not the content, so they stay.
+    rendered = []
+    for element in elements:
+        structural = (
+            element.element_type is ElementType.IMAGE or element.tag.lower() == "hr"
+        )
+        if not element.content.strip() and not structural:
+            continue
+        rendered.append(element.render())
+    body = "\n".join(rendered)
+    # A deliberate separator is one <br/>; model-emitted runs of them are
+    # fixed-layout spacing that fragments reflow.
+    body = re.sub(r"(?:<br\s*/?>\s*){2,}", "<br/>", body)
+    if not body.strip():
+        if elements:
+            raise ValueError("every element in the chapter rendered empty")
+        body = "<p></p>"
     try:
         ET.fromstring(f"<root>{body}</root>")
         return body
@@ -709,6 +727,42 @@ def internal_structure_check(epub_path: str) -> list[dict]:
                         {"file": Path(name).name, "message": "html element missing lang",
                          "severity": "ERROR"}
                     )
+
+                # Semantic-quality invariants the EPUB spec does not test
+                # (remediation Fix 13/16): chapters must carry content,
+                # paragraphs must not be empty shells, and nothing may
+                # force fixed-layout page breaks in a reflowable EPUB.
+                # Nav documents are structural by design - no body prose.
+                if not name.endswith("nav.xhtml"):
+                    body_el = root.find("{http://www.w3.org/1999/xhtml}body")
+                    if body_el is not None and not len(body_el) and not (
+                        body_el.text or ""
+                    ).strip():
+                        errors.append(
+                            {"file": Path(name).name,
+                             "message": "empty chapter body",
+                             "severity": "ERROR"}
+                        )
+                    for pel in root.iter("{http://www.w3.org/1999/xhtml}p"):
+                        if not len(pel) and not (pel.text or "").strip():
+                            errors.append(
+                                {"file": Path(name).name,
+                                 "message": "empty paragraph",
+                                 "severity": "ERROR"}
+                            )
+                    for styled in root.iter():
+                        style = (styled.get("style") or "").lower()
+                        if (
+                            "page-break" in style
+                            or "break-before" in style
+                            or "break-after" in style
+                        ):
+                            errors.append(
+                                {"file": Path(name).name,
+                                 "message": "forced page break in reflowable EPUB",
+                                 "severity": "ERROR"}
+                            )
+                            break
     return errors
 
 
