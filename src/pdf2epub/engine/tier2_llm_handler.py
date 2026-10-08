@@ -29,7 +29,7 @@ import time
 import xml.etree.ElementTree as ET
 from collections import Counter
 from dataclasses import dataclass
-from html import escape
+from html import escape, unescape
 from pathlib import Path
 from typing import Any, Callable
 
@@ -109,7 +109,13 @@ ALLOWED_TAGS = ALLOWED_BLOCK_TAGS | ALLOWED_INLINE_TAGS
 
 FENCE_OPEN_RE = re.compile(r"^\s*```(?:xml|html|xhtml|json)?\s*", re.IGNORECASE)
 FENCE_CLOSE_RE = re.compile(r"\s*```\s*$")
-BAD_AMP_RE = re.compile(r"&(?!amp;|lt;|gt;|quot;|apos;|#\d+;|#x[0-9a-fA-F]+;)")
+# A bare "&" must be escaped; an *entity-shaped* sequence must be left
+# alone -- rewriting "&mdash;" to "&mdash;" is how entities get
+# double-escaped. Entity-shaped means: numeric (&#123;) or a plausible
+# named reference (&name;). Anything else is bare ampersand text.
+BAD_AMP_RE = re.compile(
+    r"&(?!#[0-9]+;|#x[0-9a-fA-F]+;|[a-zA-Z][a-zA-Z0-9]{0,31};)"
+)
 VOID_RE = re.compile(r"<(img|br|hr|meta|link)((?:\"[^\"]*\"|'[^']*'|[^>\"'])*?)/?>", re.IGNORECASE)
 DISALLOWED_BLOCK_RE = re.compile(
     r"<\s*(script|style|iframe|object|embed|form|input|button)\b[^>]*>.*?<\s*/\s*\1\s*>",
@@ -194,10 +200,17 @@ def sanitize_and_validate_xhtml(raw_html: str) -> str:
         if ok:
             return repaired.strip()
 
-    # Last resort: keep the words, drop the broken markup.
+    # Last resort: keep the words, drop the broken markup. The text still
+    # carries entities at this point, so it must be unescaped back to raw
+    # text before the single re-escape -- re-escaping entity text here is
+    # the classic double-escape (& -> &amp;).
     text = re.sub(r"<[^>]*>", " ", html)
     text = re.sub(r"[ \t]+", " ", text)
-    lines = [escape(l.strip(), quote=False) for l in text.splitlines() if l.strip()]
+    lines = [
+        escape(unescape(l.strip()), quote=False)
+        for l in text.splitlines()
+        if l.strip()
+    ]
     return "\n".join(f"<p>{l}</p>" for l in lines)
 
 

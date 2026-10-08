@@ -380,6 +380,39 @@ def build_running_header_doc(path: str | Path) -> str:
     return str(path)
 
 
+def build_special_chars_doc(path: str | Path) -> str:
+    """Ampersands, angle brackets, quotes and a query-string URL.
+
+    Escaping-ownership regression source (remediation Fix 12): every
+    line passes through Tier-1 escape(), the OPF/nav title unescape, and
+    ebooklib serialisation; each special character must appear exactly
+    once in the packaged EPUB. No embedded metadata, so the first
+    heading also exercises the title fallback with an ampersand in it.
+    """
+    doc = fitz.open()
+    p = doc.new_page(width=PAGE_W, height=PAGE_H)
+    put_furniture(p, 1)
+    p.insert_text(
+        (MARGIN_X, 90.0), "Rock & Roll Survey",
+        fontname="helv", fontsize=BODY_SIZE,
+    )
+    lines = [
+        'Tom & Jerry said 5 > 3 and 2 < 4, "quoted".',
+        "See https://example.com/?q=1&x=2 for details.",
+        "Emphasis & nuance:",
+    ]
+    y = 120.0
+    for text in lines:
+        p.insert_text((MARGIN_X, y), text, fontname="helv", fontsize=BODY_SIZE)
+        y += LINE_H
+    put_paragraph(
+        p, MARGIN_X, y + 10, COL_W, greedy_wrap(FIVE_LINE_TEXT, COL_W)
+    )
+    doc.save(str(path))
+    doc.close()
+    return str(path)
+
+
 def build_all(out_dir: str | Path) -> dict[str, str]:
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -396,6 +429,7 @@ def build_all(out_dir: str | Path) -> dict[str, str]:
             out / "structural_headings.pdf"
         ),
         "running_header": build_running_header_doc(out / "running_header.pdf"),
+        "special_chars": build_special_chars_doc(out / "special_chars.pdf"),
     }
 
 

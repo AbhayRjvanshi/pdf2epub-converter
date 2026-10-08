@@ -122,6 +122,12 @@ def parse_xhtml_to_stream_elements(
                 whole = etree.tostring(child, encoding="unicode", method="xml").strip()
                 m = re.match(r"^<\s*([a-zA-Z0-9]+)[^>]*>(.*)</\s*\1\s*>$", whole, re.DOTALL)
                 inner_all = m.group(2) if m else inner
+                # An empty table/ul/section is fixed-layout noise: drop it
+                # (remediation Fix 13). <hr> is void by definition and is
+                # an intentional separator -- it survives the emptiness
+                # test on purpose.
+                if tag != "hr" and not inner_all.strip():
+                    continue
                 elements.append(
                     StreamElement(
                         element_type=ElementType.BLOCK,
@@ -148,6 +154,8 @@ def parse_xhtml_to_stream_elements(
         for idx, (tag, content) in enumerate(
             re.findall(r"<(p|h1|h2|h3|h4|pre|small)[^>]*>(.*?)</\1>", xhtml_page, re.DOTALL)
         ):
+            if not content.strip():
+                continue  # empty blocks never reach the stream (Fix 13)
             elem_type, level = BLOCK_TAG_TYPES.get(tag, (ElementType.PARAGRAPH, 0))
             elements.append(
                 StreamElement(
@@ -686,7 +694,10 @@ def _first_page_title_candidate(doc, profile) -> str | None:
     page_height = float(doc[0].rect.height or 0.0)
 
     def _plain(line) -> str:
-        return re.sub(r"\s+", " ", packaging.strip_tags(line.text)).strip()
+        # Content is escaped XHTML: unescape exactly once, because
+        # book.set_title() hands the string to ebooklib, which escapes
+        # again at serialisation (remediation Fix 12).
+        return re.sub(r"\s+", " ", unescape(packaging.strip_tags(line.text))).strip()
 
     seen_body = False
     for ln in lines:
