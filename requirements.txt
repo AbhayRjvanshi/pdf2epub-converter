@@ -1,11 +1,17 @@
-# Core pipeline
+# Core runtime (mirrors pyproject.toml; install with `pip install .` for the full story)
 pymupdf>=1.24,<2          # PDF parsing: text dict/rawdict, drawings, rasterisation
 ebooklib>=0.18            # EPUB3 container assembly
 lxml>=4.9                 # tolerant XHTML repair and re-serialisation
+platformdirs>=4.0         # platform-aware config/cache/log directories
+tomli>=2.0; python_version < "3.11"   # TOML reading on Python 3.10
+tomli-w>=1.0              # TOML writing (config persistence)
 
 # Optional Tier 2 providers (install whichever you use)
 # openai>=1.30
 # anthropic>=0.34
+
+# Optional desktop credential storage
+# keyring>=24
 
 # Development / test
 pytest>=7.4

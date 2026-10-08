@@ -19,6 +19,10 @@ dist/
 *.jpg
 *.jpeg
 
+# Validator report artifacts (defensive; the engine cleans up after itself)
+ace_report/
+epubcheck_*.json
+
 # Environments
 .env
 .venv
