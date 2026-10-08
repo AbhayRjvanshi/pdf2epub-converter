@@ -301,6 +301,85 @@ def build_no_heading_doc(path: str | Path) -> str:
     return str(path)
 
 
+def build_structural_headings_doc(path: str | Path) -> str:
+    """Body-size headings, lists, a table and a bold sentence (Phase K).
+
+    The headings are printed at exactly body size with no bold, so the
+    size-ratio ladder cannot find them; only the multi-signal structural
+    pass can. The table deliberately mixes separated same-baseline cell
+    pairs with a merged "Label Value" row, because real extractors emit
+    both shapes and the merged row has perfectly clean local gaps.
+    """
+    doc = fitz.open()
+
+    # -- page 1: headings, list shapes, bold sentence --------------------
+    p = doc.new_page(width=PAGE_W, height=PAGE_H)
+    put_furniture(p, 1)
+    y = 90.0
+    for heading in ("Artificial Intelligence", "Dataset", "Project Title"):
+        p.insert_text((MARGIN_X, y), heading, fontname="helv", fontsize=BODY_SIZE)
+        y += LINE_H + 6
+        y = put_paragraph(p, MARGIN_X, y, COL_W, greedy_wrap(FIVE_LINE_TEXT, COL_W)) + 12
+    for item in ("1. Count of Movies vs TV Shows", "2. Titles added per year", "11. Quit"):
+        p.insert_text((MARGIN_X, y), item, fontname="helv", fontsize=BODY_SIZE)
+        y += LINE_H
+    y += 8
+    for item in ("- Fill missing country values with Unknown.", "- Drop rows missing dates."):
+        p.insert_text((MARGIN_X, y), item, fontname="helv", fontsize=BODY_SIZE)
+        y += LINE_H
+    p.insert_text(
+        (MARGIN_X, y + 16), "This fragment matters deeply.",
+        fontname="hebo", fontsize=BODY_SIZE,
+    )
+
+    # -- page 2: header row, split cells, one merged row, real heading ---
+    p = doc.new_page(width=PAGE_W, height=PAGE_H)
+    put_furniture(p, 2)
+    y = 100.0
+    p.insert_text((MARGIN_X, y), "Field Value", fontname="helv", fontsize=BODY_SIZE)
+    for left, right in (
+        ("Dataset", "IMDB Dataset of 50K Movie Reviews"),
+        ("Platform", "Kaggle"),
+        ("Rows", "Fifty Thousand"),
+    ):
+        y += 20.0
+        p.insert_text((MARGIN_X, y), left, fontname="helv", fontsize=BODY_SIZE)
+        p.insert_text((200.0, y), right, fontname="helv", fontsize=BODY_SIZE)
+    y += 14.0
+    p.insert_text(
+        (MARGIN_X, y), "License Free For Research",
+        fontname="helv", fontsize=BODY_SIZE,
+    )
+    y += 40.0
+    p.insert_text((MARGIN_X, y), "Objective", fontname="helv", fontsize=BODY_SIZE)
+    put_paragraph(
+        p, MARGIN_X, y + LINE_H + 4, COL_W, greedy_wrap(FIVE_LINE_TEXT, COL_W)
+    )
+
+    doc.save(str(path))
+    doc.close()
+    return str(path)
+
+
+def build_running_header_doc(path: str | Path) -> str:
+    """Body-size running header on every page: promoted, then stripped.
+
+    The header is title-shaped at body size, so the structural pass tags
+    it h4 on every page; the cross-page furniture filter must then
+    remove it. This pins the Phase K edge case: repeated page-top text
+    must not survive as a swarm of headings.
+    """
+    doc = fitz.open()
+    for _ in range(4):
+        p = doc.new_page(width=PAGE_W, height=PAGE_H)
+        p.insert_text((MARGIN_X, 40.0), "Running Header Text",
+                      fontname="helv", fontsize=BODY_SIZE)
+        put_paragraph(p, MARGIN_X, 90.0, COL_W, greedy_wrap(FIVE_LINE_TEXT, COL_W))
+    doc.save(str(path))
+    doc.close()
+    return str(path)
+
+
 def build_all(out_dir: str | Path) -> dict[str, str]:
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -313,6 +392,10 @@ def build_all(out_dir: str | Path) -> dict[str, str]:
         ),
         "scanned": build_scanned_page(out / "scanned.pdf"),
         "no_heading": build_no_heading_doc(out / "no_heading.pdf"),
+        "structural_headings": build_structural_headings_doc(
+            out / "structural_headings.pdf"
+        ),
+        "running_header": build_running_header_doc(out / "running_header.pdf"),
     }
 
 

@@ -28,6 +28,12 @@ import os
 import re
 from collections import Counter
 from dataclasses import dataclass, field
+
+from .heading_signals import (
+    in_table_region,
+    structural_heading_level,
+    table_region,
+)
 from enum import Enum, auto
 from html import escape
 
@@ -324,7 +330,7 @@ def span_to_inline_xhtml(
 class ClassifiedLine:
     text: str  # escaped XHTML with inline tags applied
     raw_text: str  # unescaped plain text (for lexical checks)
-    tag: str  # h1..h4, p, small
+    tag: str  # h1..h4, p, small, pre
     level: int
     monospace: bool
     wrapped: bool  # ended near the parent block's right edge
@@ -333,6 +339,7 @@ class ClassifiedLine:
     block_id: int
     block_margin: float = 0.0
     first_word_width: float = 0.0
+    bold: bool = False  # dominant span was bold (structural-heading evidence)
 
 
 def classify_line_tag(size: float, bold: bool, profile: DocumentFontProfile) -> tuple[str, int]:
@@ -489,9 +496,52 @@ def classify_page(page: "fitz.Page", profile: DocumentFontProfile) -> list[Class
                     block_id=block_id,
                     block_margin=margin,
                     first_word_width=first_word_width(spans, texts),
+                    bold=is_bold(dominant),
                 )
             )
-    return out
+    return promote_structural_headings(out, profile)
+
+
+def promote_structural_headings(
+    lines: list[ClassifiedLine], profile: DocumentFontProfile
+) -> list[ClassifiedLine]:
+    """Second-pass promotion of same-size structural headings (Phase K).
+
+    The size ladder in :func:`classify_line_tag` answers "is this line
+    bigger than body text?". This pass answers the complementary
+    question for the residual paragraphs: "does this line *act* like a
+    heading?" -- short, alone in its block, title-shaped, not a list
+    item, caption, sentence, table row or column neighbour. Promotion is
+    always to h4, the shallowest semantic heading claim; anything less
+    certain stays a paragraph. Running headers that slip through are
+    still removed downstream by the tag-agnostic furniture filter.
+    """
+    if not lines:
+        return lines
+    block_counts: dict[int, int] = {}
+    for ln in lines:
+        block_counts[ln.block_id] = block_counts.get(ln.block_id, 0) + 1
+    bboxes = [ln.bbox for ln in lines]
+    line_height = profile.line_height or (profile.body_size * 1.2)
+    region = table_region(
+        bboxes,
+        [ln.size for ln in lines],
+        pad=line_height,
+        overlap_limit=3.0 * line_height,
+    )
+    for ln in lines:
+        if ln.tag != "p" or ln.monospace:
+            continue
+        if block_counts.get(ln.block_id, 0) != 1:
+            continue  # a heading does not share its block with wrapped text
+        if in_table_region(region, ln.bbox):
+            continue  # however the extractor shaped it, it is table/column text
+        level = structural_heading_level(
+            ln.raw_text, size=ln.size, body_size=profile.body_size, bold=ln.bold
+        )
+        if level is not None:
+            ln.tag, ln.level = f"h{level}", level
+    return lines
 
 
 def first_word_width(spans: list[dict], texts: list[str]) -> float:
@@ -646,6 +696,7 @@ def build_paragraphs(
                 bbox=(buffer.bbox[0], buffer.bbox[1], line.bbox[2], line.bbox[3]),
                 size=buffer.size,
                 block_id=buffer.block_id,
+                bold=buffer.bold,
             )
             buffer_plain = buffer.raw_text
             buffer_last_bbox = line.bbox  # critical: advance the trailing edge

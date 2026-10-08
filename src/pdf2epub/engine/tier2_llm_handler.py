@@ -33,6 +33,12 @@ from html import escape
 from pathlib import Path
 from typing import Any, Callable
 
+from .heading_signals import (
+    in_table_region,
+    structural_heading_level,
+    table_region,
+)
+
 log = logging.getLogger("tier2")
 
 SCHEMA_VERSION = "xhtml-pages/v3"
@@ -356,6 +362,7 @@ def _merge_digest_lines(
     for d in ordered:
         if buffer is None:
             buffer = dict(d)
+            buffer["line_count"] = 1
             continue
 
         same_block = d.get("block_id", 0) == buffer.get("block_id", 0)
@@ -369,16 +376,18 @@ def _merge_digest_lines(
 
         if same_block and same_column and same_flow and size_match and near_margin:
             buffer["text"] = _join_hyphenated(buffer["text"], d["text"])
+            buffer["line_count"] = buffer.get("line_count", 1) + 1
             # Advance the trailing edge (top AND bottom) to the line just
             # merged, not the paragraph's origin - comparing every new line
             # against the origin makes the gap grow by one line height per
             # row, which silently truncates every paragraph after its
             # second line (same failure mode tier1_classifier.build_paragraphs
             # documents for buffer_last_bbox).
-            buffer["bbox"] = (buffer["bbox"][0], d["bbox"][1], d["bbox"][2], d["bbox"][3])
+            buffer["bbox"] = (buffer["bbox"][0], d["bbox"][1], buffer["bbox"][2], d["bbox"][3])
         else:
             flush()
             buffer = dict(d)
+            buffer["line_count"] = 1
     flush()
     return merged
 
@@ -409,7 +418,15 @@ def _digest_fallback(req: Tier2Request) -> str:
     out: list[str] = []
     sizes = [d["size"] for d in digest]
     body = max(set(sizes), key=sizes.count) if sizes else 10.0
-    for d in paragraphs:
+    bboxes = [p["bbox"] for p in paragraphs]
+    lh = line_height or (body * 1.2)
+    region = table_region(
+        bboxes,
+        [p["size"] for p in paragraphs],
+        pad=lh,
+        overlap_limit=3.0 * lh,
+    )
+    for idx, d in enumerate(paragraphs):
         text = escape(d["text"], quote=False)
         ratio = d["size"] / body if body else 1.0
         if ratio >= 1.6:
@@ -419,7 +436,19 @@ def _digest_fallback(req: Tier2Request) -> str:
         elif ratio >= 1.15:
             out.append(f"<h3>{text}</h3>")
         else:
-            out.append(f"<p>{text}</p>")
+            # Same-size structural headings (Phase K): the identical
+            # deterministic decision Tier 1 applies, so offline and
+            # model-mediated output stay coherent. Only single-line
+            # paragraphs outside the table/column region qualify.
+            level = None
+            if d.get("line_count", 1) == 1 and not in_table_region(region, d["bbox"]):
+                level = structural_heading_level(
+                    d["text"], size=d["size"], body_size=body,
+                    bold=bool(d.get("bold")),
+                )
+            out.append(
+                f"<h{level}>{text}</h{level}>" if level else f"<p>{text}</p>"
+            )
     return "\n".join(out)
 
 
