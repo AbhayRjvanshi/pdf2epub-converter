@@ -97,6 +97,28 @@ class ChapterRecord:
     element_indices: list[int]
 
 
+@dataclass(frozen=True)
+class StructureMetrics:
+    """Measurable structure, independent of EPUB conformance (Fix 19).
+
+    Quality must be observable, not judged by opening the EPUB: these
+    counts describe what the converter actually emitted, and the
+    unresolved-target count proves navigation integrity.
+    """
+
+    headings: int = 0
+    lists: int = 0
+    list_items: int = 0
+    tables: int = 0
+    links: int = 0
+    code_blocks: int = 0
+    chapters: int = 0
+    empty_chapters: int = 0
+    empty_paragraphs: int = 0
+    nav_entries: int = 0
+    unresolved_nav_targets: int = 0
+
+
 @dataclass
 class PublicationBuild:
     output_path: str
@@ -105,6 +127,7 @@ class PublicationBuild:
     clean_stream: list[StreamElement]
     stripped_furniture: list[str]
     welded_pairs: int
+    metrics: StructureMetrics = field(default_factory=StructureMetrics)
 
 
 @dataclass
@@ -374,13 +397,19 @@ def assign_anchor_ids(elements: list[StreamElement]) -> None:
 DEFAULT_CSS = """
 html, body { margin: 0; padding: 0; }
 body { font-family: serif; line-height: 1.5; padding: 1em; }
-h1, h2, h3, h4 { font-family: sans-serif; line-height: 1.25; margin: 1.2em 0 0.4em; }
+h1, h2, h3, h4, h5, h6 { font-family: sans-serif; line-height: 1.25; margin: 1.2em 0 0.4em; }
 h1 { font-size: 1.6em; }
 h2 { font-size: 1.35em; }
 h3 { font-size: 1.15em; }
+h4 { font-size: 1.05em; }
+h5, h6 { font-size: 1em; }
 p { margin: 0; text-indent: 1.2em; }
-h1 + p, h2 + p, h3 + p, h4 + p, figure + p, pre + p { text-indent: 0; }
+h1 + p, h2 + p, h3 + p, h4 + p, h5 + p, h6 + p, figure + p, pre + p { text-indent: 0; }
 p.small { font-size: 0.85em; text-indent: 0; color: #444; }
+ul, ol { margin: 0.6em 0 0.6em 1.5em; padding: 0; }
+li { margin: 0.25em 0; }
+li > p { text-indent: 0; margin: 0; }
+a { color: inherit; }
 pre { background: #f4f4f4; padding: 0.8em; overflow-x: auto; white-space: pre-wrap;
       font-family: monospace; font-size: 0.9em; }
 code { font-family: monospace; }
@@ -390,6 +419,7 @@ figure img { max-width: 100%; height: auto; }
 figcaption { font-size: 0.85em; color: #555; }
 table { border-collapse: collapse; margin: 1em 0; width: 100%; }
 th, td { border: 1px solid #999; padding: 0.3em 0.5em; text-align: left; }
+thead th { background: #eee; }
 blockquote { margin: 1em 2em; font-style: italic; }
 """
 
@@ -583,6 +613,10 @@ def build_epub_publication(
     chapters: list[epub.EpubHtml] = []
     records: list[ChapterRecord] = []
     toc: list = []
+    nav_entries = 0
+    unresolved_targets = 0
+    empty_paragraphs = 0
+    empty_chapters = 0
 
     for idx, (chap_title, elements) in enumerate(segments, start=1):
         file_name = f"XHTML/chapter_{idx:03d}.xhtml"
@@ -632,12 +666,46 @@ def build_epub_publication(
         else:
             toc.append(epub.Link(file_name, chap_title, chap.id))
 
+        # measurable structure (Fix 19): count what this chapter adds
+        nav_entries += 1 + len(sub_links)
+        for link in sub_links:
+            if f'id="{link.href.split("#")[-1]}"' not in body:
+                unresolved_targets += 1
+        for e in elements:
+            if e.element_type is ElementType.PARAGRAPH and not e.content.strip():
+                empty_paragraphs += 1
+        if not body.strip():
+            empty_chapters += 1
+
     book.toc = tuple(toc)
     book.add_item(epub.EpubNcx())
     nav = epub.EpubNav()
     attach_stylesheet(nav, css_item)
     book.add_item(nav)
     book.spine = ["nav"] + chapters
+
+    metrics = StructureMetrics(
+        headings=sum(1 for e in clean_stream if e.element_type is ElementType.HEADING),
+        lists=sum(
+            1 for e in clean_stream
+            if e.element_type is ElementType.BLOCK and e.tag in ("ul", "ol")
+        ),
+        list_items=sum(
+            e.content.count("<li>")
+            for e in clean_stream
+            if e.element_type is ElementType.BLOCK and e.tag in ("ul", "ol")
+        ),
+        tables=sum(
+            1 for e in clean_stream if e.element_type is ElementType.BLOCK and e.tag == "table"
+        ),
+        links=sum(e.content.count("<a href=") for e in clean_stream),
+        code_blocks=sum(1 for e in clean_stream if e.element_type is ElementType.CODE_BLOCK),
+        chapters=len(records),
+        empty_chapters=empty_chapters,
+        empty_paragraphs=empty_paragraphs,
+        nav_entries=nav_entries,
+        unresolved_nav_targets=unresolved_targets,
+    )
 
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     epub.write_epub(output_path, book)
@@ -649,6 +717,7 @@ def build_epub_publication(
         clean_stream=clean_stream,
         stripped_furniture=furniture,
         welded_pairs=welds,
+        metrics=metrics,
     )
 
 
@@ -732,12 +801,39 @@ def internal_structure_check(epub_path: str) -> list[dict]:
                     href = anchor.get("href", "")
                     if not href or href.startswith(("http:", "https:", "data:", "#")):
                         continue
-                    if _zip_normalise(base, href.split("#")[0]) not in available:
+                    target = _zip_normalise(base, href.split("#")[0])
+                    if target not in available:
                         errors.append(
                             {"file": Path(name).name,
                              "message": f"broken internal link: {href}",
                              "severity": "ERROR"}
                         )
+                        continue
+                    # the file exists; a navigation fragment must also
+                    # resolve to a real id inside it (Fix 11/16)
+                    fragment = href.split("#", 1)[1] if "#" in href else ""
+                    if fragment:
+                        try:
+                            target_doc = zf.read(target).decode("utf-8", "ignore")
+                        except KeyError:
+                            target_doc = ""
+                        if f'id="{fragment}"' not in target_doc:
+                            errors.append(
+                                {"file": Path(name).name,
+                                 "message": f"unresolved navigation anchor: {href}",
+                                 "severity": "ERROR"}
+                            )
+                # double-escaping is a serialization bug, never a
+                # content feature (Fix 12)
+                raw_text = data.decode("utf-8", "ignore")
+                for artifact in ('&amp;amp;', '&lt;lt;', '&gt;gt;'):
+                    if artifact in raw_text:
+                        errors.append(
+                            {"file": Path(name).name,
+                             "message": f"double-escaped entity: {artifact}",
+                             "severity": "ERROR"}
+                        )
+                        break
                 for img in root.iter("{http://www.w3.org/1999/xhtml}img"):
                     src = img.get("src", "")
                     if not img.get("alt"):

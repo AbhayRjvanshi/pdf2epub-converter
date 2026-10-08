@@ -494,6 +494,41 @@ def test_ace_malformed_report_degrades_gracefully():
 # ---------------------------------------------------------------------------
 
 
+def test_stylesheet_supports_reflow_and_never_breaks_pages():
+    css = pk.DEFAULT_CSS
+    # a reflowable EPUB never forces fixed-page breaks (remediation Fix 3)
+    for banned in ("page-break", "break-before", "break-after", "break-inside"):
+        assert banned not in css
+    # every semantic structure the pipeline emits has presentation rules
+    for needed in ("ul, ol", "li ", "h4", "h5, h6", "thead", "a {"):
+        assert needed in css
+
+
+def test_structure_metrics_count_what_was_emitted(tmp_path):
+    stream = [
+        heading("One"),
+        para("body"),
+        StreamElement(
+            ElementType.BLOCK, "ol",
+            '<li>first</li><li>second<ul><li>sub</li></ul></li>',
+        ),
+        StreamElement(
+            ElementType.BLOCK, "table", "<tr><td>cell</td></tr>"
+        ),
+    ]
+    out = tmp_path / "metrics.epub"
+    build = pk.build_epub_publication(stream, str(out))
+    m = build.metrics
+    assert m.headings == 1
+    assert m.lists == 1
+    assert m.list_items == 3  # nested sub items count
+    assert m.tables == 1
+    assert m.chapters == 1
+    assert m.empty_chapters == 0
+    assert m.empty_paragraphs == 0
+    assert m.unresolved_nav_targets == 0
+
+
 def test_internal_check_passes_a_good_book(tmp_path):
     out = tmp_path / "good.epub"
     pk.build_epub_publication([heading("One"), para("body"), _image_element()], str(out))

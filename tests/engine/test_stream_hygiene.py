@@ -129,6 +129,26 @@ def test_structural_check_flags_forced_page_breaks(tmp_path):
     assert "forced page break in reflowable EPUB" in _messages(epub)
 
 
+def test_structural_check_flags_double_escaping(tmp_path):
+    # built at runtime: the artifact itself must survive every editor
+    artifact = chr(38) + "amp;"
+    epub = tmp_path / "esc.epub"
+    _minimal_epub(epub, f"<p>Tom {artifact}amp; Jerry</p>")
+    joined = "; ".join(_messages(epub))
+    assert "double-escaped entity" in joined
+
+
+def test_structural_check_flags_unresolved_navigation_anchor(tmp_path):
+    epub = tmp_path / "nav.epub"
+    _minimal_epub(
+        epub,
+        '<p id="sec1">x</p><a href="chapter.xhtml#sec1">ok</a>'
+        '<a href="chapter.xhtml#sec404">gone</a>',
+    )
+    joined = "; ".join(_messages(epub))
+    assert joined.count("unresolved navigation anchor") == 1
+
+
 def test_structural_check_passes_a_meaningful_body(tmp_path):
     epub = tmp_path / "ep.epub"
     _minimal_epub(epub, "<p>real prose</p>")
@@ -136,3 +156,5 @@ def test_structural_check_passes_a_meaningful_body(tmp_path):
     assert "empty paragraph" not in msgs
     assert "empty chapter body" not in msgs
     assert "forced page break in reflowable EPUB" not in msgs
+    assert "double-escaped entity" not in msgs
+    assert "unresolved navigation anchor" not in msgs

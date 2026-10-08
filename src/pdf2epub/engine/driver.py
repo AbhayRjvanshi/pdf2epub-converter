@@ -589,6 +589,13 @@ def run_pipeline(
             f"images={build.a11y.image_count} "
             f"alt_text={'yes' if build.a11y.has_alt_text else 'n/a'}"
         )
+        m = build.metrics
+        say(
+            f"            structure: lists={m.lists} items={m.list_items} "
+            f"tables={m.tables} links={m.links} code={m.code_blocks} | "
+            f"nav={m.nav_entries} unresolved={m.unresolved_nav_targets} "
+            f"empty_paragraphs={m.empty_paragraphs}"
+        )
         result["build"] = build
         result["chapters"] = len(build.chapters)
 

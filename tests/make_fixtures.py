@@ -380,6 +380,39 @@ def build_running_header_doc(path: str | Path) -> str:
     return str(path)
 
 
+def build_nested_lists_doc(path: str | Path) -> str:
+    """Ordered items with letter sub-bullets plus glyph bullets (Fix 6/17).
+
+    The numbered workflow carries Wingdings-style 'o' sub-steps that
+    nest when the sequence resumes, then a separate glyph-bullet list;
+    every list shape the semantic normalizer must reconstruct.
+    """
+    doc = fitz.open()
+    p = doc.new_page(width=PAGE_W, height=PAGE_H)
+    put_furniture(p, 1)
+    p.insert_text((MARGIN_X, 90.0), "Workflow Steps",
+                  fontname="helv", fontsize=BODY_SIZE)
+    y = 120.0
+    for text in (
+        "1. Prepare the data",
+        "o clean the columns",
+        "o join the frames",
+        "2. Train the model",
+        "o pick a metric",
+        "3. Report the results",
+    ):
+        p.insert_text((MARGIN_X, y), text, fontname="helv", fontsize=BODY_SIZE)
+        y += LINE_H + 6
+    y += 10.0
+    for text in ("- alpha option", "- beta option"):
+        p.insert_text((MARGIN_X, y), text, fontname="helv", fontsize=BODY_SIZE)
+        y += LINE_H + 6
+    put_paragraph(p, MARGIN_X, y + 8, COL_W, greedy_wrap(FIVE_LINE_TEXT, COL_W))
+    doc.save(str(path))
+    doc.close()
+    return str(path)
+
+
 def build_special_chars_doc(path: str | Path) -> str:
     """Ampersands, angle brackets, quotes and a query-string URL.
 
@@ -431,6 +464,7 @@ def build_all(out_dir: str | Path) -> dict[str, str]:
             out / "structural_headings.pdf"
         ),
         "running_header": build_running_header_doc(out / "running_header.pdf"),
+        "nested_lists": build_nested_lists_doc(out / "nested_lists.pdf"),
         "special_chars": build_special_chars_doc(out / "special_chars.pdf"),
     }
 

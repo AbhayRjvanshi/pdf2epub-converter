@@ -183,3 +183,37 @@ def test_normalize_semantics_links_urls_inside_list_items():
     assert "<li>See " in content
     assert '<a href="https://example.com/a">' in content
     assert '<a href="https://example.com/b">' in content
+
+
+# ---------------------------------------------------------------------------
+# End to end: the nested-lists fixture (Fix 17 regression class)
+# ---------------------------------------------------------------------------
+
+
+def test_nested_lists_fixture_end_to_end(fixture_pdfs, tmp_path):
+    import zipfile
+
+    from pdf2epub.engine import driver
+
+    out = tmp_path / "lists.epub"
+    result = driver.run_pipeline(
+        fixture_pdfs["nested_lists"], str(out),
+        llm_adapter=None, verbose=False, cache_dir=str(tmp_path / "cache"),
+    )
+    assert result["success"] is True
+    build = result["build"]
+    m = build.metrics
+    assert m.lists == 2          # the ordered workflow + the glyph bullets
+    assert m.list_items == 8     # 3 ordered + 3 nested subs + 2 glyph
+    assert m.chapters == 1
+    assert m.unresolved_nav_targets == 0
+    with zipfile.ZipFile(out) as zf:
+        body = "".join(
+            zf.read(n).decode("utf-8")
+            for n in zf.namelist()
+            if n.endswith(".xhtml")
+        )
+    assert "<li>Prepare the data<ul><li>clean the columns</li>" in body
+    assert "<li>join the frames</li></ul></li>" in body
+    assert "</ul></li><li>Train the model" in body
+    assert "<li>alpha option</li><li>beta option</li>" in body
