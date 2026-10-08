@@ -103,7 +103,52 @@ def test_absent_optional_sdks_never_fail(tmp_path, monkeypatch):
         config_manager=_FakeConfigManager(path=tmp_path / "config.toml"),
         environ={},
     )
-    assert _state_of(report, "openai") == OPTIONAL
+    assert _state_of(report, "openai SDK") == OPTIONAL
+    assert _state_of(report, "anthropic SDK") == OPTIONAL
+    assert _state_of(report, "keyring") == OPTIONAL
+    assert not report.failed
+
+
+def test_shared_sdk_groups_openai_and_nvidia_into_one_row(tmp_path, monkeypatch):
+    monkeypatch.setattr(doctor, "_module_available", lambda name: name != "openai")
+    monkeypatch.setattr(pk, "resolve_tool", lambda cmd: None)
+    report = run_doctor(
+        registry=build_registry(),
+        config_manager=_FakeConfigManager(path=tmp_path / "config.toml"),
+        environ={},
+    )
+    row = next(c for c in report.checks if c.name == "openai SDK")
+    assert row.state == OPTIONAL
+    assert "openai, nvidia" in row.detail
+    assert "pdf2epub[nvidia] or pdf2epub[openai]" in row.detail  # sorted extras
+    assert not any(c.name == "nvidia SDK" for c in report.checks)
+
+
+def test_installed_sdk_row_names_its_consumer_providers(tmp_path, monkeypatch):
+    report = _run(tmp_path, monkeypatch)
+    row = next(c for c in report.checks if c.name == "openai SDK")
+    assert row.state == OK
+    assert "openai" in row.detail and "nvidia" in row.detail
+
+
+def test_configured_provider_missing_sdk_warns_separately_from_credentials(
+    tmp_path, monkeypatch,
+):
+    monkeypatch.setattr(doctor, "_module_available", lambda name: name != "openai")
+    monkeypatch.setattr(pk, "resolve_tool", lambda cmd: None)
+    report = run_doctor(
+        registry=build_registry(),
+        config_manager=_FakeConfigManager(
+            AppConfig(provider_name="nvidia"), path=tmp_path / "config.toml"
+        ),
+        environ={},
+    )
+    sdk = next(c for c in report.checks if c.name == "provider SDK")
+    assert sdk.state == WARN
+    assert "nvidia" in sdk.detail and "pdf2epub[nvidia]" in sdk.detail
+    credentials = next(c for c in report.checks if c.name == "credentials")
+    assert credentials.state == WARN
+    assert "NVIDIA_API_KEY" in credentials.detail
     assert not report.failed
 
 

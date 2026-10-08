@@ -34,10 +34,25 @@ class ProviderProfile:
 
     provider_id: str
     display_name: str
-    api_style: str          # "openai" | "anthropic"
+    api_style: str          # "openai" | "anthropic" | "nvidia"
     credential_env_var: str  # Phase 5 credential resolution reads this
     base_url: str | None = None       # None -> the provider's own default
     allow_generic_key: bool = False   # PDF2EPUB_API_KEY honoured only when True
     compat: CompatOptions = field(default_factory=CompatOptions)
     models: tuple[ModelDefinition, ...] = ()
     user_facing: bool = True  # only True entries appear in /provider lists
+    client_dependency: str | None = None  # importable SDK module (None -> none)
+    install_extra: str | None = None      # pip extra that provides the SDK
+
+    def sdk_install_hint(self) -> str:
+        """The pip command installing this profile's client SDK ('' if none).
+
+        The extra is the user-facing fact; which module it provides is the
+        adapter's business. Providers sharing one SDK (openai + nvidia)
+        keep separate extras so users install for the provider they chose.
+        """
+        if self.client_dependency is None:
+            return ""
+        if self.install_extra:
+            return f"pip install 'pdf2epub[{self.install_extra}]'"
+        return f"pip install {self.client_dependency}"

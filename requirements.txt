@@ -8,6 +8,7 @@ tomli-w>=1.0              # TOML writing (config persistence)
 
 # Optional Tier 2 providers (install whichever you use)
 # openai>=1.30
+# nvidia shares the openai SDK: pip install 'pdf2epub[nvidia]'
 # anthropic>=0.34
 
 # Optional desktop credential storage

@@ -119,19 +119,46 @@ def run_doctor(
         )
     )
 
-    for name, needed_for in (
-        ("openai", "provider openai"),
-        ("anthropic", "provider anthropic"),
-        ("keyring", "OS keyring persistence"),
-    ):
-        present = _module_available(name)
-        checks.append(
-            CheckResult(
-                name,
-                OK if present else OPTIONAL,
-                "installed" if present else f"not installed (needed for {needed_for})",
+    # Provider SDK requirements are derived from the registry (profile
+    # metadata), never a hardcoded module list: one SDK shared by several
+    # providers gets a single grouped row naming every consumer, and each
+    # consumer keeps its own install extra. Dependency availability is a
+    # separate concept from credential availability (checked below).
+    sdk_consumers: dict[str, list[str]] = {}
+    sdk_extras: dict[str, set[str]] = {}
+    for adapter in registry.list():
+        profile = getattr(adapter, "profile", None)
+        dep = getattr(profile, "client_dependency", None) if profile else None
+        if dep is None:
+            continue
+        sdk_consumers.setdefault(dep, []).append(adapter.provider_id)
+        extra = getattr(profile, "install_extra", None)
+        if extra is not None:
+            sdk_extras.setdefault(dep, set()).add(extra)
+    for dep, provider_ids in sdk_consumers.items():
+        present = _module_available(dep)
+        if present:
+            detail = f"installed (providers: {', '.join(provider_ids)})"
+        else:
+            install = " or ".join(
+                f"pdf2epub[{extra}]" for extra in sorted(sdk_extras.get(dep, ()))
             )
+            detail = (
+                f"not installed (needed for providers: {', '.join(provider_ids)})"
+                + (f"; install: {install}" if install else "")
+            )
+        checks.append(CheckResult(f"{dep} SDK", OK if present else OPTIONAL, detail))
+
+    keyring_present = _module_available("keyring")
+    checks.append(
+        CheckResult(
+            "keyring",
+            OK if keyring_present else OPTIONAL,
+            "installed"
+            if keyring_present
+            else "not installed (needed for OS keyring persistence)",
         )
+    )
 
     # -- system tools ------------------------------------------------------
     for name, probe in (("java", "-version"), ("node", "--version")):
@@ -192,6 +219,31 @@ def run_doctor(
     # -- credentials (local only unless verify_credentials) ----------------
     provider_id = session.provider_id if session is not None else config.provider_name
     explicit_secret = session.explicit_secret if session is not None else None
+    # The configured provider's SDK is checked before any credential claim:
+    # a missing dependency must not first surface at verification time,
+    # and it is reported as its own check so a missing key stays distinct
+    # from a missing package.
+    if provider_id not in (None, "none"):
+        try:
+            adapter = registry.get(provider_id)
+        except KeyError:
+            adapter = None
+        if adapter is not None:
+            profile = getattr(adapter, "profile", None)
+            dep = getattr(profile, "client_dependency", None) if profile else None
+            if dep is not None and not _module_available(dep):
+                extra = getattr(profile, "install_extra", None)
+                hint = (
+                    f"pip install 'pdf2epub[{extra}]'" if extra else f"pip install {dep}"
+                )
+                checks.append(
+                    CheckResult(
+                        "provider SDK",
+                        WARN,
+                        f"the {dep!r} package is required for provider "
+                        f"{provider_id!r}: {hint}",
+                    )
+                )
     if provider_id in (None, "none"):
         checks.append(
             CheckResult("credentials", OPTIONAL, "no provider configured (offline)")

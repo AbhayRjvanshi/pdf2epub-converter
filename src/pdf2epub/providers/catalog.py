@@ -18,6 +18,8 @@ PROFILES: tuple[ProviderProfile, ...] = (
         display_name="OpenAI",
         api_style="openai",
         credential_env_var="OPENAI_API_KEY",
+        client_dependency="openai",
+        install_extra="openai",
         models=(
             ModelDefinition(
                 provider_id="openai",
@@ -42,6 +44,8 @@ PROFILES: tuple[ProviderProfile, ...] = (
         display_name="Anthropic",
         api_style="anthropic",
         credential_env_var="ANTHROPIC_API_KEY",
+        client_dependency="anthropic",
+        install_extra="anthropic",
         models=(
             ModelDefinition(
                 provider_id="anthropic",
@@ -68,6 +72,11 @@ PROFILES: tuple[ProviderProfile, ...] = (
         display_name="NVIDIA",
         api_style="nvidia",
         credential_env_var="NVIDIA_API_KEY",
+        # NVIDIA's endpoints speak the OpenAI wire family: the client SDK
+        # is shared with the openai extra, but the user-facing extra is the
+        # provider's own (doc Phase B: either extra must make this work).
+        client_dependency="openai",
+        install_extra="nvidia",
         base_url="https://integrate.api.nvidia.com/v1",
         compat=CompatOptions(
             supports_json_mode=False,
@@ -100,6 +109,8 @@ PROFILES: tuple[ProviderProfile, ...] = (
         display_name="OpenRouter",
         api_style="openai",
         credential_env_var="OPENROUTER_API_KEY",
+        client_dependency="openai",
+        install_extra="openai",
         base_url="https://openrouter.ai/api/v1",
         allow_generic_key=True,
         compat=CompatOptions(

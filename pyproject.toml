@@ -31,6 +31,7 @@ dependencies = [
 
 [project.optional-dependencies]
 openai = ["openai>=1.30"]
+nvidia = ["openai>=1.30"]
 anthropic = ["anthropic>=0.34"]
 keyring = ["keyring>=24"]
 dev = ["pytest>=7.4", "build"]

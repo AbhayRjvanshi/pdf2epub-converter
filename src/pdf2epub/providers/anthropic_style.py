@@ -18,8 +18,6 @@ from .profile import ProviderProfile
 
 log = logging.getLogger("pdf2epub.providers.anthropic_style")
 
-_INSTALL_HINT = "pip install 'pdf2epub[anthropic]'"
-
 
 class AnthropicStyleAdapter:
     """Adapter for every endpoint speaking the Anthropic Messages API."""
@@ -36,9 +34,11 @@ class AnthropicStyleAdapter:
         try:
             import anthropic
         except ImportError as exc:
+            dep = self.profile.client_dependency or "anthropic"
+            hint = self.profile.sdk_install_hint() or f"pip install {dep}"
             raise ProviderUnavailableError(
-                f"the 'anthropic' package is required for provider "
-                f"{self.provider_id!r}: {_INSTALL_HINT}"
+                f"the {dep!r} package is required for provider "
+                f"{self.provider_id!r}: {hint}"
             ) from exc
         kwargs: dict[str, Any] = {}
         if self.profile.base_url:

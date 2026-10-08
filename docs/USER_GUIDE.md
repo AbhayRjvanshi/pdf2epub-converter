@@ -117,7 +117,8 @@ pdf2epub --version
 
 | Extra | Installs | Purpose |
 |---|---|---|
-| `.[openai]` | `openai` SDK | the `openai` and `nvidia` providers (Tier 2) |
+| `.[openai]` | `openai` SDK | the `openai` provider (Tier 2) |
+| `.[nvidia]` | `openai` SDK | the `nvidia` provider (Tier 2); same client SDK as `.[openai]` |
 | `.[anthropic]` | `anthropic` SDK | the `anthropic` provider (Tier 2) |
 | `.[keyring]` | `keyring` | OS-keyring credential persistence |
 | `.[dev]` | `pytest`, `build` | development and testing |
