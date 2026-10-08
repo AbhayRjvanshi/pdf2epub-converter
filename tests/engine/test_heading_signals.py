@@ -245,8 +245,10 @@ def test_structural_fixture_end_to_end(fixture_pdfs, tmp_path):
     assert result["success"] is True
     build = result["build"]
     assert build.a11y.heading_count >= 4
-    # every promoted heading starts a chapter at the shallowest level
-    assert len(build.chapters) >= 4
+    # Remediation Fix 2: no clearly major section means one reflowable
+    # chapter named by its opening heading -- never one XHTML per h4.
+    assert len(build.chapters) == 1
+    assert build.chapters[0].title == "Artificial Intelligence"
     body = _body(out)
     for heading in ("Artificial Intelligence", "Dataset", "Project Title", "Objective"):
         assert f">{heading}<" in body

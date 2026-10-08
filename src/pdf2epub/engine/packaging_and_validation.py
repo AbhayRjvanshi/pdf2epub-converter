@@ -39,6 +39,7 @@ from ebooklib import epub
 log = logging.getLogger("packaging")
 
 from .tier1_classifier import ElementType, StreamElement, strip_tags
+from .heading_roles import MAJOR, infer_heading_depths
 
 # ---------------------------------------------------------------------------
 # Tunables
@@ -290,50 +291,69 @@ def process_element_stream(
 # ---------------------------------------------------------------------------
 
 
-def choose_split_level(elements: list[StreamElement]) -> int:
-    levels = sorted(
-        {e.level for e in elements if e.element_type is ElementType.HEADING and e.level}
-    )
-    if not levels:
-        return 0
-    return levels[0]
+def _display_title(content: str) -> str:
+    # The content stream is escaped XHTML; display titles (nav, NCX,
+    # chapter <title>) are re-escaped by ebooklib on serialisation,
+    # so the entity must be unescaped exactly once here or every
+    # "&" in a heading renders as "&" in the navigation.
+    return unescape(strip_tags(content)).strip() or "Untitled"
 
 
 def segment_chapters(
     elements: list[StreamElement],
 ) -> list[tuple[str, list[StreamElement]]]:
-    """Split at the shallowest heading level present. Returns (title, elements)."""
+    """Split at MAJOR headings only (remediation Fix 2 + Fix 14).
 
-    def _display(content: str) -> str:
-        # The content stream is escaped XHTML; display titles (nav, NCX,
-        # chapter <title>) are re-escaped by ebooklib on serialisation,
-        # so the entity must be unescaped exactly once here or every
-        # "&" in a heading renders as "&" in the navigation.
-        return unescape(strip_tags(content)).strip() or "Untitled"
+    A semantic heading is evidence about document structure; a chapter
+    boundary is a packaging decision owned by the role inference in
+    ``heading_roles``. Documents without a clearly identifiable major
+    section ship as one reflowable XHTML file whose headings remain
+    in-chapter navigation anchors.
+    """
+    depths = infer_heading_depths(elements)
+    major_starts = {i for i, d in depths.items() if d == MAJOR}
 
-    split_level = choose_split_level(elements)
     chapters: list[tuple[str, list[StreamElement]]] = []
     current: list[StreamElement] = []
     current_title = "Front Matter"
 
-    for e in elements:
-        starts_chapter = (
-            split_level
-            and e.element_type is ElementType.HEADING
-            and e.level == split_level
-        )
+    for i, e in enumerate(elements):
+        starts_chapter = i in major_starts
         if starts_chapter and current:
             chapters.append((current_title, current))
             current = []
-            current_title = _display(e.content)
-        elif starts_chapter:
-            current_title = _display(e.content)
+        if starts_chapter:
+            current_title = _display_title(e.content)
         current.append(e)
 
     if current:
         chapters.append((current_title, current))
     if not chapters:
-        chapters = [("Content", [])]
+        chapters = [("Front Matter", list(elements))]
+
+    # A prefix with no readable content -- the bare document title, or
+    # furniture-scale text a short document could not strip -- is not a
+    # reading unit: merge it into the first real chapter, where every
+    # heading stays visible content and a navigation anchor.
+    readable = {
+        ElementType.PARAGRAPH, ElementType.BLOCK, ElementType.CODE_BLOCK,
+        ElementType.IMAGE,
+    }
+    if len(chapters) >= 2 and chapters[0][1] and not any(
+        el.element_type in readable for el in chapters[0][1]
+    ):
+        heading_only = chapters.pop(0)
+        chapters[0] = (chapters[0][0], heading_only[1] + chapters[0][1])
+
+    # A single chapter that opens with a heading is named by that heading:
+    # "Front Matter" would describe a document that has none.
+    if (
+        len(chapters) == 1
+        and chapters[0][0] == "Front Matter"
+        and chapters[0][1]
+        and chapters[0][1][0].element_type is ElementType.HEADING
+    ):
+        chapters[0] = (_display_title(chapters[0][1][0].content), chapters[0][1])
     return chapters
 
 
@@ -446,11 +466,9 @@ def analyse_accessibility(elements: list[StreamElement]) -> AccessibilityProfile
         e.image_data is not None and e.image_data.alt_text.strip() for e in images
     )
     has_tables = any(e.tag.lower() == "table" for e in elements)
-    split_level = choose_split_level(elements)
-    has_table_of_contents = bool(
-        split_level
-        and any(e.element_type is ElementType.HEADING and e.level == split_level for e in headings)
-    )
+    # The navigation document now lists every heading anchor, so a table
+    # of contents exists exactly when headings exist.
+    has_table_of_contents = bool(headings)
 
     profile = AccessibilityProfile(
         has_alt_text=all_alt,
@@ -551,7 +569,8 @@ def build_epub_publication(
         )
 
     # Chapters -----------------------------------------------------------
-    split_level = choose_split_level(clean_stream)
+    depths = infer_heading_depths(clean_stream)
+    index_of = {id(e): i for i, e in enumerate(clean_stream)}
     segments = segment_chapters(clean_stream)
     chapters: list[epub.EpubHtml] = []
     records: list[ChapterRecord] = []
@@ -580,6 +599,15 @@ def build_epub_publication(
             )
         )
 
+        # Navigation lists every heading in the chapter (remediation
+        # Fix 11): the chapter's own major heading names the section
+        # entry, and every other heading -- title, minor or leaf --
+        # becomes an anchor target derived from the same stream that
+        # produced the content.
+        chapter_major = next(
+            (e for e in elements if depths.get(index_of.get(id(e))) == MAJOR),
+            None,
+        )
         sub_links = [
             epub.Link(
                 f"{file_name}#{e.anchor_id}",
@@ -588,9 +616,8 @@ def build_epub_publication(
             )
             for e in elements
             if e.element_type is ElementType.HEADING
-            and split_level
-            and e.level == split_level + 1
             and e.anchor_id
+            and e is not chapter_major
         ]
         if sub_links:
             toc.append((epub.Section(chap_title, href=file_name), tuple(sub_links)))
