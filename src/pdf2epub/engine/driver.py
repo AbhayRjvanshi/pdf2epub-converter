@@ -668,8 +668,11 @@ def _first_page_title_candidate(doc, profile) -> str | None:
       publication;
     * a heading crammed into the top 8% of the page is a running
       header, not a title;
-    * an adjacent second heading line joins the first (titles split
-      across lines), then the 120-character cap has the final word.
+    * a 120-character cap has the final word. Titles that wrap are
+      already one classified line (same-block heading lines merge
+      upstream), so the candidate is the first heading alone: joining
+      what cannot be told apart from the next section heading is how
+      "Artificial Intelligence Minor Project" happens.
 
     The heading stays in the content stream untouched: a title is
     metadata, never an instruction to re-tag an h1.
@@ -686,7 +689,7 @@ def _first_page_title_candidate(doc, profile) -> str | None:
         return re.sub(r"\s+", " ", packaging.strip_tags(line.text)).strip()
 
     seen_body = False
-    for i, ln in enumerate(lines):
+    for ln in lines:
         text = _plain(ln)
         if not text:
             continue
@@ -700,21 +703,7 @@ def _first_page_title_candidate(doc, profile) -> str | None:
             return None
         if page_height and (ln.bbox[1] / page_height) < 0.08:
             return None
-        parts = [text]
-        j = i + 1
-        while (
-            j < len(lines)
-            and lines[j].tag.startswith("h")
-            and (lines[j].bbox[1] - lines[j - 1].bbox[3]) < profile.line_height * 1.5
-            and len(" ".join(parts)) < 120
-        ):
-            nxt = _plain(lines[j])
-            if not nxt:
-                break
-            parts.append(nxt)
-            j += 1
-        candidate = " ".join(parts).strip()
-        return candidate if 0 < len(candidate) <= 120 else None
+        return text if 0 < len(text) <= 120 else None
     return None
 
 
