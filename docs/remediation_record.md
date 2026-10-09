@@ -86,9 +86,65 @@ both reachable seams), 12 (all three remaining hazards), 13, 14, 15, 16
 `nested_lists`, `staggered_table` + the Phase K set), 19.
 Already satisfied before this pass: 1 (extend, not rebuild — the stream
 *is* the contract), 3, 8, 11, 20.
-Deferred by decision: 9 (non-monospace code detection), 18 (visual
-regression — implemented as the structural heuristics of Fix 16 plus
-the CSS audit test, per the agreed "heuristic checks" scope).
+Deferred by decision: 18 (visual regression — implemented as the
+structural heuristics of Fix 16 plus the CSS audit test, per the
+agreed "heuristic checks" scope).
+
+## Fix 9: non-monospace code detection (2026-10-10)
+
+**Failure class:** *proportional-font code listings classified as
+prose.* Two commits, test-first throughout — 33 new tests were
+confirmed failing against the pass-through before the detector landed.
+
+- `8a877f2` — measured space advance: every classified line now
+  carries its observed space-glyph advance (own line, else page
+  median, else the historical 0.6×size estimate, which is exact for
+  Courier), so code-indent reconstruction is honest for proportional
+  fonts; the Courier regression test is unchanged and passes.
+- Fix 9 detector — `engine/code_signals.py`, wired into
+  `classify_page` **before** heading promotion (title-cased code such
+  as `SELECT Name FROM Users` can never become a heading). One
+  O(N) pass, bounded lookahead, duck-typed module. Evidence
+  precedence: negatives (URL-only, list markers, sentence-shaped
+  prose) checked first; strong signals (keyword statements,
+  assignments, call shapes, comments, block punctuation) start runs;
+  weak continuations (trailing comma, dangling close, operator
+  density) join them. Two strong aligned lines qualify; three-plus
+  combined with at least one strong qualify; a nearby label
+  strengthens but never establishes a block alone; URL lines join an
+  established run only tentatively (folded when code resumes, dropped
+  at run end) — a trailing URL after a listing is prose.
+
+**Regression coverage** (`tests/engine/test_code_signals.py` +
+`proportional_code` fixture): the labeled Python listing with two
+indent levels and HTML-sensitive string content, a short two-line
+listing, and the label-free SQL run all classify as code through the
+real Tier-1 flow and render as exactly three `<pre><code>` blocks with
+faithful relative indentation (4/8 spaces, verified in the parsed XML,
+not just stored metadata); the prose mention, URL line and numbered
+list stay outside every block; the ordered list and hyperlink survive
+in the packaged EPUB; the monospace Courier fixture is untouched.
+
+**Verification:** 674 passed / 14 skipped / 0 failed, 688 collected
+(exit 0). Fixture EPUB: `code=3`, EPUBCheck 5.1.0 exit 0 —
+0 fatals / 0 errors / 0 warnings / 0 infos.
+
+**Six-page baseline: one metric changed, by design.** `code 0 → 1`:
+page 5 of the reference document contains a genuine scikit-learn
+listing (`TfidfVectorizer(...)`, `max_features=50000,
+sublinear_tf=True)`, `MultinomialNB(alpha=0.5)`) that every prior
+stage flattened into prose — a true positive, evidenced by inspection.
+All other metrics are unchanged (chapters 1, headings 17, nav 17/0,
+lists 11, items 50, links 1, images 1/alt, empty paragraphs 0,
+EPUBCheck 0 errors). The frozen Stage-0 record is untouched; the
+pre-Fix-9 baseline above remains the historical reference.
+
+**Known limitations:** digest/vision pages remain outside this
+deterministic enhancement (the model path owns them); inline
+non-monospace `<code>` remains deferred; reconstruction from geometry
+cannot recover typed space counts exactly — the contract is faithful
+relative indentation, with exact counts asserted only where the
+fixture geometry makes them unambiguous.
 
 ## Table reconstruction scope (Fix 10)
 

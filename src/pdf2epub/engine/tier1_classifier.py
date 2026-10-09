@@ -29,6 +29,7 @@ import re
 from collections import Counter
 from dataclasses import dataclass, field
 
+from .code_signals import detect_code_lines
 from .heading_signals import (
     build_table_html,
     in_table_region,
@@ -553,6 +554,9 @@ def classify_page(page: "fitz.Page", profile: DocumentFontProfile) -> list[Class
                     char_width=char_width,
                 )
             )
+    # Fix 9: proportional-font code runs become pre BEFORE heading
+    # promotion, so title-cased code can never be promoted.
+    out = detect_code_lines(out, profile)
     return promote_structural_headings(out, profile)
 
 

@@ -502,6 +502,67 @@ def build_hyphen_url_doc(path: str | Path) -> str:
     return str(path)
 
 
+def build_proportional_code_doc(path: str | Path) -> str:
+    """Proportional-font code listings plus the false-positive zoo (Fix 9).
+
+    Every listing is set in Helvetica -- the exact blind spot of the
+    monospace-only classifier -- with indents positioned at whole
+    multiples of the measured space advance, so the reconstructed space
+    counts are unambiguous. The SQL run has no nearby label: it must
+    qualify on the two-strong rule alone, and its title-cased SELECT
+    line is the heading-promotion hazard this fixture pins. The
+    negatives (prose mention, URL-only line, numbered list) prove the
+    detector does not absorb ordinary content.
+    """
+    doc = fitz.open()
+    p = doc.new_page(width=PAGE_W, height=PAGE_H)
+    space = fitz.get_text_length(" ", fontname="helv", fontsize=BODY_SIZE)
+    base = MARGIN_X
+
+    def put(text, y, level=0):
+        p.insert_text(
+            (base + level * 4 * space, y), text,
+            fontname="helv", fontsize=BODY_SIZE,
+        )
+
+    y = 90.0
+    put("Example implementation:", y)                    # label-boost source
+    python_listing = [
+        ("def convert(path):", 0),
+        ("doc = open_pdf(path)", 1),
+        ("if doc.page_count > 0:", 1),
+        ('html = "<p>Tom & Jerry</p>"', 2),
+        ("return build(doc, html)", 2),
+        ("return None", 1),
+    ]
+    for text, level in python_listing:
+        y += LINE_H
+        put(text, y, level)
+
+    y += 28.0
+    put("The function returns a structured document.", y)  # run breaker
+    y += 28.0
+    put("result = client.get(url)", y)                     # second listing
+    y += LINE_H
+    put("print(result.status)", y)
+    y += 28.0
+    put("Call convert(path) to begin processing.", y)      # prose mention
+    y += 28.0
+    put("SELECT Name FROM Users", y)                       # no label nearby
+    y += LINE_H
+    put("WHERE Age > 30;", y)
+    y += 28.0
+    put("https://docs.example.com/convert", y)             # URL-only line
+    y += 28.0
+    put("1. Set retries = 5 in the config.", y)           # listify territory
+    y += LINE_H + 6  # list items are separate lines, not a wrapped paragraph
+    put("2. Import the library before use.", y)
+
+    doc.save(str(path))
+    doc.close()
+    return str(path)
+
+
 def build_special_chars_doc(path: str | Path) -> str:
     """Ampersands, angle brackets, quotes and a query-string URL.
 
@@ -559,6 +620,9 @@ def build_all(out_dir: str | Path) -> dict[str, str]:
             out / "overlapping_prose.pdf"
         ),
         "hyphen_url": build_hyphen_url_doc(out / "hyphen_url.pdf"),
+        "proportional_code": build_proportional_code_doc(
+            out / "proportional_code.pdf"
+        ),
         "special_chars": build_special_chars_doc(out / "special_chars.pdf"),
     }
 
