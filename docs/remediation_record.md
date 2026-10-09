@@ -1,5 +1,42 @@
 # Post-Conversion Remediation Record
 
+## Validation baseline before Fix 9 (2026-10-09, commit `a3cd742`)
+
+Independently remeasured before starting non-monospace code detection
+(Fix 9). Historical reference values were **remeasured, not assumed**;
+every value matched, so this run supersedes nothing — it confirms the
+existing baseline. Working tree was clean at `a3cd742` on `main`; the
+source PDF hash matched `stage0_baseline.md`
+(`369B95FE…AA9638D`).
+
+```text
+suite (venv, .venv\Scripts\python.exe -m pytest):
+  637 passed, 14 skipped, 0 failed, 651 collected (cross-check), exit 0
+  (14 skips = the designed gates: live provider, distribution, ace, slow)
+
+offline regression (established procedure, docs/stage0_baseline.md):
+  pdf2epub convert Artificial_Intelligence_Projects.pdf
+            -o baseline_fix9_pre.epub --provider none
+  exit 0, 17.3 s, no live provider, no credentials involved
+
+measured against the fresh artifact (project checker + container read):
+  chapters 1 · headings 17 · nav 17, unresolved 0 ·
+  lists 11 (stream level; 12 ol/ul open tags in the body because one
+  list nests a ul) · list items 50 · links 1 ·
+  images 1, alt 1 · empty paragraphs 0 ·
+  internal_structure_check: no findings
+
+epubcheck 5.1.0 (npm wrapper -> java -jar epubcheck-5.1.0):
+  exit 0 — 0 fatals / 0 errors / 0 warnings / 0 infos
+
+URL regression: 'netflix-shows' present, 'netflixshows' absent
+```
+
+Baseline artifacts of this run (kept, not committed):
+`%TEMP%\opencode\baseline_fix9_pre.epub` and the accompanying logs.
+
+---
+
 Outcome record for
 [post-conversion remediation plan](pdf_to_epub_post_conversion_remediation_plan.md),
 executed 2026-10-09. The plan's 20 fixes were reconciled against the
