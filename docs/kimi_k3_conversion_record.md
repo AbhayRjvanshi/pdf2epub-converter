@@ -5,6 +5,13 @@ Real-provider conversion and comparison against the frozen
 Same source PDF (SHA-256 in the baseline record), new output name per the
 freeze rule.
 
+**Artifact status (2026-10-09):** `stage-kimi-k3.epub` was removed from
+local storage during a workspace cleanup and is no longer available;
+the metrics below are the measurements taken while it existed, and this
+record is the authoritative evidence of that run. Regenerating the
+output with the live model would be a new measurement, not a
+reproduction of this one.
+
 ## Phase H — conversion metrics
 
 ```text
@@ -14,7 +21,8 @@ routing:       tier1=4, tier2-digest=1, tier2-vision=1   (identical to Stage 0)
 tier 2 result: 2/2 pages processed, no retries, no failures
 elapsed:       680.5 s (NVIDIA serverless; ~4 min cold-start per request
                observed during the Phase G smoke run)
-output:        stage-kimi-k3.epub (kept outside the repository)
+output:        stage-kimi-k3.epub (kept outside the repository;
+               removed later — see artifact status above)
 ```
 
 Packaging: 78 stream elements, **2 chapters**, 0 cross-page welds, 0
