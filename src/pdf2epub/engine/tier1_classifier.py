@@ -342,6 +342,7 @@ class ClassifiedLine:
     block_margin: float = 0.0
     first_word_width: float = 0.0
     bold: bool = False  # dominant span was bold (structural-heading evidence)
+    char_width: float = 0.0  # measured space advance (0 -> collector fallback)
 
 
 def classify_line_tag(size: float, bold: bool, profile: DocumentFontProfile) -> tuple[str, int]:
@@ -433,6 +434,45 @@ def merge_baseline_fragments(block_lines: list[dict]) -> list[dict]:
     return merged
 
 
+def _space_advances(spans: list[dict]) -> list[float]:
+    """Advance widths of real space glyphs in these spans, when present.
+
+    Many PDFs position words without space glyphs (that is why
+    :func:`span_text` recovers them from geometry); where glyphs exist,
+    their boxes carry the true space advance of this exact font and
+    size -- the quantity indentation reconstruction actually needs.
+    """
+    out: list[float] = []
+    for span in spans:
+        for ch in span.get("chars") or ():
+            if ch.get("c") == " ":
+                width = ch["bbox"][2] - ch["bbox"][0]
+                if width > 0:
+                    out.append(width)
+    return out
+
+
+def _page_space_advance(raw: dict) -> float:
+    """Median observed space advance across the whole page, or 0.0.
+
+    Page-level observation is the fallback for lines whose own text
+    carries no space glyph (an indented ``x=5`` still needs a divisor
+    from its neighbours). 0.0 means "unmeasured": the code collector
+    then falls back to its historical 0.6 x font-size estimate.
+    """
+    advances: list[float] = []
+    for block in raw.get("blocks", []):
+        if block.get("type") != 0:
+            continue
+        for line in block.get("lines", []):
+            for span in line.get("spans", []):
+                advances.extend(_space_advances([span]))
+    if not advances:
+        return 0.0
+    ordered = sorted(advances)
+    return ordered[len(ordered) // 2]
+
+
 def classify_page(page: "fitz.Page", profile: DocumentFontProfile) -> list[ClassifiedLine]:
     """Flatten a page into classified lines, preserving block identity.
 
@@ -441,6 +481,7 @@ def classify_page(page: "fitz.Page", profile: DocumentFontProfile) -> list[Class
     """
     out: list[ClassifiedLine] = []
     raw = page.get_text("rawdict")
+    page_space = _page_space_advance(raw)
 
     for block in raw["blocks"]:
         if block.get("type") != 0:
@@ -485,6 +526,16 @@ def classify_page(page: "fitz.Page", profile: DocumentFontProfile) -> list[Class
 
             line_bbox = tuple(line["bbox"])
 
+            # Indentation divisor: this line's own space glyphs when it
+            # has any, else the page's observed advance, else 0.0 (the
+            # collector's historical 0.6 x size estimate applies).
+            own_spaces = _space_advances(spans)
+            own_spaces.sort()
+            char_width = (
+                own_spaces[len(own_spaces) // 2]
+                if own_spaces
+                else page_space
+            )
             out.append(
                 ClassifiedLine(
                     text=line_html if all_mono else line_html.strip(),
@@ -499,6 +550,7 @@ def classify_page(page: "fitz.Page", profile: DocumentFontProfile) -> list[Class
                     block_margin=margin,
                     first_word_width=first_word_width(spans, texts),
                     bold=is_bold(dominant),
+                    char_width=char_width,
                 )
             )
     return promote_structural_headings(out, profile)
@@ -716,6 +768,7 @@ def build_paragraphs(
                 size=buffer.size,
                 block_id=buffer.block_id,
                 bold=buffer.bold,
+                char_width=buffer.char_width,
             )
             buffer_plain = buffer.raw_text
             buffer_last_bbox = line.bbox  # critical: advance the trailing edge
@@ -834,8 +887,11 @@ def _collect_code_blocks(
 ) -> list[StreamElement]:
     """Fold consecutive monospace lines into one <pre>, indentation intact.
 
-    The 0.6×font-size character-width estimate is appropriate here because
-    every buffered line is monospace; it is intentionally not used for prose.
+    The indentation divisor is the line's measured space advance when
+    space glyphs were observed (exact for any font, including
+    proportional code from Fix 9 detection); otherwise the historical
+    0.6 x font-size estimate applies -- which is exact for the
+    monospace fonts this path was built for.
     """
     out: list[StreamElement] = []
     buf: list[ClassifiedLine] = []
@@ -846,7 +902,7 @@ def _collect_code_blocks(
         min_x = min(l.bbox[0] for l in buf)
         rendered = []
         for l in buf:
-            char_w = max(l.size * 0.6, 1.0)
+            char_w = max(l.char_width or (l.size * 0.6), 1.0)
             indent = max(0, int(round((l.bbox[0] - min_x) / char_w)))
             rendered.append(" " * indent + l.text.strip())
         out.append(

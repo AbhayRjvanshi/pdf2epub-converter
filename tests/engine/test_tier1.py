@@ -289,3 +289,72 @@ def test_join_lines_keeps_a_url_hyphen():
     assert joined == "See https://www.kaggle.com/datasets/shivamb/netflix-shows today."
     assert ends_in_url_token(first)
     assert not ends_in_url_token("an ordinary compound-")
+
+
+def test_space_advance_measured_from_real_glyphs():
+    from pdf2epub.engine.tier1_classifier import _space_advances
+
+    def ch(c, x0, x1):
+        return {"c": c, "bbox": (x0, 0.0, x1, 10.0)}
+
+    span = {"chars": [ch("h", 0, 5), ch(" ", 5, 7.8), ch("i", 7.8, 12)]}
+    assert _space_advances([span]) == [2.8]
+
+
+def test_page_space_advance_median_and_zero_fallback():
+    from pdf2epub.engine.tier1_classifier import _page_space_advance
+
+    def span(spaces):
+        return {"spans": [{"chars": [
+            {"c": "a", "bbox": (0, 0, 5, 10)},
+            *[{"c": " ", "bbox": (5 + i * 10, 0, 5 + i * 10 + spaces[i], 10)}
+              for i in range(len(spaces))],
+        ]}]}
+
+    raw = {"blocks": [{"type": 0, "lines": [span([2.0, 3.0, 4.0])]}]}
+    assert _page_space_advance(raw) == 3.0
+    assert _page_space_advance({"blocks": []}) == 0.0
+
+
+def test_code_collector_uses_measured_width_for_proportional_fonts():
+    from pdf2epub.engine.tier1_classifier import (
+        ClassifiedLine,
+        DocumentFontProfile,
+        _collect_code_blocks,
+    )
+
+    def pre_line(text, x0, y, char_width):
+        return ClassifiedLine(
+            text=text, raw_text=text, tag="pre", level=0, monospace=False,
+            wrapped=False, bbox=(x0, y, x0 + 100.0, y + 14.0), size=10.0,
+            block_id=1, char_width=char_width,
+        )
+
+    profile = DocumentFontProfile(body_size=10.0, line_height=14.0, main_font="x")
+    lines = [
+        pre_line("def f():", 54.0, 100.0, 2.5),
+        pre_line("return 1", 54.0 + 4 * 2.5, 114.0, 2.5),  # 4-space indent
+        pre_line("x = 1", 54.0 + 8 * 2.5, 128.0, 2.5),    # 8-space indent
+    ]
+    (block,) = _collect_code_blocks(lines, 0, profile.line_height)
+    assert block.content == "def f():\n    return 1\n        x = 1"
+
+
+def test_code_collector_falls_back_to_estimate_without_measurement():
+    from pdf2epub.engine.tier1_classifier import (
+        ClassifiedLine,
+        DocumentFontProfile,
+        _collect_code_blocks,
+    )
+
+    def pre_line(text, x0, y):
+        return ClassifiedLine(
+            text=text, raw_text=text, tag="pre", level=0, monospace=True,
+            wrapped=False, bbox=(x0, y, x0 + 100.0, y + 14.0), size=10.0,
+            block_id=1,  # char_width=0.0 -> historical 0.6 x size estimate
+        )
+
+    profile = DocumentFontProfile(body_size=10.0, line_height=14.0, main_font="x")
+    lines = [pre_line("code()", 54.0, 100.0), pre_line("x", 54.0 + 6.0, 114.0)]
+    (block,) = _collect_code_blocks(lines, 0, profile.line_height)
+    assert block.content == "code()\n x"  # 6pt / 6pt = exactly one space
