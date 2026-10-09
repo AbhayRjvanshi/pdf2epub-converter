@@ -290,7 +290,21 @@ def build_table_html(
     # produces, because wrapped prose keeps its column baselines.
     multi_rows = [r for r in rows if len(r) > 1]
     if not multi_rows:
-        return None
+        # Candidate evidence did not produce a provable grid (curved or
+        # overlapping prose baselines): every candidate line returns to
+        # the prose fallback via the tuple contract -- never bare None,
+        # which both seams unpack.
+        return None, [c for r in rows for c in r]
+    tol = size_hint * _COLUMN_ALIGN_TOLERANCE
+    # Cells are x-disjoint by definition: a chain of same-x overlapping
+    # lines is a stacked paragraph, never a row of cells. Without this
+    # guard, curved decorative baselines fabricate single-row tables
+    # out of prose.
+    for row in multi_rows:
+        if any(
+            b["bbox"][0] < a["bbox"][2] - tol for a, b in zip(row, row[1:])
+        ):
+            return None, [c for r in rows for c in r]
     for row in multi_rows:
         for a, b in zip(row, row[1:]):
             overlap = min(a["bbox"][3], b["bbox"][3]) - max(a["bbox"][1], b["bbox"][1])
@@ -303,7 +317,6 @@ def build_table_html(
     else:
         return None, []  # every pair cleanly aligned: this could be prose columns
 
-    tol = size_hint * _COLUMN_ALIGN_TOLERANCE
     resolved: list[list[dict]] = []
     strays: list[dict] = []
     grid_started = False

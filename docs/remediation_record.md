@@ -77,6 +77,52 @@ table page remains vision-preserved offline by design; the
 `staggered_table` fixture pins the rebuilt grid end to end
 (`tables=1`, `<td>` cells, surrounding prose intact, EPUBCheck clean).
 
+## Post-remediation fix: table builder return contract (2026-10-09)
+
+**Failure class:** *Overlapping prose baselines produce table evidence
+without valid grid rows.*
+
+A 32-page SegoePrint children's book crashed Tier 1 at page 2 with
+`TypeError: cannot unpack non-iterable NoneType object`: its curved
+baselines (20pt text, 26pt advance) overlap by ~9pt, so every
+consecutive pair registers as table-region evidence — but at 0.26
+band overlap no pair clears the 0.3 same-row threshold, leaving zero
+provable grid rows. One branch of `build_table_html` — the
+`not multi_rows` early return — had been left as bare `return None`
+when the function migrated to the `(markup, strays)` tuple contract,
+and both seams (`extract_tables`, the digest fallback) unpack it.
+
+The regression fixture also exposed a sibling defect in the same
+gate region: a chain of *same-x* overlapping lines (overlap fraction
+above the row threshold) clustered into a single "row" and fabricated
+a table out of stacked prose. Cells are x-disjoint by definition; the
+builder now refuses such rows outright.
+
+Fixes (both minimal, no threshold or routing changes):
+
+- `build_table_html`: the no-grid branch returns
+  `None, [every candidate line]`; every return path is now a two-item
+  tuple (machine-audited, zero bare branches).
+- `build_table_html`: rows whose members overlap horizontally are
+  prose, never a grid — the x-disjointness invariant.
+
+Regression coverage: builder unit tests for both branches, a Tier-1
+`extract_tables` seam test in the exact crash geometry, a digest
+fallback seam test for the same geometry, and the
+`overlapping_prose` fixture (28pt text on a 30pt advance) converting
+end to end with `tables=0` and no text loss.
+
+Verification: 631 passed / 14 skipped (5 new tests); the original
+32-page conversion completes (`tier1 28/28`, `tier2 4/4` through
+Kimi K3, EPUBCheck 0 errors, 6.9 MB output); the six-page offline
+regression is unchanged (17 headings, 11 lists, nav 17/17, EPUBCheck
+PASS). The three live NVIDIA tests were separately confirmed green in
+the project venv (the SDK is installed via the `nvidia` extra; the
+reported `ModuleNotFoundError` came from running the suite with the
+system interpreter, which does not carry the optional provider SDKs —
+the adapter's typed error identified the provider and the correct
+install command, as designed).
+
 ## Known approximations (deliberate)
 
 - The digest fallback's two-column sort places short centered headings

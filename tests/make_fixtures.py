@@ -443,6 +443,36 @@ def build_staggered_table_doc(path: str | Path) -> str:
     return str(path)
 
 
+def build_overlapping_prose_doc(path: str | Path) -> str:
+    """Overlapping prose baselines: table evidence without a grid.
+
+    28pt text on a 30pt advance makes consecutive line bands overlap
+    by ~8.5pt (about 0.22 of the band height): enough vertical overlap
+    to register as table-region evidence, never enough to cluster a
+    grid row. This is the curved-decorative-font failure class that
+    crashed ``extract_tables`` before the (markup, strays) contract was
+    completed; ordinary prose, no genuine table data.
+    """
+    doc = fitz.open()
+    p = doc.new_page(width=PAGE_W, height=PAGE_H)
+    y = 100.0
+    for text in (
+        "The twins are overjoyed",
+        "A wonderful surprise",
+        "Another has them confused",
+        "Read on to find out why",
+    ):
+        p.insert_text((MARGIN_X, y), text, fontname="helv", fontsize=28.0)
+        y += 30.0
+    y += 20.0
+    put_paragraph(
+        p, MARGIN_X, y, COL_W, greedy_wrap(FIVE_LINE_TEXT, COL_W, size=10.0)
+    )
+    doc.save(str(path))
+    doc.close()
+    return str(path)
+
+
 def build_special_chars_doc(path: str | Path) -> str:
     """Ampersands, angle brackets, quotes and a query-string URL.
 
@@ -496,6 +526,9 @@ def build_all(out_dir: str | Path) -> dict[str, str]:
         "running_header": build_running_header_doc(out / "running_header.pdf"),
         "nested_lists": build_nested_lists_doc(out / "nested_lists.pdf"),
         "staggered_table": build_staggered_table_doc(out / "staggered_table.pdf"),
+        "overlapping_prose": build_overlapping_prose_doc(
+            out / "overlapping_prose.pdf"
+        ),
         "special_chars": build_special_chars_doc(out / "special_chars.pdf"),
     }
 

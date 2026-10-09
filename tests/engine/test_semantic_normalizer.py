@@ -282,3 +282,36 @@ def test_digest_fallback_rebuilds_staggered_tables():
     assert "<td>Widget frame assembly</td>" in xhtml
     assert "<td>nylon quick-release pair</td>" in xhtml
     assert "<h4>Parts Listing</h4>" in xhtml
+
+
+def test_digest_fallback_survives_overlapping_prose_evidence():
+    """The same failure geometry through the digest seam: curved,
+    overlapping baselines are table *evidence* but never a grid. The
+    fallback must keep every word as prose -- the bare-None branch here
+    is what crashed the tuple unpack before the contract fix."""
+    from pdf2epub.engine.tier2_llm_handler import Tier2Request, _digest_fallback
+
+    def d(line_id, block, bbox, text):
+        return {
+            "line_id": line_id, "block_id": block, "bbox": bbox,
+            "size": 20.0, "bold": False, "italic": False, "text": text,
+        }
+
+    # 20pt bands on a 26pt advance: ~9.3pt overlap (0.26 of the band)
+    digest = [
+        d(1, 1, (54.0, 340.8, 314.0, 376.1), "The twins, Rose and Violet"),
+        d(2, 2, (54.0, 366.8, 314.0, 402.1), "overjoyed with their new garden"),
+        d(3, 3, (54.0, 392.8, 314.0, 428.1), "What a wonderful surprise"),
+        d(4, 4, (54.0, 418.8, 314.0, 454.1), "Read on to find out why"),
+    ]
+    xhtml = _digest_fallback(
+        Tier2Request(page_num=2, layout_digest=digest, page_width=612.0)
+    )
+    assert "<table>" not in xhtml
+    for text in (
+        "The twins, Rose and Violet",
+        "overjoyed with their new garden",
+        "What a wonderful surprise",
+        "Read on to find out why",
+    ):
+        assert text in xhtml

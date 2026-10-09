@@ -358,3 +358,82 @@ def test_two_lines_do_not_make_a_table():
         [_tline(54, 100, 130, 114, "a")], size_hint=10.0
     )
     assert html is None
+
+
+# ---------------------------------------------------------------------------
+# Overlapping prose: table evidence without a grid (return-contract fix)
+# ---------------------------------------------------------------------------
+
+
+def test_evidence_without_grid_rows_returns_the_contract_tuple():
+    # The 32-page children's-book crash: tall, curved baselines overlap
+    # (negative next-gaps -> table-region evidence) but no pair clears
+    # the same-row threshold, so no provable grid row exists. The
+    # contract is (markup, strays) on every path -- a bare None here is
+    # exactly what crashed extract_tables and the digest fallback.
+    lines = [
+        _tline(150, 340.8, 300, 376.1, "The twins, Rose and Violet"),
+        _tline(140, 366.8, 300, 402.1, "overjoyed with their new garden"),
+        _tline(70, 392.8, 300, 428.1, "What a wonderful surprise"),
+    ]
+    markup, strays = build_table_html(lines, size_hint=20.0)
+    assert markup is None
+    assert [c["text"] for c in strays] == [
+        "The twins, Rose and Violet",
+        "overjoyed with their new garden",
+        "What a wonderful surprise",
+    ]
+
+
+def test_same_x_overlap_chain_stays_prose_not_a_fake_row():
+    # Overlap fraction ABOVE the row threshold clusters the lines into
+    # one "row" -- but they share the same x, and cells are x-disjoint
+    # by definition. A stacked paragraph must never become a row of
+    # fabricated cells.
+    lines = [
+        _tline(54, 69.9, 314, 108.4, "line one overlaps the next"),
+        _tline(54, 93.9, 314, 132.4, "line two overlaps the next"),
+        _tline(54, 117.9, 314, 156.4, "line three overlaps the next"),
+    ]
+    markup, strays = build_table_html(lines, size_hint=10.0)
+    assert markup is None
+    assert len(strays) == 3
+
+
+def test_extract_tables_keeps_overlapping_prose_as_prose():
+    # SegoePrint-style geometry end to end through the Tier-1 seam: a
+    # 20pt line on a 26pt advance overlaps by ~9.3pt (0.26 of the band),
+    # which is table evidence but never a grid. Before the contract
+    # fix this call raised TypeError at the unpack site.
+    profile = t1.DocumentFontProfile(body_size=20.0, line_height=26.0, main_font="x")
+
+    def overlapping(text, y):
+        return t1.ClassifiedLine(
+            text=text, raw_text=text, tag="p", level=0, monospace=False,
+            wrapped=False, bbox=(54.0, y, 314.0, y + 35.3), size=20.0,
+            block_id=1,
+        )
+
+    lines = [
+        overlapping(f"prose line number {n}", 340.8 + n * 26.0)
+        for n in range(4)
+    ]
+    tables, rest = t1.extract_tables(lines, profile, 1)
+    assert tables == []
+    assert rest == lines  # every line survives, in order, as prose
+
+
+def test_overlapping_prose_fixture_end_to_end(fixture_pdfs, tmp_path):
+    out = tmp_path / "overlap.epub"
+    result = _run(fixture_pdfs["overlapping_prose"], out)
+    assert result["success"] is True
+    build = result["build"]
+    assert build.metrics.tables == 0  # never a fabricated table
+    body = _body(out)
+    for probe in (
+        "The twins are overjoyed",
+        "A wonderful surprise",
+        "Read on to find out why",
+    ):
+        assert probe in body
+    assert "<table" not in body
