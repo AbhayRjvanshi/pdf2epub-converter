@@ -570,3 +570,14 @@ def test_internal_check_rejects_a_non_epub(tmp_path):
 def test_internal_check_reports_a_missing_file(tmp_path):
     errors = pk.internal_structure_check(str(tmp_path / "absent.epub"))
     assert errors[0]["severity"] == "FATAL"
+
+
+def test_weld_keeps_a_url_hyphen_across_the_page_seam():
+    # The cross-page twin: a URL's own hyphen at a page break is slug
+    # content, never a soft hyphen to strip.
+    left = para("See https://www.kaggle.com/datasets/shivamb/netflix-", 0, 600.0)
+    right = para("shows for the catalogue.", 1, 90.0)
+    clean, _, welds = pk.process_element_stream([left, right], HEIGHTS)
+    assert welds == 1
+    assert "netflix-shows" in clean[0].content
+    assert "netflixshows" not in clean[0].content

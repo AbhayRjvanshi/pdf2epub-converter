@@ -38,7 +38,12 @@ from ebooklib import epub
 
 log = logging.getLogger("packaging")
 
-from .tier1_classifier import ElementType, StreamElement, strip_tags
+from .tier1_classifier import (
+    ElementType,
+    StreamElement,
+    ends_in_url_token,
+    strip_tags,
+)
 from .heading_roles import MAJOR, infer_heading_depths
 from .semantic_normalizer import normalize_semantics
 
@@ -250,6 +255,11 @@ def _weld(prev: StreamElement, nxt: StreamElement) -> StreamElement:
     first = prev.content.rstrip()
     prev_plain = strip_tags(first).rstrip()
     if prev_plain.endswith("-") and HYPHEN_TAIL_RE.search(first):
+        if ends_in_url_token(prev_plain):
+            # A URL wrapped at its own hyphen: the hyphen is content
+            # (slugs contain hyphens), never a soft-wrap artefact.
+            joined = first + nxt.content.lstrip()
+            return replace(prev, content=joined)
         m = HYPHEN_TAIL_RE.search(first)
         assert m is not None
         first = HYPHEN_TAIL_RE.sub(lambda _m: m.group(1) + m.group(2), first)

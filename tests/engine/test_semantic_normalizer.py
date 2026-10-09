@@ -315,3 +315,89 @@ def test_digest_fallback_survives_overlapping_prose_evidence():
         "Read on to find out why",
     ):
         assert text in xhtml
+
+
+def test_digest_fallback_orders_centered_headings_by_reading_flow():
+    """A centered single-column page has a wide x-spread but no
+    side-by-side residents: a centered heading must stay at its
+    vertical position in the reading flow, not sort after the whole
+    phantom "right column" (remediation: digest two-column ordering)."""
+    from pdf2epub.engine.tier2_llm_handler import Tier2Request, _digest_fallback
+
+    def d(line_id, block, bbox, text):
+        return {
+            "line_id": line_id, "block_id": block, "bbox": bbox,
+            "size": 14.0, "bold": False, "italic": False, "text": text,
+        }
+
+    # x-spread 186pt on a 420pt page trips the naive threshold; the
+    # centered heading starts right of the naive midpoint (147)
+    digest = [
+        d(1, 1, (240.0, 100.0, 380.0, 114.0), "Major Project"),
+        d(2, 2, (54.0, 130.0, 340.0, 144.0), "Body text starts the section"),
+        d(3, 2, (54.0, 144.0, 300.0, 158.0), "and continues right after."),
+    ]
+    xhtml = _digest_fallback(
+        Tier2Request(page_num=1, layout_digest=digest, page_width=420.0)
+    )
+    assert "Major Project" in xhtml and "Body text starts" in xhtml
+    assert xhtml.index("Major Project") < xhtml.index("Body text starts")
+
+
+def test_digest_fallback_keeps_genuine_columns_two_col():
+    """The evidence gate must not flatten a real two-column page: the
+    alternating same-row, x-disjoint pairs are exactly the columnar
+    structure the sort exists for."""
+    from pdf2epub.engine.tier2_llm_handler import Tier2Request, _digest_fallback
+
+    def d(line_id, block, bbox, text):
+        return {
+            "line_id": line_id, "block_id": block, "bbox": bbox,
+            "size": 10.0, "bold": False, "italic": False, "text": text,
+        }
+
+    digest = [
+        d(1, 1, (54.0, 100.0, 200.0, 114.0), "left column line one"),
+        d(2, 2, (240.0, 100.0, 390.0, 114.0), "right column line one"),
+        d(3, 1, (54.0, 114.0, 200.0, 128.0), "left column line two"),
+        d(4, 2, (240.0, 114.0, 390.0, 128.0), "right column line two"),
+    ]
+    xhtml = _digest_fallback(
+        Tier2Request(page_num=1, layout_digest=digest, page_width=420.0)
+    )
+    # both left lines precede both right lines: columns read whole
+    assert (
+        xhtml.index("left column line one")
+        < xhtml.index("left column line two")
+        < xhtml.index("right column line one")
+        < xhtml.index("right column line two")
+    )
+
+
+def test_url_wrapped_at_its_own_hyphen_keeps_the_hyphen(fixture_pdfs, tmp_path):
+    """A URL's hyphen is content, not typography.
+
+    The PDF breaks 'netflix-shows' at its own hyphen, exactly where a
+    soft hyphen would sit; stripping it rewrites the link to the
+    nonexistent 'netflixshows'. Regression case for the join sites
+    (Tier-1 paragraph merge, digest fallback, cross-page weld)."""
+    import zipfile
+
+    from pdf2epub.engine import driver
+
+    out = tmp_path / "hyphen.epub"
+    result = driver.run_pipeline(
+        fixture_pdfs["hyphen_url"], str(out),
+        llm_adapter=None, verbose=False, cache_dir=str(tmp_path / "cache"),
+    )
+    assert result["success"] is True
+    with zipfile.ZipFile(out) as zf:
+        body = "".join(
+            zf.read(n).decode("utf-8")
+            for n in zf.namelist()
+            if n.endswith(".xhtml")
+        )
+    assert "netflixshows" not in body
+    assert 'href="https://www.kaggle.com/datasets/shivamb/netflix-shows"' in body
+    assert ">https://www.kaggle.com/datasets/shivamb/netflix-shows</a>" in body
+    assert "for the full catalogue." in body  # continuation prose intact

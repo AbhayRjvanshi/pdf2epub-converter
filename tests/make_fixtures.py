@@ -473,6 +473,35 @@ def build_overlapping_prose_doc(path: str | Path) -> str:
     return str(path)
 
 
+def build_hyphen_url_doc(path: str | Path) -> str:
+    """A URL wrapped at its own hyphen (soft-hyphen corruption class).
+
+    The URL's real hyphen ('netflix-shows') sits exactly where a
+    typographic soft hyphen would be. The pipeline must keep the
+    hyphen and join the fragments directly; stripping it as a wrap
+    artifact rewrites the link to a nonexistent page.
+    """
+    doc = fitz.open()
+    p = doc.new_page(width=PAGE_W, height=PAGE_H)
+    p.insert_text(
+        (MARGIN_X, 90.0), "Dataset source and documentation",
+        fontname="helv", fontsize=BODY_SIZE,
+    )
+    y = 120.0
+    p.insert_text(
+        (MARGIN_X, y),
+        "See https://www.kaggle.com/datasets/shivamb/netflix-",
+        fontname="helv", fontsize=BODY_SIZE,
+    )
+    p.insert_text(
+        (MARGIN_X, y + LINE_H), "shows for the full catalogue.",
+        fontname="helv", fontsize=BODY_SIZE,
+    )
+    doc.save(str(path))
+    doc.close()
+    return str(path)
+
+
 def build_special_chars_doc(path: str | Path) -> str:
     """Ampersands, angle brackets, quotes and a query-string URL.
 
@@ -529,6 +558,7 @@ def build_all(out_dir: str | Path) -> dict[str, str]:
         "overlapping_prose": build_overlapping_prose_doc(
             out / "overlapping_prose.pdf"
         ),
+        "hyphen_url": build_hyphen_url_doc(out / "hyphen_url.pdf"),
         "special_chars": build_special_chars_doc(out / "special_chars.pdf"),
     }
 

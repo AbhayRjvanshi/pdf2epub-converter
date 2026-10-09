@@ -265,3 +265,14 @@ def test_json_fences_are_stripped_before_parsing(tmp_path):
 
     handler = Tier2Handler(llm_client_fn=client, cache_dir=tmp_path)
     assert handler.process_batch([digest()]) == ["<p>ok</p>"]
+
+
+def test_join_hyphenated_keeps_a_url_hyphen():
+    # digest-page twin of the soft-hyphen corruption: a URL's own
+    # hyphen must survive the merge (slugs contain hyphens).
+    from pdf2epub.engine.tier2_llm_handler import _join_hyphenated
+
+    a = "See https://www.kaggle.com/datasets/shivamb/netflix-"
+    assert _join_hyphenated(a, "shows today.") == a + "shows today."
+    # prose soft hyphens still join as before
+    assert _join_hyphenated("won-", "derful prose") == "wonderful prose"

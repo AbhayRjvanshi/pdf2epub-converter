@@ -624,8 +624,25 @@ def _is_soft_hyphen(first_plain: str, second_plain: str) -> bool:
     return True
 
 
+URL_TOKEN_RE = re.compile(r"(?:https?://|www\.)\S*$")
+
+
+def ends_in_url_token(plain: str) -> bool:
+    """The last whitespace-delimited token is an in-progress URL.
+
+    A hyphen at the end of a URL token is content -- slugs contain
+    hyphens -- never a typographic soft hyphen: keep it and join the
+    fragments directly, or the link is silently rewritten to a
+    nonexistent page ('netflix-shows' becoming 'netflixshows').
+    """
+    return bool(URL_TOKEN_RE.search(plain.rstrip()))
+
+
 def join_lines(first_html: str, second_html: str, first_plain: str, second_plain: str) -> str:
     first_html = first_html.rstrip()
+    if HYPHEN_BREAK_RE.search(first_html) and ends_in_url_token(first_plain):
+        # A URL wrapped at its own hyphen: the hyphen is content.
+        return first_html + second_html.lstrip()
     if HYPHEN_BREAK_RE.search(first_html) and _is_soft_hyphen(first_plain, second_plain):
         match = HYPHEN_BREAK_RE.search(first_html)
         assert match is not None

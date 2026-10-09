@@ -39,6 +39,7 @@ from .heading_signals import (
     structural_heading_level,
     table_region,
 )
+from .tier1_classifier import ends_in_url_token
 
 log = logging.getLogger("tier2")
 
@@ -270,6 +271,50 @@ LLMClient = Callable[[str, str, "str | None"], str]
 
 
 TWO_COLUMN_SPREAD_FRACTION = 0.18  # fraction of page width that counts as a gutter
+COLUMNAR_ROW_OVERLAP = 0.3        # of the shorter line: same visual row
+COLUMNAR_PAIR_EVIDENCE = 2        # side-by-side rows that prove real columns
+
+
+def _count_columnar_pair_rows(digest: list[dict]) -> int:
+    """Rows of side-by-side text: y-overlapping, x-disjoint pairs.
+
+    This is the evidence that separates a genuine two-column page from
+    a centered single-column one -- both can have a wide x-spread, but
+    only real columns have lines living at the same height in distinct
+    horizontal positions.
+    """
+    ordered = sorted(digest, key=lambda d: d["bbox"][1])
+    rows: list[list[dict]] = []
+    for line in ordered:
+        if rows:
+            placed = False
+            for prev in rows[-1]:
+                overlap = (
+                    min(prev["bbox"][3], line["bbox"][3])
+                    - max(prev["bbox"][1], line["bbox"][1])
+                )
+                height = min(
+                    prev["bbox"][3] - prev["bbox"][1],
+                    line["bbox"][3] - line["bbox"][1],
+                )
+                if height > 0 and overlap > height * COLUMNAR_ROW_OVERLAP:
+                    rows[-1].append(line)
+                    placed = True
+                    break
+            if placed:
+                continue
+        rows.append([line])
+
+    pair_rows = 0
+    for row in rows:
+        if len(row) < 2:
+            continue
+        row = sorted(row, key=lambda d: d["bbox"][0])
+        if any(
+            b["bbox"][0] > a["bbox"][2] for a, b in zip(row, row[1:])
+        ):
+            pair_rows += 1
+    return pair_rows
 
 
 def _detect_two_column(digest: list[dict], page_width: float) -> tuple[bool, float]:
@@ -279,6 +324,12 @@ def _detect_two_column(digest: list[dict], page_width: float) -> tuple[bool, flo
     paperback (~300pt wide) than on a letter-size PDF (~612pt wide). Falling
     back to the widest observed line when the caller has no page dimensions
     (e.g. hand-built digests in unit tests) keeps this usable without one.
+
+    A wide x-spread alone also describes a *centered* single-column page,
+    where every line begins at its own centered offset and a centered
+    heading right of the naive midpoint would sort after the whole
+    phantom "right column". Real columns are only declared when
+    side-by-side rows actually live on the page.
     """
     xs = [d["bbox"][0] for d in digest]
     if not xs:
@@ -286,7 +337,11 @@ def _detect_two_column(digest: list[dict], page_width: float) -> tuple[bool, flo
     midpoint = (min(xs) + max(xs)) / 2
     spread = max(xs) - min(xs)
     pw = page_width or max((d["bbox"][2] for d in digest), default=0.0) or 612.0
-    return spread > (TWO_COLUMN_SPREAD_FRACTION * pw), midpoint
+    if spread <= (TWO_COLUMN_SPREAD_FRACTION * pw):
+        return False, midpoint
+    if _count_columnar_pair_rows(digest) < COLUMNAR_PAIR_EVIDENCE:
+        return False, midpoint
+    return True, midpoint
 
 
 def _column_of(d: dict, two_col: bool, midpoint: float) -> int:
@@ -344,6 +399,10 @@ def _block_right_margins(digest: list[dict]) -> dict[object, float]:
 
 def _join_hyphenated(a: str, b: str) -> str:
     if a.endswith("-") and not a.endswith("--") and b[:1].islower():
+        if ends_in_url_token(a):
+            # a URL wrapped at its own hyphen: the hyphen is content
+            # (slugs contain hyphens), never a soft-wrap artefact
+            return a + b.lstrip()
         return a[:-1] + b
     return a.rstrip() + " " + b.lstrip()
 

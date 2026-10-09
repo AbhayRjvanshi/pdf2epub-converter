@@ -123,12 +123,35 @@ system interpreter, which does not carry the optional provider SDKs —
 the adapter's typed error identified the provider and the correct
 install command, as designed).
 
+## Post-remediation fixes: digest ordering and URL hyphens (2026-10-09)
+
+Two approximations from the former list were closed, each with its
+dedicated regression case written first:
+
+**Digest two-column detection now requires side-by-side evidence.** A
+wide x-spread alone also describes a *centered* single-column page,
+where a centered heading right of the naive midpoint sorted after the
+whole phantom "right column". `_detect_two_column` now declares
+columns only when at least two rows of y-overlapping, x-disjoint
+residents actually live on the page; genuine two-column reading order
+is pinned by test and unchanged.
+
+**A URL wrapped at its own hyphen keeps the hyphen.** The former
+approximation note ("links its first fragment") was mis-diagnosed: on
+the six-page reference document the URL merged whole, but the
+soft-hyphen heuristic stripped the URL's own hyphen at all three join
+sites (Tier-1 paragraph merge, digest fallback, cross-page weld),
+silently rewriting 'netflix-shows' to 'netflixshows' — a
+complete-looking link to a nonexistent page. `ends_in_url_token` now
+keeps URL hyphens and joins the fragments directly; the reference
+document now emits the correct href with every other metric
+unchanged. Regression coverage: unit tests at each join site plus the
+`hyphen_url` fixture end to end.
+
 ## Known approximations (deliberate)
 
-- The digest fallback's two-column sort places short centered headings
-  last (page ordering only; the affected six-page page is
-  vision-routed, so the real pipeline is not impacted).
-- A URL split across tight-leading wrapped lines links its first
-  fragment (conservative; same-page continuation merging is out of
-  remediation scope).
+- A URL wrapped mid-word *without* a hyphen still receives a space at
+  the join: whether the continuation extends the URL or begins a new
+  word is not decidable from the extracted text alone (the hyphenated
+  half of this class is fixed above).
 - Letter/roman enumerators render as unordered lists in v1.

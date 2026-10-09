@@ -277,3 +277,15 @@ def test_render_escapes_alt_text():
     el = t1.StreamElement(ElementType.IMAGE, "figure", "", image_data=img)
     assert "&amp;" in el.render()
     assert '"quoted"' not in el.render()
+
+
+def test_join_lines_keeps_a_url_hyphen():
+    # A URL wrapped at its own hyphen: the hyphen is slug content,
+    # stripping it rewrites the link to a nonexistent page.
+    from pdf2epub.engine.tier1_classifier import ends_in_url_token, join_lines
+
+    first = "See https://www.kaggle.com/datasets/shivamb/netflix-"
+    joined = join_lines(first, "shows today.", first, "shows today.")
+    assert joined == "See https://www.kaggle.com/datasets/shivamb/netflix-shows today."
+    assert ends_in_url_token(first)
+    assert not ends_in_url_token("an ordinary compound-")
