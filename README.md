@@ -23,8 +23,12 @@ pipx install .
 # or
 pip install .
 
-# Development
-pip install -e ".[dev]"
+# Development: always inside a project virtual environment — the
+# system interpreter intentionally carries none of the optional SDKs
+python -m venv .venv
+.venv\Scripts\activate        # macOS/Linux: source .venv/bin/activate
+pip install -e ".[dev,nvidia,keyring]"
+pytest
 ```
 
 Optional extras:

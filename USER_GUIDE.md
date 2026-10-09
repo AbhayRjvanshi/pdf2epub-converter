@@ -141,10 +141,16 @@ mysteriously fails; it tells you what to install.
 
 ### Development
 
+All development — pytest, the CLI, live provider tests — runs inside the
+project virtual environment; the system interpreter intentionally has
+none of the optional provider SDKs.
+
 ```bash
 git clone <repository>
 cd pdf2epub-converter
-pip install -e ".[dev]"
+python -m venv .venv
+.venv\Scripts\activate        # macOS/Linux: source .venv/bin/activate
+pip install -e ".[dev,nvidia,keyring]"
 pytest
 ```
 
