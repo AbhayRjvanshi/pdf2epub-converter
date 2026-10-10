@@ -1,4 +1,135 @@
-# Real-World Corpus Session — Record 1 (2026-10-10)
+# Real-World Corpus Record
+
+## Session 3 — magazine-with-furniture + completion review (2026-10-10, `3947fa2`)
+
+Baseline frozen first (clean tree at `2762fd3`, suite 681/14/0, records
+intact). Three furniture-bearing documents, per the regression-isolation
+protocol. The session **confirmed a real defect family** — content
+furniture leaking on mixed-tier documents — and fixed it test-first.
+
+| Document | Pages | Furniture present | Result |
+|---|---|---|---|
+| architecture-reference (`.agents`) | 97 | running header + digits, every page, mixed-tier (57 t1 / 35 digest / 5 vision) | PASS — header stripped, 0 digit-headings |
+| HTML for Webdesiner | 54 | "Learner's Hub" header + "Page NN", mixed-tier (1 t1 / 52 digest / 1 vision) | PASS — all "Page N" eliminated |
+| FRONT PAGE (nursing covers) | 14 | institutional header + footer | PASS — furniture stripped (pre-existing behavior held) |
+
+### Confirmed defect: mixed-tier furniture (four mechanisms, all fixed)
+
+Content-quality inspection (independent of EPUBCheck, which had passed
+all three) found: 97 running headers + 111 digit paragraphs in M1
+(7 promoted to headings); 52 "Page N" instances in M2 (**38 promoted to
+headings**). Mechanisms, each confirmed before fixing:
+
+1. **Frequency denominator counted positionless pages** — M1's header
+   sat on 57 positionable pages of 97 total = 58.8%, below the 60%
+   gate, because Tier-2 pages carry synthetic bboxes that count as
+   pages but cannot show positional evidence. Fix: the denominator is
+   now pages with positionable elements (57/57 = 100% → detected; and
+   stripping is by text, so synthetic instances are removed too).
+2. **"Page N" promoted to heading by the structural pass** — digits are
+   excluded from the Title-Case word count, making "Page" a
+   100%-uppercase word. Fix: explicit page-number-shape negative in
+   `structural_heading_level` (roman-numeral headings deliberately
+   stay eligible).
+3. **Orphan-number regex missed the "Page N" shape** — extended via
+   the shared `PAGE_NUMBER_LINE_RE` ("30", "(iv)", "Page 30").
+4. **Digest fallback emitted band-positioned page numbers with no
+   geometry check** — Tier-2 elements get synthetic stream bboxes, so
+   stream-level orphan removal can never reach them. Fix: the fallback
+   now drops page-number lines inside the top/bottom band using the
+   digest's own per-line geometry (`Tier2Request.page_height`, plumbed
+   from the driver; without page height, content is kept — never drop
+   without proof).
+
+**Verification:** 6 new tests, each failing before its fix (the
+positionable-frequency case, the heading negative, the orphan prefix,
+the digest band-drop, the no-height safety, and a
+`magazine_furniture` fixture end-to-end — a new permanent fixture for
+the class); suite **688 passed / 14 skipped / 0 failed**; six-page
+reference baseline **byte-identical**; all three session documents
+re-converted and EPUBCheck-clean; session-1 books re-run and still
+EPUBCheck-clean (small heading-count deltas on digest-heavy books are
+the intended consequence of changed page-number handling, recorded
+here rather than assumed away).
+
+### Residuals, inspected and honestly classified
+
+- M1 keeps **84 digits-only paragraphs**: they are the cell values of
+  a 14-row LAYER/TYPE/RESPONSIBILITY **data table** the conservative
+  table builder left as prose (the documented no-fabrication rule) —
+  content, not furniture. The 58 actual page numbers are gone.
+- M2 keeps its **"Learner's Hub" running header** (51 instances): only
+  one page of 54 carries positionable elements, far below the
+  minimum-pages-for-furniture guard — offline digest pages cannot prove
+  position. Known limitation; the model path owns these pages when
+  online.
+- M1's remaining single header mention in prose and the title-page
+  occurrences are genuine content, not repetition.
+
+---
+
+## Completion review (final)
+
+### Class matrix — all ten classes, explicit status
+
+| Class | Status | Evidence |
+|---|---|---|
+| A. Text-heavy | **Covered** | 856-page and 65-page books, EPUBCheck clean |
+| B. Multi-column | **Covered** | 419-page technical book; column sort pinned by fixtures |
+| C. Scanned | **Covered** (no OCR — by design) | 74-page full scan, 24-page sparse scan, 2-page syllabus |
+| D. Complex tables | **Covered** (conservative) | course notes; grids rebuild only on proven geometry |
+| E. Diagrams/charts | **Covered** | 344-image web book, 553-image paper, fixture figures with alt text |
+| F. Academic | **Covered** | TRANSFIMER paper, synopsis, COVID paper |
+| G. Magazine-with-furniture | **Covered** (this session) | three furniture documents; header/footer/page-number handling fixed and fixture-pinned |
+| H. Long document | **Covered** | 856 pages at 42 s; gated 500-page suite scale test |
+| I. Poor-quality | **Covered** | curved decorative fonts (FLOWER GARDEN, the original crash doc), overlapping baselines |
+| J. Mixed | **Covered** | AI Projects (text+table+diagram), FLOWER GARDEN, magazine reference |
+
+### Acceptance checklist
+
+- [x] **Regression integrity** — suite 688/14/0; six-page reference
+  byte-identical across all fix sessions; all previously passing corpus
+  documents re-verified EPUBCheck-clean.
+- [x] **Target-class coverage** — magazine-with-furniture tested; all
+  ten classes have an explicit status above.
+- [x] **Content quality** — reading order, furniture leakage, caption
+  association, and missing-text inspected independently of EPUBCheck in
+  every session; those inspections are what found the 5 corpus defects
+  (all fixed with regression-pinned tests).
+- [x] **Known limitations** — documented below, each with a reason.
+- [x] **Release decision** — every gap classified required/deferred/out
+  of scope below.
+
+### Known limitations (with dispositions)
+
+| Limitation | Disposition | Reason |
+|---|---|---|
+| OCR of scanned pages | **Out of scope** (deterministic engine) | tier policy: vision pages embed rasters offline; OCR is a model/feature decision, not a defect |
+| Digest-page headers below the position-evidence guard (M2 "Learner's Hub") | **Deferred** | provable fix needs cross-page text-echo inside the offline fallback; low value while the model path owns those pages online |
+| Aligned/clean tables stay prose (M1 layer table) | **Deferred by design** | no-fabrication rule: aligned text is indistinguishable from columns; a dedicated table fixture would be needed to tighten it safely |
+| Scanned EPUB size (86.8 MB for 74 full-page scans) | **Deferred** | correctness unaffected; needs image-quality/size acceptance criteria first |
+| Duplicate title rendering (G1) | **Backlog** | intended title/heading behavior must be defined before changing it |
+| Chapter granularity on section-dense books | **Backlog** | policy tuning, needs a desired-structure decision |
+| A URL wrapped mid-word without a hyphen | **Deferred** | not decidable from extracted text alone |
+
+### Release decision
+
+**Release-ready for the documented scope**: 14 real documents across
+all ten classes convert to structurally valid, EPUBCheck-clean EPUBs
+offline, with reading order, semantics (headings, lists, links, tables,
+code, navigation, images with alt text) and content preservation
+verified by inspection. The guarantees and the boundaries above are the
+product statement. Remaining items are explicitly deferred or out of
+scope; none blocks release.
+
+No finite corpus proves compatibility with every PDF. This review
+defines the stopping condition: the planned remediation is complete and
+pinned, the intended scope is validated with representative evidence,
+and the limits are stated. New PDF classes found unsupported in the
+future enter through the same session protocol: reproduce → fixture →
+scoped fix → record.
+
+---
 
 ## Session 2 — scanned and multi-column classes (2026-10-10, after `c73a4c4`)
 
