@@ -49,6 +49,23 @@ def test_closing_paren_outside_but_balanced_parens_inside():
     assert out2.content == 'Ref (<a href="https://example.com/x">https://example.com/x</a>) helps.'
 
 
+def test_markdown_reference_suffix_stays_outside_the_href():
+    # corpus finding: technical books quote markdown reference links
+    # ([url][1]); the ][1] belongs to the sentence, never the URL
+    (out,) = linkify_urls([para("See ([https://example.com/page][1] for details.")])
+    assert out.content == (
+        "See (["
+        '<a href="https://example.com/page">https://example.com/page</a>'
+        "][1] for details."
+    )
+
+
+def test_balanced_bracket_urls_are_not_stripped():
+    # IPv6 literal host: brackets are part of the URL
+    (out,) = linkify_urls([para("Local https://[::1]:8080/ status.")])
+    assert 'href="https://[::1]:8080/"' in out.content
+
+
 def test_query_ampersand_entities_survive_single_escaped():
     url = "https://example.com/?q=1" + E + "x=2"
     (out,) = linkify_urls([para("See " + url + " now.")])

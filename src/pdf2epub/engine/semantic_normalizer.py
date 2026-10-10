@@ -41,6 +41,12 @@ def _linkify_text(text: str) -> str:
         # a ')' belongs to the sentence unless the URL opened one
         while stripped.endswith(")") and stripped.count("(") < stripped.count(")"):
             stripped = stripped[:-1]
+        # markdown reference syntax ([url][1]) glues the reference onto
+        # the match; the ][N] suffix belongs to the sentence. Precise
+        # pattern, not bracket balancing: the opening '[' sits outside
+        # the match, so counts mislead. IPv6 hosts ([::1]) never end
+        # with this shape.
+        stripped = re.sub(r"\]\[\d+\]$", "", stripped)
         trailing = url[len(stripped):]
         if len(stripped) <= len("https://x"):
             return url  # nothing URL-shaped survived the strip
