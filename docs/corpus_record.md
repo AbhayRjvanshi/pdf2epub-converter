@@ -1,5 +1,72 @@
 # Real-World Corpus Session — Record 1 (2026-10-10)
 
+## Session 2 — scanned and multi-column classes (2026-10-10, after `c73a4c4`)
+
+Six documents (three scanned, three multi-column), per the
+regression-isolation protocol: source SHA-256, offline conversion with
+defaults, routing, metrics, EPUBCheck per artifact. **All six pass
+EPUBCheck cleanly; no new defects were confirmed.** No application
+code changed in this session.
+
+| Document | Class | Pages | Routing (t1/dig/vis) | Chapters | Headings | Images | EPUBCheck | Size |
+|---|---|---|---|---|---|---|---|---|
+| Play, dance & Music therapies (compressed) | C scanned (no text layer) | 74 | 0/0/74 | 1 | 0 | 74/alt | PASS 0 errors | 86.8 MB |
+| COVID-19 Pediatrics paper | C scanned (sparse text, image-rich) | 24 | 0/24/0 | 40 | 60 | 553/alt | PASS | 1.5 MB |
+| Microprocessor syllabus | C scanned (no text layer) | 2 | 0/0/2 | 1 | 0 | 2/alt | PASS | 0.7 MB |
+| The Writing Habit | G multi-column booklet | 8 | 3/5/0 | 2 | 16 | 0 | PASS | <0.1 MB |
+| UI Design Study Plan | G multi-column | 7 | 2/5/0 | 1 | 24 | 0 | PASS | <0.1 MB |
+| Optimizer Modules Overview | G multi-column report | 11 | 10/1/0 | 13 | 78 | 0 | PASS | <0.1 MB |
+
+Source SHA-256 (identity for reproduction): C1 `d00068d2f6f2d4e2…`,
+C2 `881316eaea238a50…`, C3 `265336562d9845ac…`,
+G1 `a60b97a94f0e5ac6…`, G2 `8183a6356146975c…`,
+G3 `3c9a6900bb41c891…` (full hashes in the session artifacts).
+
+### Scanned-class findings
+
+- **Missing text is source-inherent, recorded separately from
+  structural errors.** C1 and C3 have **no text layer at all** (0
+  source characters); every page routes to vision and is embedded as a
+  raster. The offline deterministic path performs no OCR — that is the
+  documented tier policy, not a conversion defect. C2 carries sparse
+  born-digital text (~380 chars/page) with 553 embedded images; its
+  digest-routed pages render as coherent prose, EPUBCheck clean.
+- **Observation (not a defect):** C1's output is **86.8 MB** — 74
+  full-page scans re-encoded as PNG at ~1.2 MB each, ~7× the source's
+  JPEG-compressed bytes. Photographic scans as PNG inflate size; a
+  future enhancement could embed photographic rasters as JPEG.
+  Mechanism inspected (all 74 are genuine PNG); triaged as a size
+  optimization, not a correctness issue.
+
+### Multi-column-class findings
+
+- **Reading order is coherent.** Spot-checked extracted prose from G1
+  and G2 chapters: flowing paragraphs in correct sequence, no column
+  interleaving, no mid-sentence splits. The digest fallback's
+  column-aware sort (evidence-gated since `a3cd742`) held on real
+  multi-column layouts.
+- **Observation:** G1 renders its title twice (cover-page label and
+  in-content H1 both survive as separate headings) — the plan's
+  "duplicate headings" nav edge case, visible here in content rather
+  than navigation. EPUBCheck unaffected; recorded as evidence for any
+  future heading-dedup pass.
+- **Observation:** G3 yields 13 chapters / 78 headings from 11 pages —
+  heading-granularity again behaving per the majors-only policy on
+  section-dense documents, consistent with the Q&A-book observation
+  from session 1.
+
+### Session verdict
+
+Two previously-untested document classes now have recorded evidence:
+scanned documents convert to valid, EPUBCheck-clean image-preserving
+EPUBs (with OCR explicitly out of deterministic scope), and
+multi-column documents preserve reading order. Corpus coverage is now
+**7 of 10 classes** (A, B, C, D, F, G-partial, I, J). Remaining gaps:
+true magazine layouts with interleaved furniture. These results extend
+the evidence base; they are not a broad reliability claim.
+
+---
+
 First measurement of the converter on real-world documents (Phase Q of
 the post-conversion plan), run after the program closure (`68a5b39`).
 Eight documents across five of the plan's ten classes; every document
