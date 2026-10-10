@@ -24,7 +24,7 @@ import tempfile
 import time
 from collections import Counter
 from dataclasses import replace
-from html import unescape
+from html import escape, unescape
 from pathlib import Path
 from typing import Any, Callable, Sequence
 
@@ -74,7 +74,12 @@ MIN_REPAIR_TEXT_RETENTION = 0.60
 def _inner_xhtml(element: Any) -> str:
     from lxml import etree
 
-    parts = [element.text or ""]
+    # lxml parses entities into DECODED text; the stream content contract
+    # is escaped inner XHTML. Serialised children re-escape themselves,
+    # but the leading text node must be re-escaped explicitly or raw
+    # angle brackets from code snippets (Popen(<your_command>, ...))
+    # leak into chapter bodies and EPUBCheck rejects the file.
+    parts = [escape(element.text or "", quote=False)]
     for child in element:
         parts.append(etree.tostring(child, encoding="unicode", method="xml"))
     return "".join(parts).strip()
@@ -140,11 +145,13 @@ def parse_xhtml_to_stream_elements(
             else:
                 text = (child.text_content() or "").strip()
                 if text:
+                    # text_content() is lxml-decoded raw text; the stream
+                    # contract requires escaped inner XHTML
                     elements.append(
                         StreamElement(
                             element_type=ElementType.PARAGRAPH,
                             tag="p",
-                            content=text,
+                            content=escape(text, quote=False),
                             page_num=page_index,
                             block_id=idx,
                         )

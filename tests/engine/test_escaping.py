@@ -14,6 +14,8 @@ from pdf2epub.engine.tier2_llm_handler import sanitize_and_validate_xhtml
 
 E = '&amp;'
 DAM = '&amp;amp;'
+LT = '&lt;'
+GT = '&gt;'
 
 
 # ---------------------------------------------------------------------------
@@ -142,3 +144,45 @@ def test_special_characters_survive_to_the_epub_exactly_once(
     # heading text and dc:title both single-escaped at serialisation
     assert ">Rock " + E + " Roll Survey<" in body
     assert "<dc:title>Rock " + E + " Roll Survey</dc:title>" in opf
+
+
+# ---------------------------------------------------------------------------
+# The lxml decode -> stream seam (corpus finding, Fix 12 third hazard)
+# ---------------------------------------------------------------------------
+
+
+def test_tier2_stream_construction_reescapes_decoded_text():
+    """lxml parses entities into DECODED text; the stream content
+    contract is escaped inner XHTML. Without re-escaping, a code snippet
+    like Popen(<your_command>, ...) leaks raw angle brackets that
+    EPUBCheck then rejects as unknown elements."""
+    src = (
+        "<p>process = subprocess.Popen(" + LT + "your_command" + GT
+        + ", stdout=1)</p>"
+    )
+    elements = driver.parse_xhtml_to_stream_elements(src, 0)
+    assert len(elements) == 1
+    content = elements[0].content
+    assert "<your_command>" not in content
+    assert "Popen(" + LT + "your_command" + GT in content
+
+
+def test_tier2_unknown_tag_flattening_reescapes_text_content():
+    src = "<custom>alpha " + LT + "tag" + GT + " beta</custom>"
+    elements = driver.parse_xhtml_to_stream_elements(src, 0)
+    assert len(elements) == 1
+    content = elements[0].content
+    assert "<tag>" not in content
+    assert "alpha " + LT + "tag" + GT + " beta" == content
+
+
+def test_decoded_code_snippet_round_trips_to_valid_xml():
+    import xml.etree.ElementTree as ET
+
+    src = (
+        "<p>process = subprocess.Popen(" + LT + "your_command" + GT + ")</p>"
+        "<p>if x " + LT + " 10: print('done')</p>"
+    )
+    elements = driver.parse_xhtml_to_stream_elements(src, 0)
+    body = "\n".join(e.render() for e in elements)
+    ET.fromstring(f"<root>{body}</root>")  # must parse: no raw tags leaked
