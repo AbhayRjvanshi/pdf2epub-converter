@@ -45,6 +45,7 @@ from .tier1_classifier import (
     strip_tags,
 )
 from .heading_roles import MAJOR, infer_heading_depths
+from .heading_signals import PAGE_NUMBER_LINE_RE
 from .semantic_normalizer import normalize_semantics
 
 # ---------------------------------------------------------------------------
@@ -59,7 +60,7 @@ MIN_PAGES_SEEN = 3              # and it must actually repeat
 TERMINAL_PUNCT = ".!?:;\u2026\"'\u201d\u2019)"
 CONFORMS_TO = "EPUB Accessibility 1.1 - WCAG 2.0 Level AA"
 
-PAGE_NUMBER_RE = re.compile(r"^[\[\(]?\s*(?:\d{1,4}|[ivxlcdmIVXLCDM]{1,7})\s*[\]\)]?$")
+PAGE_NUMBER_RE = PAGE_NUMBER_LINE_RE  # the shared shape rule ("30", "(iv)", "Page 30")
 HYPHEN_TAIL_RE = re.compile(r"(\w)-((?:</\w+>)*)\s*$")
 
 
@@ -189,8 +190,16 @@ def detect_running_furniture(
     if not elements or not page_heights:
         return set()
 
-    pages = {e.page_num for e in elements}
-    total_pages = max(len(pages), 1)
+    # The frequency denominator counts pages whose elements COULD show
+    # positional evidence: Tier-2 pages carry synthetic bboxes, so their
+    # furniture is real in the text but invisible to the band test.
+    # Counting those pages diluted real running headers below the gate
+    # on every mixed-tier document (57/97 = 59% failed the 60% gate on
+    # the corpus magazine reference).
+    positionable = {
+        e.page_num for e in elements if e.bbox != (0.0, 0.0, 0.0, 0.0)
+    }
+    total_pages = max(len(positionable), 1)
     if total_pages < MIN_PAGES_FOR_FURNITURE:
         return set()
 

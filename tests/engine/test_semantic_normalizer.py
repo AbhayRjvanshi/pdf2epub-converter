@@ -418,3 +418,56 @@ def test_url_wrapped_at_its_own_hyphen_keeps_the_hyphen(fixture_pdfs, tmp_path):
     assert 'href="https://www.kaggle.com/datasets/shivamb/netflix-shows"' in body
     assert ">https://www.kaggle.com/datasets/shivamb/netflix-shows</a>" in body
     assert "for the full catalogue." in body  # continuation prose intact
+
+
+def test_digest_fallback_drops_band_positioned_page_numbers():
+    """Corpus session 3: Tier-2 pages get synthetic stream bboxes, so
+    stream-level orphan removal cannot see their page numbers. The
+    digest fallback owns the real per-line geometry: a page-number
+    line inside the furniture band is dropped there, by the same
+    shape rule as every positionable page."""
+    from pdf2epub.engine.tier2_llm_handler import Tier2Request, _digest_fallback
+
+    def d(line_id, block, bbox, text):
+        return {
+            "line_id": line_id, "block_id": block, "bbox": bbox,
+            "size": 10.0, "bold": False, "italic": False, "text": text,
+        }
+
+    digest = [
+        d(1, 1, (210.0, 32.0, 260.0, 44.0), "Page 30"),      # top band
+        d(2, 2, (54.0, 90.0, 340.0, 104.0), "Real content begins here and"),
+        d(3, 3, (54.0, 104.0, 300.0, 118.0), "continues down the page."),
+        d(4, 4, (54.0, 660.0, 90.0, 672.0), "31"),            # bottom band
+    ]
+    xhtml = _digest_fallback(
+        Tier2Request(
+            page_num=30, layout_digest=digest,
+            page_width=420.0, page_height=680.0,
+        )
+    )
+    assert "Page 30" not in xhtml
+    assert "31" not in xhtml
+    assert "Real content begins" in xhtml
+
+
+def test_digest_fallback_keeps_body_digits_without_page_height():
+    """Without page geometry (older callers), digits stay: position
+    evidence is required before dropping content."""
+    from pdf2epub.engine.tier2_llm_handler import Tier2Request, _digest_fallback
+
+    def d(line_id, block, bbox, text):
+        return {
+            "line_id": line_id, "block_id": block, "bbox": bbox,
+            "size": 10.0, "bold": False, "italic": False, "text": text,
+        }
+
+    digest = [
+        d(1, 1, (210.0, 32.0, 260.0, 44.0), "Page 30"),
+        d(2, 2, (54.0, 90.0, 340.0, 104.0), "Content line"),
+    ]
+    xhtml = _digest_fallback(
+        Tier2Request(page_num=30, layout_digest=digest, page_width=420.0)
+    )
+    assert "Page 30" in xhtml  # no page_height: no band evidence, keep
+    assert "Content line" in xhtml

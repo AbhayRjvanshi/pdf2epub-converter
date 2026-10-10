@@ -432,3 +432,17 @@ def _jpx_page_stub():
             }]}}.get(kind, {})
 
     return _Page()
+
+
+def test_size_ladder_never_promotes_page_number_lines():
+    """Corpus session 3 residual: a bold/large 'Page 43' promoted to h4
+    via the font-size ladder, which runs before the structural signal
+    pass. Page-number furniture is never a heading, whatever its size."""
+    profile = t1.DocumentFontProfile(body_size=10.0, line_height=14.0, main_font="x")
+    # large + bold would normally be h1/h2 territory
+    tag, level = t1.classify_line_tag(16.0, True, profile)
+    assert tag == "h1"
+    tag, level = t1.classify_line_tag(16.0, True, profile, raw_text="Page 43")
+    assert (tag, level) == ("p", 0)
+    tag, level = t1.classify_line_tag(11.0, True, profile, raw_text="Page 2")
+    assert (tag, level) == ("p", 0)

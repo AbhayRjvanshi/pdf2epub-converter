@@ -507,6 +507,7 @@ def run_pipeline(
                     layout_digest=r.layout_digest,
                     raster_bytes=r.raster_bytes,
                     page_width=float(doc[r.page_index].rect.width),
+                    page_height=float(doc[r.page_index].rect.height),
                     vision=r.target is RoutingTarget.TIER2_VISION_OCR,
                 )
             for start in range(0, len(llm_reports), batch_size):

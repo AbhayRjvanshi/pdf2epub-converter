@@ -437,3 +437,13 @@ def test_overlapping_prose_fixture_end_to_end(fixture_pdfs, tmp_path):
     ):
         assert probe in body
     assert "<table" not in body
+
+
+def test_page_number_lines_never_become_headings():
+    # Corpus session 3: "Page 30" promoted to h4 on 38 pages of a real
+    # book because digits are excluded from Title-Case evaluation,
+    # making "Page" a 100%-uppercase word. A page-number-shaped line is
+    # furniture, never a section heading.
+    assert structural_heading_level("Page 30", size=10.0, body_size=10.0) is None
+    assert structural_heading_level("page 7", size=10.0, body_size=10.0) is None
+    assert structural_heading_level("Page One", size=10.0, body_size=10.0) == 4

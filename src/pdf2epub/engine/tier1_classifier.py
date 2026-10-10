@@ -349,7 +349,22 @@ class ClassifiedLine:
     char_width: float = 0.0  # measured space advance (0 -> collector fallback)
 
 
-def classify_line_tag(size: float, bold: bool, profile: DocumentFontProfile) -> tuple[str, int]:
+def classify_line_tag(
+    size: float, bold: bool, profile: DocumentFontProfile, raw_text: str = ""
+) -> tuple[str, int]:
+    """The font-size ratio ladder, from strongest to weakest signal.
+
+    ``raw_text`` (when given) guards the ladder against page-number
+    furniture in the explicit "Page N" shape: a bold, oversized
+    "Page 43" on a cover or footer is typography, never a section
+    heading -- the corpus magazine session caught this ladder promoting
+    exactly that. Bare digits/romans keep their ladder classification;
+    the positional orphan rule owns those.
+    """
+    if raw_text and re.match(
+        r"^[\[\(]?\s*page\s+\d{1,4}\s*[\]\)]?$", raw_text.strip(), re.IGNORECASE
+    ):
+        return "p", 0
     ratio = size / profile.body_size if profile.body_size else 1.0
     if ratio >= 1.6:
         return "h1", 1
@@ -509,7 +524,7 @@ def classify_page(page: "fitz.Page", profile: DocumentFontProfile) -> list[Class
                 zip(spans, texts), key=lambda pair: len(pair[1].strip())
             )[0]
             tag, level = classify_line_tag(
-                dominant["size"], is_bold(dominant), profile
+                dominant["size"], is_bold(dominant), profile, raw_text=plain
             )
             if all_mono:
                 tag, level = "pre", 0

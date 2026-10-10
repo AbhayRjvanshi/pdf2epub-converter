@@ -581,3 +581,89 @@ def test_weld_keeps_a_url_hyphen_across_the_page_seam():
     assert welds == 1
     assert "netflix-shows" in clean[0].content
     assert "netflixshows" not in clean[0].content
+
+
+# ---------------------------------------------------------------------------
+# Furniture on mixed-tier documents (corpus session 3)
+# ---------------------------------------------------------------------------
+
+
+def test_running_furniture_frequency_counts_positionable_pages():
+    """Tier-2 pages carry synthetic bboxes: their furniture is real in
+    the text but invisible to position evidence. The frequency gate
+    must count pages that COULD show evidence, or running headers leak
+    on every mixed-tier document (57/97 = 59% failed the 60% gate on
+    the real corpus)."""
+    stream = []
+    # four positionable pages carrying the running header in the band
+    for page in range(4):
+        stream.append(para("The Running Header", page, y=30.0))
+        stream.append(para("body prose fills the page here", page, y=200.0))
+    # five positionless pages (synthetic bboxes): same header, no evidence
+    for page in range(4, 9):
+        stream.append(
+            StreamElement(
+                ElementType.PARAGRAPH, "p", "The Running Header",
+                bbox=(0.0, 0.0, 0.0, 0.0), page_num=page,
+            )
+        )
+    heights = {i: 680.0 for i in range(9)}
+    furniture = pk.detect_running_furniture(stream, heights)
+    assert "the running header" in furniture
+
+
+def test_orphan_page_number_accepts_page_prefix():
+    """The M2 corpus shape: 'Page 30' is a page number, not a sentence,
+    and must be removed from positionable pages exactly like bare
+    digits."""
+    stream = [
+        para("Some body prose starts the page", 0, y=200.0),
+        para("Page 30", 0, y=655.0),
+    ]
+    clean, furniture, welds = pk.process_element_stream(stream, HEIGHTS)
+    assert furniture == []  # single page: no frequency furniture, only orphans
+    assert all("Page 30" not in e.content for e in clean)
+    assert len(clean) == 1
+
+
+def test_magazine_fixture_strips_furniture_and_page_numbers(tmp_path):
+    """End-to-end for the magazine-with-furniture class: the running
+    header is stripped by frequency, 'Page N' is never promoted to a
+    heading and never survives as content, and body prose is intact."""
+    import make_fixtures as mf
+
+    out = tmp_path / "mag.epub"
+    build = pk.build_epub_publication(
+        _fixture_stream(mf.build_magazine_furniture_doc(str(out) + ".pdf")),
+        str(out),
+        title="Magazine Fixture",
+        page_heights={i: 680.0 for i in range(6)},
+    )
+    assert "sample magazine section" in build.stripped_furniture
+    import zipfile
+
+    with zipfile.ZipFile(out) as zf:
+        body = "".join(
+            zf.read(n).decode("utf-8")
+            for n in zf.namelist()
+            if n.endswith(".xhtml") and "nav" not in n
+        )
+    import re
+
+    assert not re.search(r"<h[1-6][^>]*>\s*Page \d+", body)
+    assert "Page 3" not in re.sub(r"<[^>]+>", "", body)
+    assert "paying reader" in body  # prose intact
+
+
+def _fixture_stream(pdf_path):
+    import fitz
+
+    import pdf2epub.engine.tier1_classifier as t1
+
+    doc = fitz.open(pdf_path)
+    profile = t1.DocumentFontProfile.build(doc)
+    stream = []
+    for i in range(doc.page_count):
+        stream.extend(t1.build_page_stream(doc[i], profile, i))
+    doc.close()
+    return stream

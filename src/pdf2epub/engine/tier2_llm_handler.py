@@ -34,6 +34,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from .heading_signals import (
+    PAGE_NUMBER_LINE_RE,
     build_table_html,
     in_table_region,
     structural_heading_level,
@@ -45,6 +46,7 @@ log = logging.getLogger("tier2")
 
 SCHEMA_VERSION = "xhtml-pages/v3"
 DEFAULT_CACHE_DIR = Path(".cache_llm_epub")
+_FURNITURE_BAND = 0.12  # top/bottom page fraction; mirrors packaging's band
 
 # ---------------------------------------------------------------------------
 # Prompts
@@ -245,6 +247,7 @@ class Tier2Request:
     layout_digest: list[dict] | None = None
     raster_bytes: bytes | None = None
     page_width: float = 0.0  # physical page width in points, for the digest fallback
+    page_height: float = 0.0  # physical height; 0 -> the fallback cannot use band tests
     vision: bool = False  # persists after large payloads are released
 
     @property
@@ -492,6 +495,24 @@ def _digest_fallback(req: Tier2Request) -> str:
     ordered = sorted(
         digest, key=lambda d: (_column_of(d, two_col, midpoint), d["bbox"][1], d["bbox"][0])
     )
+
+    # Page-number furniture inside the top/bottom band is dropped here,
+    # by real per-line geometry: downstream these elements get synthetic
+    # stream bboxes, so the stream-level orphan rule (which needs
+    # position) can never reach them. Same band fraction and same
+    # line shape as Tier 1's rule; without page_height there is no band
+    # evidence and content is kept (never drop without proof).
+    if req.page_height > 0:
+        ordered = [
+            d for d in ordered
+            if not (
+                (
+                    d["bbox"][1] / req.page_height <= _FURNITURE_BAND
+                    or d["bbox"][3] / req.page_height >= 1.0 - _FURNITURE_BAND
+                )
+                and PAGE_NUMBER_LINE_RE.match(d["text"].strip())
+            )
+        ]
 
     lh = line_height or (max(d["size"] for d in digest) * 1.2 if digest else 12.0)
     sizes = [d["size"] for d in digest]

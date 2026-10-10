@@ -619,6 +619,45 @@ def build_jpx_image_doc(path: str | Path) -> str:
     return str(path)
 
 
+def build_magazine_furniture_doc(path: str | Path) -> str:
+    """Magazine-with-furniture: running header + page numbers (Fix set).
+
+    Every page carries a running header in the top furniture band and a
+    page number in the bottom band -- three in the "Page N" shape (the
+    M2 corpus leak) and three as bare digits (the M1 shape). Heading
+    promotion must never turn "Page N" into a section heading, and both
+    furniture forms must be stripped from the reading content.
+    """
+    doc = fitz.open()
+    for pno in range(1, 7):
+        p = doc.new_page(width=PAGE_W, height=PAGE_H)
+        p.insert_text(
+            (MARGIN_X, 40.0), "Sample Magazine Section",
+            fontname="helv", fontsize=8.0,
+        )
+        if pno % 2:
+            p.insert_text(
+                (PAGE_W / 2, 655.0), f"Page {pno}",
+                fontname="helv", fontsize=10.0,
+            )
+        else:
+            p.insert_text(
+                (PAGE_W / 2, 655.0), str(pno),
+                fontname="helv", fontsize=10.0,
+            )
+        y = 90.0
+        if pno == 1:
+            p.insert_text(
+                (MARGIN_X, y), "Feature Stories",
+                fontname="helv", fontsize=BODY_SIZE,
+            )
+            y += 24.0
+        y = put_paragraph(p, MARGIN_X, y, COL_W, greedy_wrap(FIVE_LINE_TEXT, COL_W))
+    doc.save(str(path))
+    doc.close()
+    return str(path)
+
+
 def build_special_chars_doc(path: str | Path) -> str:
     """Ampersands, angle brackets, quotes and a query-string URL.
 
@@ -680,6 +719,9 @@ def build_all(out_dir: str | Path) -> dict[str, str]:
             out / "proportional_code.pdf"
         ),
         "jpx_image": build_jpx_image_doc(out / "jpx_image.pdf"),
+        "magazine_furniture": build_magazine_furniture_doc(
+            out / "magazine_furniture.pdf"
+        ),
         "special_chars": build_special_chars_doc(out / "special_chars.pdf"),
     }
 

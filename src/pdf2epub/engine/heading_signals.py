@@ -62,6 +62,13 @@ TABLE_OVERLAP_TOLERANCE = 2.0   # pt: gaps below -tolerance mean cell overlap
 SIDE_BY_SIDE_X_GAP = 1.0        # x font size: clear horizontal separation
 SIDE_BY_SIDE_Y_OVERLAP = 0.3    # of the shorter line's height
 
+# Page-number furniture, shared with the packaging orphan rule and the
+# digest fallback: "30", "(iv)", "Page 30" -- never content.
+PAGE_NUMBER_LINE_RE = re.compile(
+    r"^[\[\(]?\s*(?:page\s+)?(?:\d{1,4}|[ivxlcdm]{1,7})\s*[\]\)]?$",
+    re.IGNORECASE,
+)
+
 _SMALL_WORDS = frozenset(
     "a an the of in on for and or nor but to with by from at vs into onto "
     "over under is are was were be been being as per via not its it".split()
@@ -113,6 +120,13 @@ def structural_heading_level(
         return None
     if len(plain.split()) == 1 and any(c in plain for c in "()={}[]<>"):
         return None  # a lone code-shaped token (identifier(...), key=value)
+    # Page-number furniture in the "Page 30" shape: digits are excluded
+    # from the Title-Case word count, which alone made "Page" look like
+    # a 100%-uppercase heading word on real books. Roman-numeral
+    # headings ("IV") stay eligible; the packaging orphan rule owns
+    # positional page numbers by band.
+    if re.match(r"^[\[\(]?\s*page\s+\d{1,4}\s*[\]\)]?$", plain, re.IGNORECASE):
+        return None
     if not (bold or _is_title_like(plain)):
         return None
     return 4
