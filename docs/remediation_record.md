@@ -1,5 +1,55 @@
 # Post-Conversion Remediation Record
 
+## Program closure — disposition of all 20 fixes (2026-10-10, `92f76f7`)
+
+This section is the authoritative program summary. The chronological
+entries below are the historical record and are unchanged. Commit
+hashes were verified against the repository at closure time.
+
+**Implemented and verified** — supported by the cited commits and the
+closing verification (674 passed / 14 skipped / 688 collected, exit 0;
+six-page offline baseline re-measured with one by-design metric change
+— `code 0 → 1`, a true positive on page 5; EPUBCheck 5.1.0:
+0 fatals / 0 errors / 0 warnings on both the reference and fixture
+EPUBs).
+
+**Satisfied by existing architecture** — the requirement was already
+true; tests pin it rather than implement it.
+
+**Deferred by explicit decision** — not implemented; do not read the
+presence of a row here as capability.
+
+| Fix | Disposition | Evidence | Remaining limitation |
+|---|---|---|---|
+| 1. Canonical representation | Satisfied by architecture — `StreamElement` is the contract; extended, never replaced | `attrs` (856992c), `char_width` (8a877f2) | the plan's parallel `SemanticDocument` tree deliberately not built |
+| 2. Headings ≠ chapters | Implemented | `7e98b2d` (heading_roles, majors-only split) | — |
+| 3. No page breaks from PDF pages | Satisfied by architecture | zero `page-break` rules, pinned by the CSS audit test (2ebc68a) | — |
+| 4. Semantic normalizer stage | Implemented | `856992c` | — |
+| 5. URL linkification | Implemented | `856992c`; hyphen preservation `a3cd742` | mid-word URL wrap without a hyphen stays ambiguous (documented) |
+| 6. Semantic lists | Implemented | `856992c` | letter/roman enumerators render unordered (v1) |
+| 7. Heading hierarchy | Implemented role-based — TITLE/MAJOR/MINOR/LEAF inference replaced level-jump normalization | `7e98b2d` + `26ae478` | flat structural h4 runs stay flat by design |
+| 8. False heading prevention | Implemented | `26ae478` (multi-signal gates), `85ea3a3` (code tokens), `39e792e` (overlapping-prose contract) | — |
+| 9. Code blocks (non-monospace) | Implemented, block-level | `8a877f2` + `92f76f7` | inline non-mono `<code>` deferred; digest/vision pages model-owned |
+| 10. Table reconstruction | Implemented, both deterministic seams | `a605140` + `39e792e` | aligned pairs = prose columns (never fabricated); merged cells approximated by colspan |
+| 11. Navigation as derived artifact | Satisfied, then strengthened | every heading an anchor (`7e98b2d`) | — |
+| 12. Single-pass escaping | Implemented | `85ea3a3` + `7f9098e` | — |
+| 13. Empty blocks | Implemented | `4f213a2` | — |
+| 14. Explicit chapter sizing policy | Implemented | majors-only split + no-mass merge (`7e98b2d`) | minor-heading documents ship as one long chapter (documented trade) |
+| 15. Reflowable CSS | Implemented | `2ebc68a` | `.tbl` overflow behavior varies by reader |
+| 16. Structural quality validation | Implemented | `2ebc68a` + `4f213a2` + honest SKIPPED rendering (`5478aeb`) | **Ace by DAISY deferred** — npm `allow-scripts` policy blocks its postinstalls; not reported as passing |
+| 17. Regression fixtures | **Partially implemented** — 12 synthetic fixtures | `make_fixtures.py` across `26ae478`, `856992c`, `2ebc68a`, `92f76f7` | synthetic fixtures prove regression protection, **not** real-world coverage — the corpus session is the follow-up |
+| 18. Visual regression | **Deferred by decision** — heuristic scope only | structural checks + CSS audit test (`2ebc68a`) | no rendered-screenshot pipeline; not claimed as done |
+| 19. Conversion quality metrics | Implemented | `StructureMetrics` + driver report (`2ebc68a`) | — |
+| 20. Strict layer responsibilities | Satisfied and pinned | engine SDK-free test, layer-isolation tests | — |
+
+**Program result:** the offline engine now emits the semantic
+structures the original comparison showed only in the model's output
+(deterministic headings, lists, links, tables, code, complete
+navigation) while preserving content and passing real EPUBCheck on
+every regression artifact. Deferred capabilities are exactly those
+listed above — no more, no fewer.
+
+
 ## Validation baseline before Fix 9 (2026-10-09, commit `a3cd742`)
 
 Independently remeasured before starting non-monospace code detection
