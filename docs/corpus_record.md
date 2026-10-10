@@ -12,7 +12,7 @@ is a real PDF from this machine, converted fully offline
 |---|---|---|---|---|
 | PythonNotesForProfessionals | A text-heavy / H long | 856 | FAIL — EPUBCheck: unknown elements from raw `<…>` text | **PASS** — 0/0/0/0, 110 s |
 | LinuxNotesForProfessionals | A text-heavy | 65 | FAIL — same leak | **PASS** |
-| Hands-On Generative AI (Sanseviero et al.) | B technical book | 419 | FAIL — 298 errors | FAIL — JPEG 2000 images (triaged) |
+| Hands-On Generative AI (Sanseviero et al.) | B technical book | 419 | FAIL — 298 errors | **PASS** — EPUBCheck 0/0/0/0, 29 s (post-JPX fix) |
 | PRIYANSHU TRANSFIMER | F academic (image-heavy) | 22 | PASS | PASS |
 | Compiler Design Synopsis | F2 report | 19 | PASS | PASS |
 | OS course notes | D tables/course | 16 | PASS | PASS |
@@ -51,18 +51,31 @@ hrefs (`…html][1]`) that EPUBCheck rejects (RSC-020). Fix: a precise
 `[` sits outside the match), with IPv6-host and reference-suffix
 regression tests.
 
-## Finding 3 (TRIAGED, not fixed): non-core image formats
+## Finding 3 (FIXED, 2026-10-10): non-core image formats
 
 **Failure class:** *JPEG 2000 (`.jpx`) images packaged with the wrong
-media type.* The Hands-On book embeds 149 JPX images;
-`MIME_BY_EXT.get(ext, "image/png")` labels every unknown extension as
-`image/png`, so the OPF misdeclares them — and even correctly-labeled
-JPX is not an EPUB 3 core media type. Proposed scoped fix (separate
-task): transcode non-core rasters to PNG at extraction via
-`fitz.Pixmap`, or detect the codestream magic and set the true media
-type plus a core-format fallback. Not fixed in this session: it is a
-new capability (image transcoding), not a defect in an implemented
-fix, and the corpus protocol is record-then-triage.
+media type.* The Hands-On book embeds 149 JPX images (all verified as
+genuine JP2 signature-box data, not inferred from extensions);
+`MIME_BY_EXT.get(ext, "image/png")` labelled every unknown extension
+`image/png`, and JPX is not an EPUB 3 core media type in any case —
+298 EPUBCheck errors.
+
+Fix (scoped, per the review contract): `_transcode_to_core` in
+`tier1_classifier` decodes any non-core raster (`jpx`/`jp2`/`j2k`,
+BMP, TIFF, WebP) via PyMuPDF and re-encodes as PNG at extraction —
+CMYK/indexed sources converted to RGB, alpha preserved, content hash
+taken from the *packaged* bytes so dedup stays honest. **Failure
+behavior:** an undecodable image is dropped with a logged diagnostic
+naming page, block and format — never silently relabelled. Acceptance
+was validated at every level: a committed 1.5 KB JP2 asset embedded
+through a handcrafted `/JPXDecode` PDF (`jpx_image` fixture, provenance
+documented), extraction-level tests for both the transcode and the
+drop-with-diagnostic path, EPUBCheck 0/0/0/0 on the fixture EPUB, and
+the full Hands-On book — **8/8 corpus documents now pass**, all 168
+packaged images core-format with zero mislabelled files.
+
+Guardrails after the fix: suite **681 passed / 14 skipped / 0 failed**
+(679 + 2); six-page reference baseline byte-identical.
 
 ## Discrepancies observed but not triaged as defects
 
