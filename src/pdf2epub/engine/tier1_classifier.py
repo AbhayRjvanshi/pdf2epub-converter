@@ -24,10 +24,13 @@ Key mechanics
 from __future__ import annotations
 
 import hashlib
+import logging
 import os
 import re
 from collections import Counter
 from dataclasses import dataclass, field
+
+log = logging.getLogger(__name__)
 
 from .code_signals import detect_code_lines
 from .heading_signals import (
@@ -800,6 +803,34 @@ MIME_BY_EXT = {
     "webp": "image/webp",
 }
 
+# EPUB 3 core raster formats (image/svg+xml aside). Everything else --
+# JPEG 2000 (jpx/jp2/j2k), BMP, TIFF, WebP -- requires transcoding to
+# reach EPUBCheck-clean output; publishers embed JPEG 2000 routinely
+# (corpus finding 3: 149 .jpx images in one technical book).
+_EPUB_CORE_IMAGE_EXTS = frozenset({"png", "jpeg", "jpg", "gif"})
+
+
+def _transcode_to_core(data: bytes) -> bytes | None:
+    """Re-encode arbitrary raster bytes as PNG (EPUB 3 core).
+
+    Returns ``None`` when the bytes cannot be decoded. The caller drops
+    the image with a diagnostic -- the one forbidden outcome is silently
+    relabelling undecodable bytes with a core media type.
+    """
+    try:
+        pix = fitz.Pixmap(data)
+    except Exception:
+        return None
+    try:
+        if pix.colorspace is not None and pix.colorspace.name not in (
+            "DeviceRGB",
+            "DeviceGray",
+        ):
+            pix = fitz.Pixmap(fitz.csRGB, pix)  # CMYK / indexed -> RGB
+        return pix.tobytes("png")
+    except Exception:
+        return None
+
 
 def _harvest_alt_text(
     image_bbox: tuple, text_lines: list[ClassifiedLine], page_num: int, block_id: int
@@ -845,6 +876,22 @@ def extract_images(
         ext = (block.get("ext") or "png").lower()
         block_id = block.get("number", 0)
         bbox = tuple(block["bbox"])
+        if ext not in _EPUB_CORE_IMAGE_EXTS:
+            # corpus finding 3: non-core rasters (JPEG 2000 et al.) must
+            # transcode to a core format at extraction; a failed transcode
+            # drops the image with a diagnostic rather than mislabelling
+            transcoded = _transcode_to_core(data)
+            if transcoded is None:
+                log.warning(
+                    "page %s: image block %s (format %r) could not be "
+                    "transcoded to a core format; dropping it",
+                    page_index + 1,
+                    block_id,
+                    ext,
+                )
+                continue
+            data = transcoded
+            ext = "png"
         alt = _harvest_alt_text(bbox, text_lines, page_index, block_id)
         digest = hashlib.sha1(data).hexdigest()[:16]
         filename = f"img_{digest}.{ext}"

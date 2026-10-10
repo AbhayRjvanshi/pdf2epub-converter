@@ -15,7 +15,6 @@ try:
     import pymupdf as fitz
 except ImportError:  # pragma: no cover
     import fitz
-
 PAGE_W, PAGE_H = 420.0, 680.0
 MARGIN_X = 54.0
 COL_W = 260.0
@@ -563,6 +562,63 @@ def build_proportional_code_doc(path: str | Path) -> str:
     return str(path)
 
 
+def build_jpx_image_doc(path: str | Path) -> str:
+    """A PDF embedding one genuine JPEG 2000 image (corpus finding 3).
+
+    The image bytes come from ``tests/assets/jpx_sample.jp2`` -- a
+    1.5 KB JP2 (signature-box) image extracted from the Hands-On
+    Generative AI book during the first real-world corpus session --
+    embedded through a handcrafted PDF with a ``/JPXDecode`` XObject,
+    exactly how technical publishers embed JPEG 2000. The caption line
+    below the figure provides alt text for the a11y contract.
+    """
+    asset = Path(__file__).resolve().parent / "assets" / "jpx_sample.jp2"
+    data = asset.read_bytes()
+    pix = fitz.Pixmap(data)  # dimension probe; MuPDF decodes JPX
+    w, h = pix.width, pix.height
+
+    content = b"q 180 0 0 208 10 20 cm /Im0 Do Q"
+    image_dict = (
+        f"<< /Type /XObject /Subtype /Image /Width {w} /Height {h} "
+        f"/ColorSpace /DeviceRGB /BitsPerComponent 8 "
+        f"/Filter /JPXDecode /Length {len(data)} >>\nstream\n"
+    ).encode()
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        (
+            b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 260] "
+            b"/Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>"
+        ),
+        image_dict + data + b"\nendstream",
+        b"<< /Length " + str(len(content)).encode()
+        + b" >>\nstream\n" + content + b"\nendstream",
+    ]
+    out = bytearray(b"%PDF-1.5\n")
+    offsets = []
+    for i, obj in enumerate(objects, start=1):
+        offsets.append(len(out))
+        out += str(i).encode() + b" 0 obj\n" + obj + b"\nendobj\n"
+    xref_pos = len(out)
+    out += b"xref\n0 " + str(len(objects) + 1).encode() + b"\n"
+    out += b"0000000000 65535 f \n"
+    for off in offsets:
+        out += ("%010d 00000 n \n" % off).encode()
+    out += (
+        b"trailer\n<< /Size " + str(len(objects) + 1).encode()
+        + b" /Root 1 0 R >>\nstartxref\n" + str(xref_pos).encode() + b"\n%%EOF"
+    )
+
+    doc = fitz.open("pdf", bytes(out))
+    doc[0].insert_text(
+        (10.0, 250.0), "Figure 1. A JPEG 2000 sample.",
+        fontname="helv", fontsize=10.0,
+    )
+    doc.save(str(path))
+    doc.close()
+    return str(path)
+
+
 def build_special_chars_doc(path: str | Path) -> str:
     """Ampersands, angle brackets, quotes and a query-string URL.
 
@@ -623,6 +679,7 @@ def build_all(out_dir: str | Path) -> dict[str, str]:
         "proportional_code": build_proportional_code_doc(
             out / "proportional_code.pdf"
         ),
+        "jpx_image": build_jpx_image_doc(out / "jpx_image.pdf"),
         "special_chars": build_special_chars_doc(out / "special_chars.pdf"),
     }
 

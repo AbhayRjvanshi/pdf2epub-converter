@@ -18,6 +18,8 @@ dist/
 *.png
 *.jpg
 *.jpeg
+# except the committed test assets
+!tests/assets/*
 
 # Validator report artifacts (defensive; the engine cleans up after itself)
 ace_report/

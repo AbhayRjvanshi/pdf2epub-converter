@@ -1,6 +1,7 @@
 """Module 1: deterministic layout stream processor."""
 
 import re
+from pathlib import Path
 
 import pytest
 
@@ -358,3 +359,76 @@ def test_code_collector_falls_back_to_estimate_without_measurement():
     lines = [pre_line("code()", 54.0, 100.0), pre_line("x", 54.0 + 6.0, 114.0)]
     (block,) = _collect_code_blocks(lines, 0, profile.line_height)
     assert block.content == "code()\n x"  # 6pt / 6pt = exactly one space
+
+
+# ---------------------------------------------------------------------------
+# Non-core image transcoding (corpus finding 3)
+# ---------------------------------------------------------------------------
+
+JPX_ASSET = (
+    Path(__file__).resolve().parents[1] / "assets" / "jpx_sample.jp2"
+)
+
+
+def test_jpx_image_transcodes_to_core_png_at_extraction(fixture_pdfs):
+    """A JPEG 2000 embed (ext jpx, genuine JP2 bytes) must never reach
+    the EPUB as an image/png-labelled .jpx: it transcodes to real PNG at
+    extraction, preserving pixel content and the alt-text contract."""
+    import fitz
+
+    doc = fitz.open(fixture_pdfs["jpx_image"])
+    profile = t1.DocumentFontProfile.build(doc)
+    elements = t1.build_page_stream(doc[0], profile, 0)
+    doc.close()
+
+    images = [
+        e for e in elements
+        if e.element_type is ElementType.IMAGE and e.image_data is not None
+    ]
+    assert len(images) == 1
+    img = images[0].image_data
+    assert img.ext == "png"
+    assert img.mime_type == "image/png"
+    assert img.image_bytes[:8] == b"\x89PNG\r\n\x1a\n"
+    assert img.filename.endswith(".png")
+    # visual content preserved: the packaged PNG keeps source dimensions
+    out_pix = fitz.Pixmap(img.image_bytes)
+    assert (out_pix.width, out_pix.height) == (80, 104)
+    # alt text still harvested from the caption
+    assert img.alt_text
+
+
+def test_undecodable_image_is_dropped_with_diagnostic(monkeypatch, caplog):
+    """A failed transcode must produce a clear diagnostic and must
+    never silently relabel undecodable bytes as PNG."""
+    import logging
+
+    monkeypatch.setattr(t1, "_transcode_to_core", lambda data: None)
+    page = _jpx_page_stub()
+    with caplog.at_level(
+        logging.WARNING, logger="pdf2epub.engine.tier1_classifier"
+    ):
+        dropped = t1.extract_images(page, 0, [], None)
+    assert dropped == []  # skipped, not mislabeled
+    assert "could not be transcoded" in caplog.text
+    assert "jpx" in caplog.text
+
+
+def _jpx_page_stub():
+    """A minimal fitz.Page-like object carrying one jpx image block."""
+    import types
+
+    data = JPX_ASSET.read_bytes()
+
+    class _Page:
+        rect = types.SimpleNamespace(width=200.0, height=260.0)
+
+        @staticmethod
+        def get_text(kind):
+            return {"dict": {"blocks": [{
+                "type": 1, "number": 7,
+                "bbox": (10.0, 32.0, 190.0, 240.0),
+                "ext": "jpx", "image": data,
+            }]}}.get(kind, {})
+
+    return _Page()
