@@ -31,6 +31,7 @@ class ConversionRequest:
     output_path: Path
     title: str | None = None  # None -> PDF metadata -> engine default
     author: str | None = None
+    language: str | None = None  # None -> PDF /Lang -> 'und' (engine policy)
     provider_id: str = "none"  # decision #5
     conversion_model: str | None = None
     options: ConversionOptions = field(default_factory=ConversionOptions)

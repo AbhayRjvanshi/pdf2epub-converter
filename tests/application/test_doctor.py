@@ -274,3 +274,108 @@ def test_render_contains_states(tmp_path, monkeypatch):
     report = _run(tmp_path, monkeypatch)
     rendered = report.render()
     assert "python" in rendered and "OK" in rendered
+
+
+# ---------------------------------------------------------------------------
+# Round 2 WS-5: the four credential states, reported separately
+# ---------------------------------------------------------------------------
+
+
+def test_env_var_presence_is_its_own_state(tmp_path, monkeypatch):
+    """State 1: a key set in the environment is reported even when no
+    provider is selected. "NVIDIA_API_KEY is set" and "no provider
+    configured (offline)" are different facts; neither may collapse
+    into the other."""
+    report = _run(
+        tmp_path,
+        monkeypatch,
+        config=AppConfig(),
+        environ={"NVIDIA_API_KEY": "nv-secret"},
+    )
+    row = next(c for c in report.checks if c.name == "env NVIDIA_API_KEY")
+    assert row.state == OK
+    assert row.detail == "set"
+    creds = next(c for c in report.checks if c.name == "credentials")
+    assert creds.state == OPTIONAL  # selection is still unambiguously offline
+
+
+def test_unset_env_vars_are_optional_never_failures(tmp_path, monkeypatch):
+    report = _run(tmp_path, monkeypatch, environ={})
+    row = next(c for c in report.checks if c.name == "env NVIDIA_API_KEY")
+    assert row.state == OPTIONAL
+    assert row.detail == "not set"
+    assert not report.failed
+
+
+def test_model_smoke_reports_a_completed_request(tmp_path, monkeypatch):
+    """State 4: credential validation proves the key; only a completed
+    request proves the model id works end to end."""
+    registry = build_registry()
+    adapter = registry.get("openai")
+    monkeypatch.setattr(adapter, "validate_credentials", lambda credential: True)
+
+    def fake_factory(model, credential):
+        assert credential == "sk-good"
+
+        def client(system_prompt, payload, image_b64=None):
+            return "ready"
+
+        return client
+
+    monkeypatch.setattr(adapter, "create_llm_callable", fake_factory)
+    report = _run(
+        tmp_path,
+        monkeypatch,
+        config=AppConfig(provider_name="openai", conversion_model="gpt-test"),
+        environ={"OPENAI_API_KEY": "sk-good"},
+        registry=registry,
+        verify=True,
+    )
+    row = next(c for c in report.checks if c.name == "model request")
+    assert row.state == OK
+    assert "gpt-test" in row.detail
+
+
+def test_model_smoke_failure_is_a_hard_failure(tmp_path, monkeypatch):
+    registry = build_registry()
+    adapter = registry.get("openai")
+    monkeypatch.setattr(adapter, "validate_credentials", lambda credential: True)
+
+    def fake_factory(model, credential):
+        def client(system_prompt, payload, image_b64=None):
+            raise RuntimeError("boom")
+
+        return client
+
+    monkeypatch.setattr(adapter, "create_llm_callable", fake_factory)
+    report = _run(
+        tmp_path,
+        monkeypatch,
+        config=AppConfig(provider_name="openai", conversion_model="gpt-x"),
+        environ={"OPENAI_API_KEY": "sk"},
+        registry=registry,
+        verify=True,
+    )
+    row = next(c for c in report.checks if c.name == "model request")
+    assert row.state == FAIL
+    assert report.failed
+
+
+def test_no_model_smoke_without_explicit_verification(tmp_path, monkeypatch):
+    """doctor stays offline unless --verify-credentials: no request,
+    no row -- mirroring the absent 'credential verification' row."""
+    registry = build_registry()
+    adapter = registry.get("openai")
+    calls = []
+    monkeypatch.setattr(
+        adapter, "create_llm_callable", lambda *a: calls.append(a)
+    )
+    report = _run(
+        tmp_path,
+        monkeypatch,
+        config=AppConfig(provider_name="openai", conversion_model="gpt-test"),
+        environ={"OPENAI_API_KEY": "sk-env"},
+        registry=registry,
+    )
+    assert calls == []
+    assert not any(c.name == "model request" for c in report.checks)

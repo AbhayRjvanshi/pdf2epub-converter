@@ -58,8 +58,6 @@ FURNITURE_BAND = 0.12           # top/bottom 12% of the page
 MIN_PAGES_FOR_FURNITURE = 4     # below this, "every page" means nothing
 MIN_PAGES_SEEN = 3              # and it must actually repeat
 TERMINAL_PUNCT = ".!?:;\u2026\"'\u201d\u2019)"
-CONFORMS_TO = "EPUB Accessibility 1.1 - WCAG 2.0 Level AA"
-
 PAGE_NUMBER_RE = PAGE_NUMBER_LINE_RE  # the shared shape rule ("30", "(iv)", "Page 30")
 HYPHEN_TAIL_RE = re.compile(r"(\w)-((?:</\w+>)*)\s*$")
 
@@ -77,6 +75,8 @@ class AccessibilityProfile:
     has_reading_order: bool = True
     has_tables: bool = False
     image_count: int = 0
+    images_described: int = 0       # caption-derived descriptions (Round 2)
+    images_location_only: int = 0   # location-only stubs (Round 2)
     heading_count: int = 0
     hazards: list[str] = field(default_factory=lambda: ["none"])
     access_modes: list[str] = field(default_factory=lambda: ["textual"])
@@ -88,8 +88,16 @@ class AccessibilityProfile:
             bits.append("Headings provide structural navigation.")
         if self.image_count and self.has_alt_text:
             bits.append("All images carry alternative text.")
+        elif self.image_count and self.images_described:
+            bits.append(
+                f"{self.images_described} of {self.image_count} images carry "
+                f"alternative text; the rest have location-only descriptions."
+            )
         elif self.image_count:
-            bits.append("Some images lack alternative text.")
+            bits.append(
+                "Images carry location-only descriptions; the source "
+                "contained no captions to derive text alternatives from."
+            )
         else:
             bits.append("The publication contains no images.")
         return " ".join(bits)
@@ -512,9 +520,19 @@ def attach_stylesheet(item: epub.EpubHtml, css_item: epub.EpubItem) -> None:
 def analyse_accessibility(elements: list[StreamElement]) -> AccessibilityProfile:
     images = [e for e in elements if e.element_type is ElementType.IMAGE]
     headings = [e for e in elements if e.element_type is ElementType.HEADING]
-    all_alt = bool(images) and all(
-        e.image_data is not None and e.image_data.alt_text.strip() for e in images
+    # Round 2: a location-only stub ("Figure on page N, block M") names
+    # where to look, not what is there -- it is not a text alternative.
+    # Only caption-derived descriptions earn the alternativeText feature;
+    # both populations are reported so the summary can stay honest.
+    described = sum(
+        1
+        for e in images
+        if e.image_data is not None
+        and e.image_data.alt_source == "caption"
+        and e.image_data.alt_text.strip()
     )
+    location_only = len(images) - described
+    all_alt = bool(images) and location_only == 0
     has_tables = any(e.tag.lower() == "table" for e in elements)
     # The navigation document now lists every heading anchor, so a table
     # of contents exists exactly when headings exist.
@@ -527,6 +545,8 @@ def analyse_accessibility(elements: list[StreamElement]) -> AccessibilityProfile
         has_reading_order=True,
         has_tables=has_tables,
         image_count=len(images),
+        images_described=described,
+        images_location_only=location_only,
         heading_count=len(headings),
         access_modes=["textual", "visual"] if images else ["textual"],
     )
@@ -535,7 +555,11 @@ def analyse_accessibility(elements: list[StreamElement]) -> AccessibilityProfile
 
 
 def _inject_metadata(book: epub.EpubBook, a11y: AccessibilityProfile) -> None:
-    book.add_metadata(None, "meta", CONFORMS_TO, {"property": "dcterms:conformsTo"})
+    # Round 2 decision: no dcterms:conformsTo claim is emitted, at any
+    # level. This tool has never run a WCAG audit and EPUBCheck does not
+    # certify conformance; an "EPUB Accessibility 1.1 / WCAG 2.0 AA"
+    # declaration would mislead readers and distributors. The honest
+    # signals are the evidence-gated features below and the summary.
     for mode in a11y.access_modes:
         book.add_metadata(None, "meta", mode, {"property": "schema:accessMode"})
     book.add_metadata(None, "meta", "textual", {"property": "schema:accessModeSufficient"})
@@ -564,12 +588,74 @@ def _inject_metadata(book: epub.EpubBook, a11y: AccessibilityProfile) -> None:
     )
 
 
+def _opf_with_xml_lang(data: bytes, language: str) -> bytes:
+    from lxml import etree
+
+    root = etree.fromstring(data)
+    root.set("{http://www.w3.org/XML/1998/namespace}lang", language)
+    return etree.tostring(
+        root, pretty_print=True, encoding="utf-8", xml_declaration=True
+    )
+
+
+def _set_package_xml_lang(epub_path: str, language: str) -> None:
+    """Declare the publication language on the OPF ``<package>`` element.
+
+    ebooklib 0.20 hardcodes the package attributes and cannot emit
+    ``xml:lang``; Ace's epub-lang check flags its absence as *serious*.
+    Rewriting the single OPF entry after the write keeps the
+    dependency un-forked: every other zip entry is copied byte-for-byte
+    in its original order, with ``mimetype`` kept first and stored, and
+    the swap itself is atomic (temp file + ``os.replace``).
+    """
+    with zipfile.ZipFile(epub_path, "r") as src:
+        entries = [(info, src.read(info.filename)) for info in src.infolist()]
+
+    patched = [
+        (
+            info,
+            _opf_with_xml_lang(data, language)
+            if info.filename.endswith(".opf")
+            else data,
+        )
+        for info, data in entries
+    ]
+
+    fd, tmp_name = tempfile.mkstemp(
+        dir=str(Path(epub_path).parent), suffix=".opf_lang.tmp"
+    )
+    os.close(fd)
+    try:
+        with zipfile.ZipFile(tmp_name, "w") as out:
+            for info, data in patched:
+                if info.filename == "mimetype":
+                    # EPUB requirement: first entry, stored uncompressed
+                    zi = zipfile.ZipInfo(info.filename, date_time=info.date_time)
+                    out.writestr(zi, data, compress_type=zipfile.ZIP_STORED)
+                else:
+                    out.writestr(info, data)
+        os.replace(tmp_name, epub_path)
+    except BaseException:
+        try:
+            os.unlink(tmp_name)
+        except OSError:
+            pass
+        raise
+
+
 def build_epub_publication(
     stream: list[StreamElement],
     output_path: str,
     title: str = "Untitled Publication",
     author: str = "Unknown Author",
-    language: str = "en",
+    # Round 2 language policy: the driver always passes a derived tag;
+    # the honest fallback for direct callers is 'und', never a
+    # hardcoded "en" guess.
+    language: str = "und",
+    # Round 2 cover policy: filename of the one image the driver proved
+    # to be the title-page cover (page-0 full-bleed, sparse text).
+    # None means no evidence -> the property is gracefully omitted.
+    cover_image: str | None = None,
     page_heights: dict[int, float] | None = None,
     preprocess: bool = True,
 ) -> PublicationBuild:
@@ -616,14 +702,27 @@ def build_epub_publication(
             log.warning("image %s has no data; skipping", img.filename)
             continue
         seen_images.add(img.filename)
-        book.add_item(
-            epub.EpubImage(
+        if cover_image and img.filename == cover_image:
+            # The one evidence-gated cover asset. EpubCover is the
+            # ebooklib item class whose manifest entry carries
+            # properties="cover-image"; it accepts no media_type/content
+            # in its constructor, so both are set after construction.
+            cover_item = epub.EpubCover(
                 uid=f"img_{len(seen_images)}",
                 file_name=f"images/{img.filename}",
-                media_type=img.mime_type,
-                content=payload,
             )
-        )
+            cover_item.media_type = img.mime_type
+            cover_item.content = payload
+            book.add_item(cover_item)
+        else:
+            book.add_item(
+                epub.EpubImage(
+                    uid=f"img_{len(seen_images)}",
+                    file_name=f"images/{img.filename}",
+                    media_type=img.mime_type,
+                    content=payload,
+                )
+            )
 
     # Chapters -----------------------------------------------------------
     depths = infer_heading_depths(clean_stream)
@@ -698,7 +797,10 @@ def build_epub_publication(
 
     book.toc = tuple(toc)
     book.add_item(epub.EpubNcx())
-    nav = epub.EpubNav()
+    # Round 2: the navigation document carries the publication title as
+    # its <title>; ebooklib's default empty title emits no title
+    # element at all.
+    nav = epub.EpubNav(title=title)
     attach_stylesheet(nav, css_item)
     book.add_item(nav)
     book.spine = ["nav"] + chapters
@@ -728,6 +830,10 @@ def build_epub_publication(
 
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     epub.write_epub(output_path, book)
+    # ebooklib 0.20 hardcodes the <package> attributes and cannot emit
+    # xml:lang; declaring the publication language there is Ace's
+    # epub-lang requirement (a serious violation without it).
+    _set_package_xml_lang(output_path, language)
 
     return PublicationBuild(
         output_path=output_path,

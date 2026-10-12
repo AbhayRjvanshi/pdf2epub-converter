@@ -65,6 +65,10 @@ def build_parser(provider_choices: Sequence[str] | None = None) -> argparse.Argu
         help="override the author (default: PDF metadata)",
     )
     convert.add_argument(
+        "--language", default=None,
+        help="override the publication language, BCP-47 (default: PDF /Lang)",
+    )
+    convert.add_argument(
         "--provider", default=None, choices=provider_choices,
         help="AI provider for complex pages (default: none / saved config)",
     )
@@ -127,6 +131,7 @@ def request_from_args(
         output_path=Path(args.output),
         title=args.title,
         author=args.author,
+        language=args.language,
         provider_id=provider_id,
         conversion_model=model,
         options=ConversionOptions(

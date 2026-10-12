@@ -12,6 +12,7 @@ external validator is never a FAIL -- optional tooling must not fail CI.
 from __future__ import annotations
 
 import importlib.util
+import os
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -216,6 +217,31 @@ def run_doctor(
     except OSError as exc:
         checks.append(CheckResult("output directory", WARN, f"not writable: {exc}"))
 
+    # -- provider credential environment variables (state 1) ---------
+    # A key set in the environment is a fact *independent* of provider
+    # selection. "NVIDIA_API_KEY is set" and "no provider configured"
+    # are different states: a user who exported a key must see it
+    # registered even while the tool runs offline, and must never be
+    # told "no provider configured (offline)" as if the key did not
+    # exist. One row per distinct credential variable, never per
+    # provider, so a variable shared by two providers is listed once.
+    env_map = environ if environ is not None else os.environ
+    seen_vars: set[str] = set()
+    for adapter in registry.list():
+        profile = getattr(adapter, "profile", None)
+        var = getattr(profile, "credential_env_var", None) if profile else None
+        if not var or var in seen_vars:
+            continue
+        seen_vars.add(var)
+        present = bool(str(env_map.get(var, "")).strip())
+        checks.append(
+            CheckResult(
+                f"env {var}",
+                OK if present else OPTIONAL,
+                "set" if present else "not set",
+            )
+        )
+
     # -- credentials (local only unless verify_credentials) ----------------
     provider_id = session.provider_id if session is not None else config.provider_name
     explicit_secret = session.explicit_secret if session is not None else None
@@ -270,6 +296,12 @@ def run_doctor(
                             "verified" if ok else "rejected by the provider",
                         )
                     )
+                    _append_model_request_check(
+                        checks,
+                        adapter,
+                        _selected_model(session, config),
+                        explicit_secret,
+                    )
     else:
         try:
             adapter = registry.get(provider_id)
@@ -312,6 +344,12 @@ def run_doctor(
                                     "verified" if ok else "rejected by the provider",
                                 )
                             )
+                            _append_model_request_check(
+                                checks,
+                                adapter,
+                                _selected_model(session, config),
+                                resolved.credential,
+                            )
 
     # -- model vs last routing (session-aware) -----------------------------
     if (
@@ -343,3 +381,52 @@ def run_doctor(
                 )
 
     return DoctorReport(checks)
+
+
+def _selected_model(session, config) -> str | None:
+    """The model the user actually selected: session overrides config."""
+    if session is not None and getattr(session, "conversion_model", None):
+        return session.conversion_model
+    return getattr(config, "conversion_model", None) or None
+
+
+def _append_model_request_check(
+    checks: list[CheckResult], adapter, model: str | None, credential: str
+) -> None:
+    """State 4: can the selected model actually complete a request?
+
+    Credential validation (state 3) proves the key; only a completed
+    request proves the model id, the endpoint and the quota together.
+    Opt-in by design -- this is a real network call, so it runs only
+    under ``--verify-credentials``, exactly like credential
+    verification itself.
+    """
+    if not model:
+        checks.append(
+            CheckResult(
+                "model request",
+                WARN,
+                "no model selected (pass --model or configure one)",
+            )
+        )
+        return
+    try:
+        client = adapter.create_llm_callable(model, credential)
+        reply = client(
+            "You are a connectivity probe.",
+            "Reply with the single word: ready",
+            None,
+        )
+    except Exception as exc:
+        checks.append(
+            CheckResult("model request", FAIL, f"request failed: {exc}")
+        )
+        return
+    if reply and str(reply).strip():
+        checks.append(
+            CheckResult("model request", OK, f"{model} completed a request")
+        )
+    else:
+        checks.append(
+            CheckResult("model request", FAIL, "model returned an empty response")
+        )

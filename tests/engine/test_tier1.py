@@ -311,7 +311,46 @@ def test_image_extracted_with_caption_alt_text(tier1_stream):
     assert img.image_data is not None
     assert img.image_data.image_bytes[:4] == b"\x89PNG"
     assert "Figure 1" in img.image_data.alt_text
+    assert img.image_data.alt_source == "caption"
     assert 'alt="Figure 1' in img.render()
+
+
+def test_plain_text_below_an_image_is_not_harvested_as_a_caption(tmp_path):
+    """Round 2 no-fabrication rule: a line that merely sits below an
+    image (story prose, a donation plea, a footer) must never become a
+    description; only caption-shaped text earns the credit. Found on
+    the real Flower Garden book, whose page-3 promo art harvested the
+    publisher's Patreon plea."""
+    try:
+        import pymupdf as fitz
+    except ImportError:  # pragma: no cover
+        import fitz
+    import make_fixtures as mf
+
+    doc = fitz.open()
+    page = doc.new_page(width=420.0, height=680.0)
+    page.insert_image(
+        fitz.Rect(50.0, 100.0, 370.0, 300.0), stream=mf.make_square_png()
+    )
+    page.insert_text(
+        (54.0, 330.0),
+        "Please make a donation to support the artist.",
+        fontname="helv", fontsize=10.0,
+    )
+    pdf = tmp_path / "plain_below.pdf"
+    doc.save(str(pdf))
+    doc.close()
+
+    doc = fitz.open(str(pdf))
+    profile = t1.DocumentFontProfile.build(doc)
+    stream = t1.build_page_stream(doc[0], profile, 0)
+    doc.close()
+
+    images = [e for e in stream if e.element_type is ElementType.IMAGE]
+    assert len(images) == 1
+    img = images[0].image_data
+    assert img.alt_source == "location"
+    assert "donation" not in img.alt_text
 
 
 def test_stream_elements_are_in_reading_order(tier1_stream):

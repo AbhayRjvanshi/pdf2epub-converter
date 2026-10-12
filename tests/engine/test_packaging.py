@@ -1,7 +1,9 @@
 """Module 4: reassembly, segmentation, metadata honesty, validation parsing."""
 
 import json
+import re
 import zipfile
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import pytest
@@ -192,11 +194,11 @@ def test_content_before_the_first_heading_is_kept():
 # ---------------------------------------------------------------------------
 
 
-def _image_element(alt="A figure"):
+def _image_element(alt="A figure", alt_source="caption"):
     img = ImageElement(
         ext="png", mime_type="image/png", image_bytes=b"\x89PNG\r\n\x1a\n",
         bbox=(54.0, 200.0, 200.0, 320.0), page_num=0, block_id=2,
-        alt_text=alt, filename="img_p0001_b2.png",
+        alt_text=alt, filename="img_p0001_b2.png", alt_source=alt_source,
     )
     return StreamElement(
         ElementType.IMAGE, "figure", "", bbox=img.bbox, page_num=0,
@@ -242,10 +244,25 @@ def test_metadata_only_asserts_present_features(tmp_path):
     with zipfile.ZipFile(out) as zf:
         opf = next(n for n in zf.namelist() if n.endswith(".opf"))
         xml = zf.read(opf).decode()
+        nav = next(n for n in zf.namelist() if n.endswith("nav.xhtml"))
+        nav_xml = zf.read(nav).decode()
     assert "structuralNavigation" in xml
     assert "tableOfContents" in xml
-    assert "alternativeText" not in xml
-    assert pk.CONFORMS_TO in xml
+    assert "alternativeText" not in xml  # no images: nothing to describe
+    # Round 2 decision: no conformance claim is emitted at all. The tool
+    # has never run a WCAG audit, so an EPUB Accessibility 1.1 / WCAG AA
+    # declaration would be an unsupported claim (dcterms:conformsTo).
+    assert "conformsTo" not in xml
+    assert "WCAG" not in xml
+    # Round 2: the package element must declare its language (Ace's
+    # epub-lang check, serious, demands xml:lang on <package>).
+    root = ET.fromstring(xml.encode())
+    assert root.tag.endswith("package")
+    assert root.get("{http://www.w3.org/XML/1998/namespace}lang") == "und"
+    # Round 2: the navigation document carries a real <title>, not an
+    # empty one (best practice; reading systems show it in the UI).
+    title_text = re.search(r"<title>(.*?)</title>", nav_xml, re.S)
+    assert title_text and title_text.group(1).strip()
 
 
 def test_data_table_does_not_emit_table_of_contents_feature(tmp_path):
@@ -270,6 +287,141 @@ def test_metadata_asserts_alt_text_when_earned(tmp_path):
         xml = zf.read(opf).decode()
         assert "EPUB/images/img_p0001_b2.png" in zf.namelist()
     assert "alternativeText" in xml
+
+
+# ---------------------------------------------------------------------------
+# Round 2 WS-3: description-quality honesty
+# ---------------------------------------------------------------------------
+
+
+def test_location_only_stubs_never_earn_the_alt_text_feature(tmp_path):
+    """A location stub ("Figure on page N, block M") names where to
+    look, not what is there: it is not a text alternative. The OPF
+    must not claim alternativeText for it and the summary must say
+    exactly what the descriptions are."""
+    stream = [
+        heading("One"),
+        _image_element(alt="Figure on page 1, block 2", alt_source="location"),
+        _image_element(alt="Page 3 (image-only page)", alt_source="location"),
+    ]
+    profile = pk.analyse_accessibility(stream)
+    assert profile.image_count == 2
+    assert profile.images_described == 0
+    assert profile.images_location_only == 2
+    assert profile.has_alt_text is False
+    out = tmp_path / "stubs.epub"
+    pk.build_epub_publication(stream, str(out))
+    with zipfile.ZipFile(out) as zf:
+        opf = next(n for n in zf.namelist() if n.endswith(".opf"))
+        xml = zf.read(opf).decode()
+    assert "alternativeText" not in xml
+    assert "location-only" in xml
+
+
+def test_caption_and_stub_counts_are_reported_separately(tmp_path):
+    stream = [
+        heading("One"),
+        _image_element(),  # caption-derived by default
+        _image_element(alt="Figure on page 1, block 2", alt_source="location"),
+    ]
+    profile = pk.analyse_accessibility(stream)
+    assert profile.images_described == 1
+    assert profile.images_location_only == 1
+    assert profile.has_alt_text is False
+    assert "1 of 2 images" in profile.summary
+    out = tmp_path / "mixed.epub"
+    pk.build_epub_publication(stream, str(out))
+    with zipfile.ZipFile(out) as zf:
+        opf = next(n for n in zf.namelist() if n.endswith(".opf"))
+        xml = zf.read(opf).decode()
+    assert "alternativeText" not in xml
+
+
+def test_all_captioned_images_earn_the_alt_text_feature(tmp_path):
+    stream = [heading("One"), _image_element(), _image_element(alt="Another caption")]
+    profile = pk.analyse_accessibility(stream)
+    assert profile.has_alt_text is True
+    out = tmp_path / "captioned.epub"
+    pk.build_epub_publication(stream, str(out))
+    with zipfile.ZipFile(out) as zf:
+        opf = next(n for n in zf.namelist() if n.endswith(".opf"))
+        xml = zf.read(opf).decode()
+    assert "alternativeText" in xml
+    assert "All images carry alternative text" in xml
+
+
+# ---------------------------------------------------------------------------
+# Round 2 WS-4: package language declaration
+# ---------------------------------------------------------------------------
+
+
+def test_package_xml_lang_matches_the_publication_language(tmp_path):
+    out = tmp_path / "lang.epub"
+    pk.build_epub_publication(
+        [heading("One"), para("body")], str(out), language="en-GB"
+    )
+    with zipfile.ZipFile(out) as zf:
+        opf = next(n for n in zf.namelist() if n.endswith(".opf"))
+        xml = zf.read(opf).decode()
+    root = ET.fromstring(xml.encode())
+    assert root.get("{http://www.w3.org/XML/1998/namespace}lang") == "en-GB"
+    assert "en-GB" in xml  # dc:language agrees with the package attribute
+
+
+def test_xml_lang_rewrite_preserves_the_container(tmp_path):
+    """The OPF rewrite must not damage the EPUB container: mimetype
+    stays first and stored, container.xml survives, the OPF parses."""
+    out = tmp_path / "zip.epub"
+    pk.build_epub_publication([para("x")], str(out), language="de")
+    with zipfile.ZipFile(out) as zf:
+        infos = zf.infolist()
+        assert infos[0].filename == "mimetype"
+        assert infos[0].compress_type == zipfile.ZIP_STORED
+        assert zf.read("mimetype") == b"application/epub+zip"
+        assert "META-INF/container.xml" in zf.namelist()
+        opf = next(n for n in zf.namelist() if n.endswith(".opf"))
+        root = ET.fromstring(zf.read(opf))
+        assert root.get("{http://www.w3.org/XML/1998/namespace}lang") == "de"
+
+
+# ---------------------------------------------------------------------------
+# Round 2 WS-2: cover designation
+# ---------------------------------------------------------------------------
+
+
+def test_cover_image_property_is_emitted_for_the_designated_asset(tmp_path):
+    out = tmp_path / "cover.epub"
+    pk.build_epub_publication(
+        [heading("One"), _image_element()], str(out), cover_image="img_p0001_b2.png"
+    )
+    with zipfile.ZipFile(out) as zf:
+        opf = next(n for n in zf.namelist() if n.endswith(".opf"))
+        xml = zf.read(opf).decode()
+        names = zf.namelist()
+    assert 'properties="cover-image"' in xml
+    item = re.search(r"<item[^>]*cover-image[^>]*/>", xml)
+    assert "img_p0001_b2.png" in item.group(0)
+    assert "EPUB/images/img_p0001_b2.png" in names
+
+
+def test_no_cover_property_without_a_designated_cover(tmp_path):
+    out = tmp_path / "nocover.epub"
+    pk.build_epub_publication([heading("One"), _image_element()], str(out))
+    with zipfile.ZipFile(out) as zf:
+        opf = next(n for n in zf.namelist() if n.endswith(".opf"))
+        xml = zf.read(opf).decode()
+    assert "cover-image" not in xml
+
+
+def test_designated_cover_absent_from_the_stream_is_ignored(tmp_path):
+    out = tmp_path / "gone.epub"
+    pk.build_epub_publication(
+        [heading("One"), _image_element()], str(out), cover_image="no_such.png"
+    )
+    with zipfile.ZipFile(out) as zf:
+        opf = next(n for n in zf.namelist() if n.endswith(".opf"))
+        xml = zf.read(opf).decode()
+    assert "cover-image" not in xml
 
 
 # ---------------------------------------------------------------------------

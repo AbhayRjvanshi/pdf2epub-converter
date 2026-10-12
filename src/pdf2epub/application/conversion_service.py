@@ -226,6 +226,7 @@ class ConversionService:
                 author=(
                     request.author if request.author is not None else _AUTHOR_SENTINEL
                 ),
+                language=request.language,
                 llm_adapter=llm_adapter,
                 model_id=request.conversion_model or "gpt-4o",
                 batch_size=request.options.batch_size,

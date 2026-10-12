@@ -58,7 +58,7 @@ def test_every_flag_maps_to_its_field(tmp_path):
     request = _request(
         [
             "convert", str(tmp_path / "b.pdf"), "-o", str(tmp_path / "o.epub"),
-            "--title", "T", "--author", "A",
+            "--title", "T", "--author", "A", "--language", "de-AT",
             "--provider", "openai", "--model", "gpt-4o-mini",
             "--batch-size", "7", "--cache-dir", str(tmp_path / "c"),
             "--max-repair-attempts", "3", "--skip-validation", "--report-only",
@@ -69,6 +69,7 @@ def test_every_flag_maps_to_its_field(tmp_path):
     assert request.pdf_path == tmp_path / "b.pdf"
     assert request.output_path == tmp_path / "o.epub"
     assert request.title == "T" and request.author == "A"
+    assert request.language == "de-AT"  # explicit BCP-47 override (Round 2)
     assert request.provider_id == "openai"
     assert request.conversion_model == "gpt-4o-mini"
     o = request.options

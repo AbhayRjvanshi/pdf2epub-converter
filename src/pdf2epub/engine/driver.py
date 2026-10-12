@@ -65,6 +65,25 @@ PASSTHROUGH_BLOCKS = {
 # confidence_router.plan_tier2_routing -- one source shared with preflight.
 MIN_REPAIR_TEXT_RETENTION = 0.60
 
+# Round 2 metadata policy: a publication language is only ever written
+# when a BCP-47 tag is actually evidenced (explicit flag or the PDF
+# catalog's /Lang). Everything else is 'und' (undetermined) -- never a
+# hardcoded "en" that would lie about every non-English document.
+BCP47_RE = re.compile(r"^[A-Za-z]{1,8}(-[A-Za-z0-9]{1,8})*$")
+
+# Round 2 cover policy: the title page must actually look like a cover
+# before the cover-image manifest property is assigned -- one image
+# covering ~the whole page, on page 0, on a page that carries almost no
+# text. Weaker evidence means graceful omission: a wrong cover marker
+# is worse than none, and EPUBCheck does not require one.
+COVER_MIN_AREA_SHARE = 0.90
+COVER_MAX_PAGE_TEXT = 200  # characters; a cover is not a prose page
+
+BYLINE_RE = re.compile(
+    r"^by\s+(?P<name>[A-Z][\w.'’\-]*(?:\s+[A-Z][\w.'’\-]*){0,3})[.!]?$",
+    re.IGNORECASE,
+)
+
 
 # ---------------------------------------------------------------------------
 # 1. Tier 2 XHTML -> StreamElement normaliser
@@ -315,6 +334,7 @@ def run_pipeline(
     output_epub: str,
     title: str = "Untitled Publication",
     author: str = "Unknown Author",
+    language: str | None = None,
     llm_adapter: Callable | None = None,
     model_id: str = "gpt-4o",
     batch_size: int = 4,
@@ -417,9 +437,25 @@ def run_pipeline(
 
         if title == "Untitled Publication":
             candidate = _first_page_title_candidate(doc, profile)
+            source = "first-page heading"
+            if not candidate:
+                # A cover title can be pure raster art with no text
+                # layer anywhere; the file name is then the only
+                # deterministic witness that a title ever existed.
+                candidate = _filename_title_candidate(pdf_path)
+                source = "filename evidence"
             if candidate:
                 title = candidate
-                say(f"            title from first-page heading: {title!r}")
+                say(f"            title from {source}: {title!r}")
+
+        if author == "Unknown Author":
+            candidate = _first_pages_byline_candidate(doc, profile)
+            if candidate:
+                author = candidate
+                say(f"            author from byline: {author!r}")
+
+        language, language_source = _derive_language(doc, language)
+        say(f"            language: {language} ({language_source})")
 
         # -- Phase 3 -------------------------------------------------------
         say("\n[PHASE 3] Triage & routing")
@@ -586,11 +622,16 @@ def run_pipeline(
         # -- Phase 6 -------------------------------------------------------
         say("\n[PHASE 6] Packaging EPUB3")
         emit("phase_started", 6)
+        cover_image = _cover_image_candidate(doc, unified)
+        if cover_image:
+            say(f"            cover-image: {cover_image}")
         build = packaging.build_epub_publication(
             stream=unified,
             output_path=output_epub,
             title=title,
             author=author,
+            language=language,
+            cover_image=cover_image,
             page_heights=page_heights,
         )
         say(
@@ -601,7 +642,7 @@ def run_pipeline(
         say(
             f"            a11y: headings={build.a11y.heading_count} "
             f"images={build.a11y.image_count} "
-            f"alt_text={'yes' if build.a11y.has_alt_text else 'n/a'}"
+            f"alt={build.a11y.images_described}/{build.a11y.image_count}"
         )
         m = build.metrics
         say(
@@ -654,6 +695,8 @@ def run_pipeline(
                 output_path=output_epub,
                 title=title,
                 author=author,
+                language=language,
+                cover_image=cover_image,
                 page_heights=page_heights,
             )
             result["build"] = build
@@ -737,6 +780,176 @@ def _first_page_title_candidate(doc, profile) -> str | None:
             return None
         return text if 0 < len(text) <= 120 else None
     return None
+
+
+def _filename_title_candidate(pdf_path: str) -> str | None:
+    """Filename evidence, the last tier of the title chain (Round 2).
+
+    A cover title that lives in raster art has no text layer to read
+    anywhere in the document; download file names usually reproduce it
+    in caps. The candidate is the maximal *leading* run of
+    fully-uppercase words -- at least two of them, at most 120
+    characters -- after stripping digit prefixes ("20250926...-") and
+    trailing bracketed cruft ("(1)", "[ParthPant]"). Tokens containing
+    digits keep their shape ("COVID-19"); everything else is
+    title-cased. Weaker file names keep the sentinel: a title is
+    metadata, and a wrong guess is worse than an honest absence.
+
+    This tier is metadata only -- the content stream is never touched.
+    """
+    stem = Path(pdf_path).stem
+    stem = re.sub(r"^[\d\s\-_.]+", "", stem)
+    stem = re.sub(r"[\(\[][^\)\]]*[\)\]]\s*$", "", stem).strip()
+    tokens = [t for t in re.split(r"[\s\-_]+", stem) if t]
+    run: list[str] = []
+    lettered = 0
+    for tok in tokens:
+        letters = "".join(ch for ch in tok if ch.isalpha())
+        if letters and letters.isupper():
+            run.append(tok)
+            lettered += 1
+        elif not letters and lettered:
+            run.append(tok)  # "&" and friends glue uppercase words
+        else:
+            break
+    if lettered < 2:
+        return None
+    words = [
+        tok if any(ch.isdigit() for ch in tok) else tok.capitalize()
+        for tok in run
+    ]
+    candidate = " ".join(words)
+    return candidate if 0 < len(candidate) <= 120 else None
+
+
+def _typographically_distinct(line, profile) -> bool:
+    """True when this text line cannot be an ordinary body sentence.
+
+    A credit line is set apart from the body: smaller than the modal
+    body size, or in a different font family. Without this guard a
+    title-case body sentence beginning "By The Time They Arrived"
+    would become the author.
+    """
+    spans = [s for s in line.get("spans", []) if isinstance(s, dict)]
+    sizes = [float(s["size"]) for s in spans if s.get("size")]
+    if sizes and max(sizes) < profile.body_size - 0.01:
+        return True
+    body_family = re.sub(r"[-_\s]", "", (profile.main_font or "").lower())
+    for span in spans:
+        family = re.sub(r"[-_\s]", "", (span.get("font") or "").lower())
+        if family and family != body_family:
+            return True
+    return False
+
+
+def _first_pages_byline_candidate(doc, profile) -> str | None:
+    """An author credit on the opening pages, or None (Round 2).
+
+    "By T. Albert" on a cover whose docinfo is empty is the only
+    deterministic witness of authorship. Guards keep prose out:
+
+    * the line must *start* with "By" -- "Published by", "Illustrated
+      by" and mid-sentence "by" never match the anchor;
+    * the line must be typographically distinct from the body profile
+      (see ``_typographically_distinct``).
+
+    The first qualifying line wins; opening pages only.
+    """
+    try:
+        pages = min(3, len(doc))
+        for pno in range(pages):
+            for block in doc[pno].get_text("dict")["blocks"]:
+                if block.get("type") != 0:
+                    continue
+                for line in block.get("lines", []):
+                    text = re.sub(
+                        r"\s+", " ", "".join(s["text"] for s in line["spans"])
+                    ).strip()
+                    match = BYLINE_RE.match(text)
+                    if match is None:
+                        continue
+                    if not _typographically_distinct(line, profile):
+                        continue
+                    name = match.group("name").strip()
+                    if 0 < len(name) <= 60:
+                        return name
+    except Exception:
+        return None
+    return None
+
+
+def _derive_language(doc, explicit: str | None) -> tuple[str, str]:
+    """The BCP-47 language policy (Round 2).
+
+    Explicit override (validated) -> the PDF catalog's ``/Lang``
+    (validated: real corpus PDFs carry junk there -- one ships
+    ``b'\\xff5'``) -> ``und``, the standards-compatible
+    "undetermined" tag. A hardcoded "en" default would lie about every
+    non-English document; ``und`` lets reading systems pick their own
+    fallback honestly.
+
+    Returns ``(tag, provenance)`` so the caller can report the source.
+    Explicit tags are checked for well-formedness, not IANA registry
+    membership (no registry ships with the tool); EPUBCheck applies
+    the same well-formedness rule.
+    """
+    candidate = (explicit or "").strip()
+    if candidate:
+        if BCP47_RE.match(candidate):
+            return candidate, "explicit"
+        log.warning(
+            "ignoring invalid --language %r: not a BCP-47 tag", candidate
+        )
+    raw = ""
+    try:
+        kind, value = doc.xref_get_key(doc.pdf_catalog(), "Lang")
+        if kind == "string":
+            raw = (value or "").strip()
+    except Exception:
+        raw = ""
+    if raw and BCP47_RE.match(raw):
+        return raw, "PDF catalog /Lang"
+    return "und", "undetermined fallback"
+
+
+def _cover_image_candidate(doc, elements) -> str | None:
+    """The filename of the title-page cover image, or None (Round 2).
+
+    Evidence, all of it required:
+
+    * the placement covers at least ``COVER_MIN_AREA_SHARE`` of page
+      zero (full-bleed art, including vision-embedded scans whose
+      synthetic bbox is the whole page);
+    * page zero carries almost no text (``COVER_MAX_PAGE_TEXT``): an
+      illustrated content page is dense with prose, a cover is not;
+    * among qualifying placements the largest wins.
+
+    Ties and near-misses return None: the caller gracefully omits the
+    cover-image property rather than guessing.
+    """
+    try:
+        page = doc[0]
+        rect = page.rect
+        page_area = float(rect.width) * float(rect.height)
+        if page_area <= 0:
+            return None
+        if len(page.get_text("text").strip()) > COVER_MAX_PAGE_TEXT:
+            return None
+        best_name: str | None = None
+        best_area = 0.0
+        for e in elements:
+            if e.element_type is not ElementType.IMAGE or e.image_data is None:
+                continue
+            if e.page_num != 0:
+                continue
+            bbox = e.image_data.bbox or (0.0, 0.0, 0.0, 0.0)
+            area = max(0.0, bbox[2] - bbox[0]) * max(0.0, bbox[3] - bbox[1])
+            if area >= COVER_MIN_AREA_SHARE * page_area and area > best_area:
+                best_name = e.image_data.filename
+                best_area = area
+        return best_name
+    except Exception:
+        return None
 
 
 def _print_validation(report: ValidationReport, attempt: int, say: Callable) -> None:

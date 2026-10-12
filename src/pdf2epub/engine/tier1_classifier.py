@@ -85,6 +85,11 @@ class ImageElement:
     filename: str = ""
     image_bytes: bytes = b""
     source_path: str = ""
+    # Round 2: where the alt text came from. "caption" is a real
+    # description harvested from source text; "location" is the
+    # location-only fallback stub -- it names where to look, not what
+    # is there, and never counts as a text alternative.
+    alt_source: str = "location"
 
     def load_bytes(self) -> bytes:
         if self.image_bytes:
@@ -1112,8 +1117,17 @@ def _composite_with_mask(base_data: bytes, mask_data: bytes) -> bytes | None:
 
 def _harvest_alt_text(
     image_bbox: tuple, text_lines: list[ClassifiedLine], page_num: int, block_id: int
-) -> str:
-    """Prefer a caption sitting directly under the figure; otherwise stub it."""
+) -> tuple[str, str]:
+    """A caption *identifying itself as one* directly under the figure;
+    otherwise stub it (and say so: the caller records the source so
+    packaging can tell a real description from a location-only stub).
+
+    Round 2 no-fabrication rule: only caption-shaped text
+    (``CAPTION_RE`` -- "Figure 3 ...", "Table 2 ...") is harvested. A
+    line that merely sits below an image can be story prose, a
+    publisher's donation plea or a page footer; treating it as a
+    description would invent an alt text the source never wrote.
+    """
     best: tuple[float, str] | None = None
     for line in text_lines:
         below_gap = line.bbox[1] - image_bbox[3]
@@ -1124,12 +1138,14 @@ def _harvest_alt_text(
             txt = line.raw_text.strip()
             if not txt:
                 continue
-            score = below_gap - (100 if CAPTION_RE.match(txt) else 0)
+            if not CAPTION_RE.match(txt):
+                continue
+            score = below_gap
             if best is None or score < best[0]:
                 best = (score, txt)
     if best is not None:
-        return best[1][:300]
-    return f"Figure on page {page_num + 1}, block {block_id}"
+        return best[1][:300], "caption"
+    return f"Figure on page {page_num + 1}, block {block_id}", "location"
 
 
 def extract_images(
@@ -1245,7 +1261,7 @@ def extract_images(
                 continue
             data = transcoded
             ext = "png"
-        alt = _harvest_alt_text(bbox, text_lines, page_index, block_id)
+        alt, alt_source = _harvest_alt_text(bbox, text_lines, page_index, block_id)
         digest = hashlib.sha1(data).hexdigest()[:16]
         filename = f"img_{digest}.{ext}"
 
@@ -1256,6 +1272,7 @@ def extract_images(
             page_num=page_index,
             block_id=block_id,
             alt_text=alt,
+            alt_source=alt_source,
             filename=filename,
         )
         if spool_dir:

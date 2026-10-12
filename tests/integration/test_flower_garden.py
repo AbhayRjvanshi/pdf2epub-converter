@@ -128,6 +128,50 @@ def test_flower_garden_round_1_gates(tmp_path):
     )
 
 
+def test_flower_garden_round_2_publication_gates(tmp_path):
+    """Round 2: the publication metadata must come from evidence, the
+    cover must be designated honestly, and accessibility claims must
+    match what the book actually contains."""
+    import xml.etree.ElementTree as ET
+
+    result, out = _convert(tmp_path)
+    assert result["success"] is True, result
+    zf = zipfile.ZipFile(str(out))
+    opf_name = next(n for n in zf.namelist() if n.endswith(".opf"))
+    opf_xml = zf.read(opf_name).decode("utf-8")
+
+    # -- WS-1: metadata recovered from real evidence -------------------
+    # title from the filename tier (the cover title is raster art with
+    # no text layer), author from the page-0 byline, language from the
+    # PDF catalog /Lang -- none of them sentinels or guesses.
+    assert "<dc:title>The Flower Garden</dc:title>" in opf_xml
+    assert "T. Albert" in opf_xml
+    assert "en-GB" in opf_xml
+
+    # -- WS-2: the title-page illustration is the cover ----------------
+    assert 'properties="cover-image"' in opf_xml
+
+    # -- WS-4: no unsupported conformance claim; package language ------
+    assert "conformsTo" not in opf_xml
+    assert "WCAG" not in opf_xml
+    root = ET.fromstring(opf_xml.encode("utf-8"))
+    assert root.get("{http://www.w3.org/XML/1998/namespace}lang") == "en-GB"
+    nav_name = next(n for n in zf.namelist() if n.endswith("nav.xhtml"))
+    title_match = re.search(r"<title>(.*?)</title>", zf.read(nav_name).decode("utf-8"), re.S)
+    assert title_match and title_match.group(1).strip()
+
+    # -- WS-3: honest description-quality accounting -------------------
+    # This book's illustrations carry no captions: every alt text is a
+    # location-only stub, so the alternativeText feature must not be
+    # claimed and the summary must say so.
+    build = result["build"]
+    assert build.a11y.image_count >= 30
+    assert build.a11y.images_location_only == build.a11y.image_count
+    assert build.a11y.images_described == 0
+    assert "alternativeText" not in opf_xml
+    assert "location-only" in opf_xml
+
+
 def test_flower_garden_epubcheck(tmp_path):
     """Runs only when epubcheck is installed; skips honestly otherwise."""
     from pdf2epub.engine import packaging_and_validation as pk
