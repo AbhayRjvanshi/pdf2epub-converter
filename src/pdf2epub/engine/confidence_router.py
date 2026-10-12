@@ -31,6 +31,8 @@ try:
 except ImportError:  # pragma: no cover
     import fitz
 
+from .tier1_classifier import is_bold
+
 
 # ---------------------------------------------------------------------------
 # Tunable calibration constants
@@ -309,7 +311,10 @@ def build_layout_digest(page: "fitz.Page") -> list[dict]:
                     "block_id": block_id,
                     "bbox": [round(v, 1) for v in line["bbox"]],
                     "size": round(dom["size"], 1),
-                    "bold": bool(dom.get("flags", 0) & (1 << 4)),
+                    # Same evidence Tier 1 weighs (flags + font-name
+                    # hints), so the two paths cannot disagree about
+                    # boldness for a decorative name like SegoePrint-Bold.
+                    "bold": is_bold(dom),
                     "italic": bool(dom.get("flags", 0) & (1 << 1)),
                     "text": text,
                 }

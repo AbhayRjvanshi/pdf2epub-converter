@@ -388,6 +388,11 @@ def run_pipeline(
             raise RuntimeError("PDF contains no pages.")
 
         meta = doc.metadata or {}
+        # None/empty overrides fall back to the sentinels: writing a
+        # literal None into dc:title produces an invalid EPUB that only
+        # external validators catch (Round 1 finding).
+        title = (title or "").strip() or "Untitled Publication"
+        author = (author or "").strip() or "Unknown Author"
         if title == "Untitled Publication" and meta.get("title"):
             title = meta["title"].strip() or title
         if author == "Unknown Author" and meta.get("author"):
@@ -509,6 +514,7 @@ def run_pipeline(
                     page_width=float(doc[r.page_index].rect.width),
                     page_height=float(doc[r.page_index].rect.height),
                     vision=r.target is RoutingTarget.TIER2_VISION_OCR,
+                    bold_is_structural=profile.bold_is_structural,
                 )
             for start in range(0, len(llm_reports), batch_size):
                 _check_cancel()

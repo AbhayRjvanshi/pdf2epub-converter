@@ -19,6 +19,8 @@ Key mechanics
 * Tag-aware hyphen rejoining, with a lexical guard against real compounds.
 * Monospace run collection into <pre><code> with indentation preserved.
 * Image block extraction with spatial alt-text harvesting.
+* /SMask compositing into alpha PNGs, with inventory-evidence filtering of
+  renderer artifacts (soft-mask rasters, solid group buffers).
 """
 
 from __future__ import annotations
@@ -34,6 +36,8 @@ log = logging.getLogger(__name__)
 
 from .code_signals import detect_code_lines
 from .heading_signals import (
+    LIST_MARKER_RE,
+    TRAILING_PUNCT_RE,
     build_table_html,
     in_table_region,
     structural_heading_level,
@@ -176,6 +180,10 @@ class DocumentFontProfile:
     size_histogram: Counter = field(default_factory=Counter)
 
     sampled_pages: int = 0
+    bold_char_share: float = 0.0  # fraction of sampled body characters bold
+    # Boldness is structural evidence only while it is rare enough to be
+    # deliberate. Hand-built profiles default to True (legacy behaviour).
+    bold_is_structural: bool = True
 
     @classmethod
     def build(
@@ -192,6 +200,8 @@ class DocumentFontProfile:
         sizes: Counter = Counter()
         fonts: Counter = Counter()
         gaps: Counter = Counter()
+        bold_chars = 0
+        total_chars = 0
 
         total = len(doc)
         if total <= max_sample_pages:
@@ -222,6 +232,9 @@ class DocumentFontProfile:
                             continue
                         sizes[round(span["size"], 1)] += len(text)
                         fonts[span["font"]] += len(text)
+                        total_chars += len(text)
+                        if is_bold(span):
+                            bold_chars += len(text)
 
         if not sizes:
             raise ValueError("No extractable text layer found in document")
@@ -229,12 +242,15 @@ class DocumentFontProfile:
         body_size = sizes.most_common(1)[0][0]
         main_font = fonts.most_common(1)[0][0]
         line_height = gaps.most_common(1)[0][0] if gaps else round(body_size * 1.2, 1)
+        bold_char_share = (bold_chars / total_chars) if total_chars else 0.0
         return cls(
             body_size=body_size,
             line_height=line_height,
             main_font=main_font,
             size_histogram=sizes,
             sampled_pages=len(indices),
+            bold_char_share=round(bold_char_share, 4),
+            bold_is_structural=bold_char_share < BOLD_NOISE_SHARE,
         )
 
 
@@ -251,6 +267,37 @@ FLAG_BOLD = 1 << 4
 BOLD_NAME_HINTS = ("bold", "black", "heavy", "semibold", "-bd", "demi")
 ITALIC_NAME_HINTS = ("italic", "oblique", "-it")
 MONO_NAME_HINTS = ("courier", "mono", "consolas", "menlo", "inconsolata")
+
+# Tunable heuristic (Round 1 / WS2): the share of body characters set in
+# bold above which boldness is the document's normal voice and carries
+# no structural or emphatic signal. Books typeset throughout in a
+# decorative bold font (flower-garden: SegoePrint-Bold, share ~1.0)
+# must not turn every short unpunctuated line into an h4 nor wrap every
+# paragraph in <strong>. Mixed-typography documents sit far below it.
+BOLD_NOISE_SHARE = 0.60
+
+_FONT_NOISE_TOKENS = (
+    "bold", "black", "heavy", "semibold", "demi", "light", "medium",
+    "regular", "italic", "oblique", "bd", "it",
+)
+
+
+def font_family(font_name: str) -> str:
+    """Normalized font family for identity comparisons.
+
+    "SegoePrint-Bold" and "SegoePrint" are the same family in different
+    weights; stripping the weight/style tokens (also inside compound
+    names like "Helvetica-BoldItalic") lets "is this span set in the
+    body's own font?" be answered from names alone.
+    """
+    fam = (font_name or "").replace("-", " ").replace("_", " ")
+    fam = re.sub(r"([a-z])([A-Z])", r"\1 \2", fam)  # BoldItalic -> Bold Italic
+    fam = re.sub(r"\s+", " ", fam).strip().lower()
+    kept = [
+        tok for tok in fam.split()
+        if tok not in _FONT_NOISE_TOKENS
+    ]
+    return "".join(kept)
 
 
 def is_bold(span: dict) -> bool:
@@ -347,6 +394,7 @@ class ClassifiedLine:
     first_word_width: float = 0.0
     bold: bool = False  # dominant span was bold (structural-heading evidence)
     char_width: float = 0.0  # measured space advance (0 -> collector fallback)
+    font: str = ""  # dominant span's font name (cross-block evidence)
 
 
 def classify_line_tag(
@@ -523,8 +571,14 @@ def classify_page(page: "fitz.Page", profile: DocumentFontProfile) -> list[Class
             dominant = max(
                 zip(spans, texts), key=lambda pair: len(pair[1].strip())
             )[0]
+            # Weight evidence is discounted when boldness is the
+            # document's normal voice: an all-bold book must not gain
+            # ladder h4s from weight alone.
             tag, level = classify_line_tag(
-                dominant["size"], is_bold(dominant), profile, raw_text=plain
+                dominant["size"],
+                is_bold(dominant) and profile.bold_is_structural,
+                profile,
+                raw_text=plain,
             )
             if all_mono:
                 tag, level = "pre", 0
@@ -534,12 +588,24 @@ def classify_page(page: "fitz.Page", profile: DocumentFontProfile) -> list[Class
             else:
                 # A fully bold heading does not need <strong> inside it.
                 suppress = tag.startswith("h") and all(is_bold(s) for s in spans)
+                # Semantic emphasis is a *separate decision* from heading
+                # promotion: document-norm boldness in the body font
+                # family is decorative styling, not emphasis. A bold
+                # span in any other font keeps its <strong> claim.
+                main_family = font_family(profile.main_font)
+                body_bold_is_noise = (
+                    not profile.bold_is_structural and bool(main_family)
+                )
                 pieces = []
                 for i, (sp, txt) in enumerate(zip(spans, texts)):
                     if i and _needs_gap(spans[i - 1], sp, texts[i - 1], txt):
                         pieces.append(" ")
+                    no_strong = suppress or (
+                        body_bold_is_noise
+                        and font_family(sp.get("font", "")) == main_family
+                    )
                     pieces.append(
-                        span_to_inline_xhtml(sp, text=txt, suppress_bold=suppress)
+                        span_to_inline_xhtml(sp, text=txt, suppress_bold=no_strong)
                     )
                 line_html = coalesce_inline_tags("".join(pieces))
 
@@ -570,6 +636,7 @@ def classify_page(page: "fitz.Page", profile: DocumentFontProfile) -> list[Class
                     first_word_width=first_word_width(spans, texts),
                     bold=is_bold(dominant),
                     char_width=char_width,
+                    font=dominant.get("font", ""),
                 )
             )
     # Fix 9: proportional-font code runs become pre BEFORE heading
@@ -591,6 +658,10 @@ def promote_structural_headings(
     always to h4, the shallowest semantic heading claim; anything less
     certain stays a paragraph. Running headers that slip through are
     still removed downstream by the tag-agnostic furniture filter.
+
+    Boldness only counts as heading evidence while the document's own
+    body is not predominantly bold (``profile.bold_is_structural``); in
+    an all-bold book only the title-shape guard can promote.
     """
     if not lines:
         return lines
@@ -613,7 +684,11 @@ def promote_structural_headings(
         if in_table_region(region, ln.bbox):
             continue  # however the extractor shaped it, it is table/column text
         level = structural_heading_level(
-            ln.raw_text, size=ln.size, body_size=profile.body_size, bold=ln.bold
+            ln.raw_text,
+            size=ln.size,
+            body_size=profile.body_size,
+            bold=ln.bold,
+            bold_is_structural=profile.bold_is_structural,
         )
         if level is not None:
             ln.tag, ln.level = f"h{level}", level
@@ -728,6 +803,53 @@ def join_lines(first_html: str, second_html: str, first_plain: str, second_plain
     return first_html + " " + second_html.lstrip()
 
 
+CROSS_COLUMN_OVERLAP = 0.5   # of the shorter line: same text column
+CROSS_X_ALIGN = 2.0          # x font sizes: compatible left edges
+
+
+def _continues_across_blocks(
+    prev: ClassifiedLine,
+    prev_last_bbox: tuple,
+    prev_plain: str,
+    nxt: ClassifiedLine,
+) -> bool:
+    """Evidence that a line in a *different* PDF block continues the
+    buffered paragraph.
+
+    Children's-book producers emit one text object per visual line, so
+    block identity carries no paragraph signal and wrapped sentences
+    shatter into one <p> per line (flower-garden class). Cross-block
+    merging is deliberately over-determined: every geometric gate must
+    agree *and* the pair must show linguistic continuation. Any doubt
+    keeps the blocks separate -- a wrongly split paragraph is cheaper
+    than two paragraphs welded into one.
+    """
+    a, b = prev_last_bbox, nxt.bbox
+    # same text column: horizontal ranges overlap substantially
+    overlap = min(a[2], b[2]) - max(a[0], b[0])
+    shorter = min(a[2] - a[0], b[2] - b[0])
+    if shorter <= 0 or overlap < CROSS_COLUMN_OVERLAP * shorter:
+        return False
+    # compatible left alignment: an indented or shifted start is a new
+    # paragraph, a blockquote or another column, never a continuation
+    if abs(b[0] - a[0]) > CROSS_X_ALIGN * max(prev.size, 1.0):
+        return False
+    # structural boundaries: list items never continue prose
+    if LIST_MARKER_RE.match(prev.raw_text.strip()) or LIST_MARKER_RE.match(
+        nxt.raw_text.strip()
+    ):
+        return False
+    # same typeface family
+    if font_family(prev.font) != font_family(nxt.font):
+        return False
+    # linguistic continuation: the previous line must not close a
+    # sentence, and the next line must flow on from a lowercase start
+    if TRAILING_PUNCT_RE.search(prev_plain.rstrip()):
+        return False
+    nxt_plain = nxt.raw_text.lstrip()
+    return bool(nxt_plain) and nxt_plain[0].islower()
+
+
 def build_paragraphs(
     lines: list[ClassifiedLine], profile: DocumentFontProfile
 ) -> list[ClassifiedLine]:
@@ -736,6 +858,11 @@ def build_paragraphs(
     Tracks ``buffer_last_bbox`` rather than the paragraph origin: comparing
     every new line against the origin makes the gap grow by one line height per
     row, which silently truncates every paragraph after its second line.
+
+    Lines in *different* PDF blocks merge only through the over-determined
+    continuation evidence in :func:`_continues_across_blocks` (children's
+    books emit one text object per visual line, so block identity there
+    carries no paragraph signal).
     """
     merged: list[ClassifiedLine] = []
     buffer: ClassifiedLine | None = None
@@ -775,8 +902,14 @@ def build_paragraphs(
             < (line.first_word_width + space_est)
         )
         buffer_wrapped = buffer.wrapped or next_word_would_not_fit
+        cross_block = (
+            not same_block
+            and _continues_across_blocks(buffer, buffer_last_bbox, buffer_plain, line)
+        )
 
-        if same_flow and same_block and same_tag and size_match and buffer_wrapped:
+        if same_flow and same_tag and size_match and (
+            (same_block and buffer_wrapped) or cross_block
+        ):
             buffer = ClassifiedLine(
                 text=join_lines(buffer.text, line.text, buffer_plain, line.raw_text),
                 raw_text=(buffer_plain.rstrip() + " " + line.raw_text.lstrip()),
@@ -791,6 +924,7 @@ def build_paragraphs(
                 block_id=buffer.block_id,
                 bold=buffer.bold,
                 char_width=buffer.char_width,
+                font=buffer.font,
             )
             buffer_plain = buffer.raw_text
             buffer_last_bbox = line.bbox  # critical: advance the trailing edge
@@ -824,6 +958,13 @@ MIME_BY_EXT = {
 # (corpus finding 3: 149 .jpx images in one technical book).
 _EPUB_CORE_IMAGE_EXTS = frozenset({"png", "jpeg", "jpg", "gif"})
 
+# Colorspace codes MuPDF reports on dict image blocks (1=gray, 3=rgb,
+# 4=cmyk; indexed and friends use higher codes). Core-format bytes can
+# still carry a non-core colorspace -- a CMYK JPEG is not valid EPUB core
+# content even though the extension is.
+_CS_GRAY = 1
+_CS_RGB = 3
+
 
 def _transcode_to_core(data: bytes) -> bytes | None:
     """Re-encode arbitrary raster bytes as PNG (EPUB 3 core).
@@ -843,6 +984,128 @@ def _transcode_to_core(data: bytes) -> bytes | None:
         ):
             pix = fitz.Pixmap(fitz.csRGB, pix)  # CMYK / indexed -> RGB
         return pix.tobytes("png")
+    except Exception:
+        return None
+
+
+def _page_image_context(page: "fitz.Page") -> dict:
+    """Authoritative image inventory for one page.
+
+    MuPDF dict blocks report *rendered* rasters: alongside real image
+    XObjects they can include transparency-group buffers and soft-mask
+    rasters the renderer synthesizes while painting the page. The page's
+    own inventory (image xrefs, /SMask links, placement rects) is the
+    evidence that separates real artwork from synthesized artifacts.
+    """
+    xref_to_smask: dict[int, int] = {}
+    try:
+        for im in page.get_images(full=True):
+            xref, smask = im[0], im[1]
+            if xref:
+                xref_to_smask[xref] = smask or 0
+    except Exception:  # pragma: no cover - defensive: inventory is evidence
+        pass
+    placements: list[tuple[tuple, int, int, int]] = []
+    try:
+        infos = page.get_image_info(xrefs=True)
+    except Exception:
+        infos = []
+    for info in infos:
+        try:
+            placements.append(
+                (
+                    tuple(info["bbox"]),
+                    int(info["width"]),
+                    int(info["height"]),
+                    int(info.get("xref") or 0),
+                )
+            )
+        except (KeyError, TypeError, ValueError):
+            continue
+    masked_bboxes = [
+        pbbox
+        for pbbox, _w, _h, xref in placements
+        if xref and xref_to_smask.get(xref, 0)
+    ]
+    return {
+        "placements": placements,
+        "masked_bboxes": masked_bboxes,
+    }
+
+
+def _resolve_placement_xref(block: dict, ctx: dict) -> int:
+    """Match a dict image block to a registered placement.
+
+    Returns the backing xref of a registered image placed exactly here
+    (>0), 0 when placements of these dimensions exist but none is a
+    registered image at this position (a synthesized raster), or -1
+    when nothing registered resembles the block at all (keep it).
+    """
+    try:
+        dims = (int(block["width"]), int(block["height"]))
+        bb = tuple(block["bbox"])
+    except (KeyError, TypeError, ValueError):
+        return -1
+    dim_matches = [p for p in ctx["placements"] if (p[1], p[2]) == dims]
+    if not dim_matches:
+        return -1
+    for pbbox, _w, _h, xref in dim_matches:
+        if xref and all(abs(a - b) <= 3 for a, b in zip(pbbox, bb)):
+            return xref
+    return 0
+
+
+def _overlaps_any(bbox: tuple, rects: list[tuple]) -> bool:
+    for r in rects:
+        if bbox[0] < r[2] and bbox[2] > r[0] and bbox[1] < r[3] and bbox[3] > r[1]:
+            return True
+    return False
+
+
+def _is_uniform_raster(data: bytes) -> bool:
+    """True when every pixel of the decoded raster is identical.
+
+    Transparency-group buffers MuPDF synthesizes are often solid
+    backplates (all-white or fully transparent): they carry no artwork,
+    yet used to be packaged as blank figures (flower-garden pages 31/32).
+    """
+    try:
+        pix = fitz.Pixmap(data)
+    except Exception:
+        return False
+    try:
+        s = pix.samples
+        if not s:
+            return False
+        return len(set(s)) == 1
+    except Exception:
+        return False
+
+
+def _composite_with_mask(base_data: bytes, mask_data: bytes) -> bytes | None:
+    """Composite a base raster with its /SMask into an alpha-carrying PNG.
+
+    PDF stores transparency as a separate mask stream; a JPEG painted
+    through an /SMask is only correct once both streams are merged.
+    Returns ``None`` when either side is undecodable or the mask does not
+    match the base dimensions (``Pixmap`` would raise); the caller then
+    keeps the opaque base instead of crashing the extraction.
+    """
+    try:
+        base = fitz.Pixmap(base_data)
+        mask = fitz.Pixmap(mask_data)
+    except Exception:
+        return None
+    try:
+        if (base.width, base.height) != (mask.width, mask.height):
+            return None
+        if base.colorspace is not None and base.colorspace.name not in (
+            "DeviceRGB",
+            "DeviceGray",
+        ):
+            base = fitz.Pixmap(fitz.csRGB, base)
+        comp = fitz.Pixmap(base, mask)
+        return comp.tobytes("png")
     except Exception:
         return None
 
@@ -879,9 +1142,16 @@ def extract_images(
 
     Filenames are derived from a content hash, so a logo repeated on every
     page is written once and packaged once instead of 500 times.
+
+    Rendered artifacts MuPDF synthesizes (soft-mask rasters of /SMask'd
+    images, solid transparency-group backplates) are filtered out with
+    page-inventory evidence, and base+mask pairs are composited into
+    alpha-carrying PNGs so transparency survives into the EPUB.
     """
     elements: list[StreamElement] = []
     raw = page.get_text("dict")
+    ctx = _page_image_context(page)
+    seen_placements: set[tuple] = set()
     for block in raw["blocks"]:
         if block.get("type") != 1:
             continue
@@ -891,7 +1161,75 @@ def extract_images(
         ext = (block.get("ext") or "png").lower()
         block_id = block.get("number", 0)
         bbox = tuple(block["bbox"])
-        if ext not in _EPUB_CORE_IMAGE_EXTS:
+        colorspace = block.get("colorspace")
+
+        # -- artifact filtering (synthesized rasters only; a registered
+        #    image xref is authoritative content and is never dropped) ----
+        xref = _resolve_placement_xref(block, ctx)
+        if xref == 0:
+            # (1) a grayscale raster with no backing xref, on a page that
+            #     carries /SMask'd images, overlapping such an image's
+            #     placement, is the renderer's soft-mask raster, not
+            #     artwork (flower-garden page 6: 828x335 gray block).
+            if (
+                colorspace == _CS_GRAY
+                and ctx["masked_bboxes"]
+                and _overlaps_any(bbox, ctx["masked_bboxes"])
+            ):
+                log.info(
+                    "page %s: image block %s is a soft-mask raster of a "
+                    "masked image; dropping it",
+                    page_index + 1,
+                    block_id,
+                )
+                continue
+            # (2) a solid synthesized raster (all-white or fully
+            #     transparent group buffer) carries no artwork.
+            if _is_uniform_raster(data):
+                log.info(
+                    "page %s: image block %s is a solid transparency-group "
+                    "buffer; dropping it",
+                    page_index + 1,
+                    block_id,
+                )
+                continue
+        # (3) the same raster bytes at the same placement is a duplicate
+        #     paint, not new content (bbox + content-hash evidence).
+        placement_identity = (
+            tuple(round(v, 2) for v in bbox),
+            hashlib.sha1(data).hexdigest(),
+        )
+        if placement_identity in seen_placements:
+            log.info(
+                "page %s: image block %s repeats an identical placement; "
+                "dropping the duplicate",
+                page_index + 1,
+                block_id,
+            )
+            continue
+        seen_placements.add(placement_identity)
+
+        # -- /SMask compositing: transparency survives only if the base
+        #    and its mask stream are merged into one RGBA PNG -----------
+        mask_data = block.get("mask") or b""
+        if mask_data:
+            composited = _composite_with_mask(data, mask_data)
+            if composited is not None:
+                data, ext, colorspace = composited, "png", _CS_RGB
+            else:
+                log.warning(
+                    "page %s: image block %s has a soft mask that could not "
+                    "be composited; keeping the opaque base",
+                    page_index + 1,
+                    block_id,
+                )
+
+        # -- colorspace gate: a core *extension* can still carry CMYK or
+        #    indexed bytes, which are not valid EPUB core content --------
+        if (
+            ext not in _EPUB_CORE_IMAGE_EXTS
+            or colorspace not in (None, _CS_GRAY, _CS_RGB)
+        ):
             # corpus finding 3: non-core rasters (JPEG 2000 et al.) must
             # transcode to a core format at extraction; a failed transcode
             # drops the image with a diagnostic rather than mislabelling

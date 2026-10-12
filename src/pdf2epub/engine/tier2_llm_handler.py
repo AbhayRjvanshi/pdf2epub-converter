@@ -34,7 +34,9 @@ from pathlib import Path
 from typing import Any, Callable
 
 from .heading_signals import (
+    LIST_MARKER_RE,
     PAGE_NUMBER_LINE_RE,
+    TRAILING_PUNCT_RE,
     build_table_html,
     in_table_region,
     structural_heading_level,
@@ -249,6 +251,10 @@ class Tier2Request:
     page_width: float = 0.0  # physical page width in points, for the digest fallback
     page_height: float = 0.0  # physical height; 0 -> the fallback cannot use band tests
     vision: bool = False  # persists after large payloads are released
+    # Document-level heading evidence, so the offline digest fallback
+    # applies the same boldness discount as Tier 1 (an all-bold book
+    # must not promote narrative fragments here either).
+    bold_is_structural: bool = True
 
     @property
     def is_vision(self) -> bool:
@@ -410,6 +416,31 @@ def _join_hyphenated(a: str, b: str) -> str:
     return a.rstrip() + " " + b.lstrip()
 
 
+def _cross_block_continues(buffer: dict, d: dict) -> bool:
+    """Digest-native twin of Tier 1's cross-block continuation rule.
+
+    Same over-determined evidence (column overlap, left alignment, no
+    list markers, no terminal punctuation, lowercase continuation) so
+    tier1 and tier2 pages of a one-line-per-block book cannot disagree
+    about paragraph shape.
+    """
+    a, b = buffer["bbox"], d["bbox"]
+    overlap = min(a[2], b[2]) - max(a[0], b[0])
+    shorter = min(a[2] - a[0], b[2] - b[0])
+    if shorter <= 0 or overlap < 0.5 * shorter:
+        return False
+    if abs(b[0] - a[0]) > 2.0 * max(buffer.get("size", 10.0), 1.0):
+        return False
+    if LIST_MARKER_RE.match(buffer["text"].strip()) or LIST_MARKER_RE.match(
+        d["text"].strip()
+    ):
+        return False
+    if TRAILING_PUNCT_RE.search(buffer["text"].rstrip()):
+        return False
+    nxt = d["text"].lstrip()
+    return bool(nxt) and nxt[0].islower()
+
+
 def _merge_digest_lines(
     ordered: list[dict],
     two_col: bool,
@@ -449,8 +480,13 @@ def _merge_digest_lines(
         size_match = abs(d["size"] - buffer["size"]) < 0.6
         margin = margins.get(buffer.get("block_id", 0), 0.0)
         near_margin = margin > 0 and (margin - buffer["bbox"][2]) < max(buffer["size"] * 0.5, 3.0)
+        cross_block = (
+            not same_block and _cross_block_continues(buffer, d)
+        )
 
-        if same_block and same_column and same_flow and size_match and near_margin:
+        if same_column and same_flow and size_match and (
+            (same_block and near_margin) or cross_block
+        ):
             buffer["text"] = _join_hyphenated(buffer["text"], d["text"])
             buffer["line_count"] = buffer.get("line_count", 1) + 1
             # Advance the trailing edge (top AND bottom) to the line just
@@ -543,14 +579,21 @@ def _digest_fallback(req: Tier2Request) -> str:
             (before if d["bbox"][1] < strict_region[0] else after).append(d)
         head = _merge_digest_lines(before, two_col, midpoint, line_height, margins)
         tail = _merge_digest_lines(after, two_col, midpoint, line_height, margins)
-        body = _render_digest_paragraphs(head, margins, line_height) \
+        body = _render_digest_paragraphs(
+                head, margins, line_height,
+                bold_is_structural=req.bold_is_structural,
+            ) \
             + [f"<table>{table_html}</table>"] \
-            + _render_digest_paragraphs(tail, margins, line_height)
+            + _render_digest_paragraphs(
+                tail, margins, line_height,
+                bold_is_structural=req.bold_is_structural,
+            )
         return "\n".join(body)
 
     paragraphs = _merge_digest_lines(ordered, two_col, midpoint, line_height, margins)
     body = _render_digest_paragraphs(
-        paragraphs, margins, line_height, padded_region=padded_region
+        paragraphs, margins, line_height, padded_region=padded_region,
+        bold_is_structural=req.bold_is_structural,
     )
     return "\n".join(body)
 
@@ -560,6 +603,7 @@ def _render_digest_paragraphs(
     margins: dict,
     line_height: float,
     padded_region: tuple[float, float] | None = None,
+    bold_is_structural: bool = True,
 ) -> list[str]:
     """Merged digest paragraphs -> XHTML block strings (Fix K + Fix 12)."""
     sizes = [p["size"] for p in paragraphs] or [10.0]
@@ -587,6 +631,7 @@ def _render_digest_paragraphs(
                 level = structural_heading_level(
                     d["text"], size=d["size"], body_size=body,
                     bold=bool(d.get("bold")),
+                    bold_is_structural=bold_is_structural,
                 )
             out.append(
                 f"<h{level}>{text}</h{level}>" if level else f"<p>{text}</p>"

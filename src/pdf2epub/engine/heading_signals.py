@@ -99,12 +99,19 @@ def structural_heading_level(
     size: float,
     body_size: float,
     bold: bool = False,
+    bold_is_structural: bool = True,
 ) -> int | None:
     """Heading level for a same-size line, or None to keep it a paragraph.
 
     Callers run their own ratio ladders first; this decides only the
     residual band around body size (0.95 .. 1.15). Geometry guards
     (tables, columns) live with the callers, who own the page context.
+
+    ``bold_is_structural`` is document-level evidence: when the body
+    font itself is bold (a decorative all-bold book), boldness carries
+    no structural signal and only the title-shape guard can promote.
+    Same-family headings are not vetoed -- they simply need wording
+    evidence instead of weight evidence.
     """
     ratio = size / body_size if body_size else 1.0
     if not (0.95 <= ratio < 1.15):
@@ -127,7 +134,7 @@ def structural_heading_level(
     # positional page numbers by band.
     if re.match(r"^[\[\(]?\s*page\s+\d{1,4}\s*[\]\)]?$", plain, re.IGNORECASE):
         return None
-    if not (bold or _is_title_like(plain)):
+    if not ((bold and bold_is_structural) or _is_title_like(plain)):
         return None
     return 4
 

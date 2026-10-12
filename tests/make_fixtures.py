@@ -693,6 +693,175 @@ def build_special_chars_doc(path: str | Path) -> str:
     return str(path)
 
 
+# ---------------------------------------------------------------------------
+# Image-fidelity fixtures (Round 1 / WS1)
+# ---------------------------------------------------------------------------
+
+
+def make_rgba_pattern_pixmap(w: int = 64, h: int = 32):
+    """An RGBA pixmap: left half opaque red, right half fully transparent."""
+    pix = fitz.Pixmap(fitz.csRGB, fitz.IRect(0, 0, w, h), True)
+    for y in range(h):
+        for x in range(w):
+            if x < w // 2:
+                pix.set_pixel(x, y, (255, 0, 0, 255))
+            else:
+                pix.set_pixel(x, y, (0, 128, 0, 0))
+    return pix
+
+
+def build_smask_composite_doc(path: str | Path) -> str:
+    """A PDF whose single image carries a real /SMask (flower-garden class).
+
+    ``insert_image`` of an RGBA pixmap makes MuPDF split the alpha plane
+    into a separate grayscale /SMask stream -- exactly the structure of
+    the flower-garden illustrations (pages 6, 10, 11, 29, 31). Extraction
+    must composite base+mask into one alpha-carrying PNG and must never
+    package the mask as a second, standalone figure.
+    """
+    doc = fitz.open()
+    p = doc.new_page(width=200.0, height=100.0)
+    p.insert_image(fitz.Rect(10.0, 10.0, 110.0, 60.0),
+                   pixmap=make_rgba_pattern_pixmap())
+    doc.save(str(path))
+    doc.close()
+    return str(path)
+
+
+def build_soft_mask_artifact_doc(path: str | Path) -> str:
+    """A page painted through an ExtGState luminosity soft mask.
+
+    Reproduces the flower-garden page-6 mechanism exactly: a masked base
+    image plus a transparency group referenced as ``/SMask`` in a
+    graphics state. MuPDF's renderer synthesizes the mask as a separate
+    grayscale dict image block with no backing xref; the extractor must
+    drop that raster instead of packaging it as a meaningless figure.
+    """
+    doc = fitz.open()
+    page = doc.new_page(width=200.0, height=100.0)
+    page.insert_image(fitz.Rect(10.0, 10.0, 110.0, 60.0),
+                      pixmap=make_rgba_pattern_pixmap())
+    _base_xref, smask_xref = page.get_images(full=True)[0][:2]
+
+    # A transparency-group form that paints the mask image.
+    form_xref = doc.get_new_xref()
+    doc.update_object(
+        form_xref,
+        "<< /Type /XObject /Subtype /Form /BBox [0 0 200 100] "
+        "/Group << /S /Transparency /CS /DeviceGray /I true /K false >> "
+        f"/Resources << /XObject << /M0 {smask_xref} 0 R >> >> >>",
+    )
+    doc.update_stream(form_xref, b"q 200 0 0 100 0 0 cm /M0 Do Q")
+
+    # An ExtGState whose soft mask is that group.
+    gs_xref = doc.get_new_xref()
+    doc.update_object(
+        gs_xref,
+        f"<< /Type /ExtGState /SMask << /S /Luminosity /G {form_xref} 0 R >> >>",
+    )
+    rtype, rval = doc.xref_get_key(page.xref, "Resources")
+    res_xref = int(rval.split()[0]) if rtype == "xref" else 0
+    if res_xref:
+        doc.xref_set_key(res_xref, "ExtGState", f"<< /GS0 {gs_xref} 0 R >>")
+    else:  # pragma: no cover - resources are always indirect here
+        doc.xref_set_key(
+            page.xref, "Resources",
+            f"<< /ExtGState << /GS0 {gs_xref} 0 R >> >>",
+        )
+
+    # Paint a white rectangle through the soft mask.
+    old_contents = page.get_contents()
+    extra_xref = doc.get_new_xref()
+    doc.update_object(extra_xref, "<< >>")
+    doc.update_stream(extra_xref, b"q /GS0 gs 1 1 1 rg 20 20 150 30 re f Q")
+    if old_contents:
+        arr = " ".join(f"{x} 0 R" for x in old_contents) + f" {extra_xref} 0 R"
+        doc.xref_set_key(page.xref, "Contents", f"[{arr}]")
+
+    doc.save(str(path))
+    doc.close()
+    return str(path)
+
+
+def build_cmyk_raster_doc(path: str | Path) -> str:
+    """A PDF embedding a DeviceCMYK raster.
+
+    CMYK content must never reach the EPUB with a core extension intact:
+    a CMYK JPEG/png stream is transcoded to RGB at extraction, and the
+    conversion must not invert colors (a naive channel flip turns the
+    black swatch into near-white).
+    """
+    cmyk = fitz.Pixmap(fitz.csCMYK, fitz.IRect(0, 0, 16, 16), False)
+    for y in range(16):
+        for x in range(16):
+            cmyk.set_pixel(x, y, (0, 0, 0, 255))  # k-only: renders near-black
+    doc = fitz.open()
+    p = doc.new_page(width=100.0, height=100.0)
+    p.insert_image(fitz.Rect(10.0, 10.0, 90.0, 90.0), pixmap=cmyk)
+    doc.save(str(path))
+    doc.close()
+    return str(path)
+
+
+def build_duplicate_placement_doc(path: str | Path) -> str:
+    """One image drawn twice at the identical placement.
+
+    Identical raster bytes at the identical position are a duplicate
+    paint, not two figures; the extractor emits one element. Identical
+    bytes at *different* positions (the logo case) stay two figures.
+    """
+    doc = fitz.open()
+    p = doc.new_page(width=200.0, height=100.0)
+    rect = fitz.Rect(10.0, 10.0, 110.0, 60.0)
+    p.insert_image(rect, stream=make_square_png(48))
+    p.insert_image(rect, stream=make_square_png(48))
+    doc.save(str(path))
+    doc.close()
+    return str(path)
+
+
+BOLD_BOOK_LINES = (
+    # Flower-garden page-24 shapes: short bold fragments that end
+    # mid-sentence, plus punctuated closers. Widths must fit the 366pt
+    # measure at 20pt Helvetica-Bold or MuPDF clips the overflow.
+    "They could not wait to show their",
+    "dad. They ran to the house and",
+    "the garden gate and into the yard.",
+    "hurry!",
+    "gardens.",
+)
+
+
+def build_bold_body_narrative_doc(path: str | Path) -> str:
+    """A decorative all-bold book (flower-garden class, WS2).
+
+    Every narrative line is set in a bold-named font, so boldness is
+    the document's normal voice rather than structural or emphatic
+    evidence: the font profile must discount it, narrative must stay
+    ``<p>`` without ``<strong>``, while a genuinely larger title still
+    climbs the size ladder on size evidence alone.
+
+    One line sits in the 1.05-1.15 size band where the old ladder
+    promoted bold text to h4 with no other evidence -- under the
+    discount it must stay a paragraph.
+    """
+    doc = fitz.open()
+    p = doc.new_page(width=PAGE_W, height=PAGE_H)
+    y = 120.0
+    for line in BOLD_BOOK_LINES:
+        p.insert_text((MARGIN_X, y), line, fontname="hebo", fontsize=20.0)
+        y += 26.0
+    # ladder band (20 * 1.075): boldness alone must not promote this
+    p.insert_text((MARGIN_X, y + 14.0), "A slightly larger bold line",
+                  fontname="hebo", fontsize=21.5)
+    # genuine heading: 60% above body size climbs the size ladder
+    p.insert_text((MARGIN_X, y + 70.0), "Your Garden",
+                  fontname="hebo", fontsize=32.0)
+    doc.save(str(path))
+    doc.close()
+    return str(path)
+
+
 def build_all(out_dir: str | Path) -> dict[str, str]:
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -723,6 +892,19 @@ def build_all(out_dir: str | Path) -> dict[str, str]:
             out / "magazine_furniture.pdf"
         ),
         "special_chars": build_special_chars_doc(out / "special_chars.pdf"),
+        "smask_composite": build_smask_composite_doc(
+            out / "smask_composite.pdf"
+        ),
+        "soft_mask_artifact": build_soft_mask_artifact_doc(
+            out / "soft_mask_artifact.pdf"
+        ),
+        "cmyk_raster": build_cmyk_raster_doc(out / "cmyk_raster.pdf"),
+        "duplicate_placement": build_duplicate_placement_doc(
+            out / "duplicate_placement.pdf"
+        ),
+        "bold_body_narrative": build_bold_body_narrative_doc(
+            out / "bold_body_narrative.pdf"
+        ),
     }
 
 

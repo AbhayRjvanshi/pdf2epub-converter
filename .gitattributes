@@ -1,0 +1,10 @@
+# Normalize text files to LF in the repository; working copies follow
+# the platform's native conventions. Binary assets must never be
+# renormalized (Round 1 audit: cross-platform archives produced
+# whole-file line-ending noise without this).
+* text=auto
+*.png binary
+*.jp2 binary
+*.pdf binary
+*.epub binary
+*.ico binary

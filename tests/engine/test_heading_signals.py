@@ -46,6 +46,58 @@ def test_title_shaped_body_size_lines_promote_to_h4():
     assert structural_heading_level("installation notes", size=10, body_size=10, bold=True) == 4
 
 
+# ---------------------------------------------------------------------------
+# Round 1 / WS2: document-norm boldness is not heading evidence
+# ---------------------------------------------------------------------------
+
+
+def test_norm_bold_document_rejects_bold_fragments():
+    """When the body font itself is bold, boldness alone must not
+    promote narrative fragments (flower-garden page 24: ten false h4s)."""
+    assert (
+        structural_heading_level(
+            "installation notes", size=10, body_size=10,
+            bold=True, bold_is_structural=False,
+        )
+        is None
+    )
+    assert (
+        structural_heading_level(
+            "They could not wait to show their mom and", size=22,
+            body_size=22, bold=True, bold_is_structural=False,
+        )
+        is None
+    )
+
+
+def test_title_shape_promotes_without_weight_evidence():
+    """Same-family headings are not vetoed: with boldness discounted,
+    wording evidence alone can still promote."""
+    assert (
+        structural_heading_level(
+            "Installation Notes", size=10, body_size=10,
+            bold=True, bold_is_structural=False,
+        )
+        == 4
+    )
+    assert (
+        structural_heading_level(
+            "Your Story Book", size=10, body_size=10,
+            bold_is_structural=False,
+        )
+        == 4
+    )
+    # trailing punctuation still rejects even title-shaped lines; the
+    # real "Your Story Book!" title climbs the size ladder as h1 instead
+    assert (
+        structural_heading_level(
+            "Your Story Book!", size=10, body_size=10,
+            bold_is_structural=False,
+        )
+        is None
+    )
+
+
 @pytest.mark.parametrize(
     "text",
     [
@@ -447,3 +499,108 @@ def test_page_number_lines_never_become_headings():
     assert structural_heading_level("Page 30", size=10.0, body_size=10.0) is None
     assert structural_heading_level("page 7", size=10.0, body_size=10.0) is None
     assert structural_heading_level("Page One", size=10.0, body_size=10.0) == 4
+
+
+# ---------------------------------------------------------------------------
+# Round 1 / WS2: promotion pass + digest fallback honor the discount
+# ---------------------------------------------------------------------------
+
+PAGE24_FRAGMENTS = (
+    "They couldn't wait to tell their mom and",
+    "dad. They ran to the house and through",
+    "the door. \"Mom, dad,\" they shouted. \"Come",
+    "are beautiful, come-on, come-on, and",
+    "hurry!\"",
+    "Rose grabbed her mom's hand and Violet",
+    "grabbed her dad's hand, as they both",
+    "gardens.",
+    "\"You girls have done a great job,\" said",
+    "mom said.",
+)
+
+
+def _fragment_lines(n: int):
+    """Bold narrative fragments, each alone in its own block, at body
+    size -- the exact flower-garden page-24 promotion shape. Boxes are
+    stacked top-down with clean positive gaps so no table/column region
+    forms; only the boldness discount can keep these lines paragraphs."""
+    return [
+        t1.ClassifiedLine(
+            text=f"<p>{txt}</p>", raw_text=txt, tag="p", level=0,
+            monospace=False, wrapped=True,
+            bbox=(54.0, 100.0 + i * 34.0, 500.0, 120.0 + i * 34.0),
+            size=22.0, block_id=i + 1, bold=True,
+        )
+        for i, txt in enumerate(PAGE24_FRAGMENTS[:n])
+    ]
+
+
+def test_norm_bold_document_keeps_fragments_as_paragraphs():
+    """The ten confirmed false h4s must stay <p> once boldness is
+    discounted as the document's normal voice."""
+    profile = t1.DocumentFontProfile(
+        body_size=22.0, line_height=30.0, main_font="SegoePrint-Bold",
+        bold_is_structural=False,
+    )
+    lines = _fragment_lines(len(PAGE24_FRAGMENTS))
+    out = t1.promote_structural_headings(list(lines), profile)
+    assert all(ln.tag == "p" for ln in out), [
+        ln.raw_text for ln in out if ln.tag != "p"
+    ]
+
+
+def test_rare_bold_still_promotes_fragments_as_before():
+    """Control: when boldness IS rare, the identical lines still promote
+    (legacy behaviour must not regress)."""
+    profile = t1.DocumentFontProfile(body_size=22.0, line_height=30.0, main_font="helv")
+    assert profile.bold_is_structural is True
+    lines = _fragment_lines(3)
+    out = t1.promote_structural_headings(list(lines), profile)
+    assert [ln.tag for ln in out] == ["h4", "h4", "h4"]
+
+
+def test_digest_fallback_discounts_norm_boldness():
+    """The offline digest twin must apply the same evidence, so tier1 and
+    tier2 pages of an all-bold book cannot disagree about headings."""
+    # a capital start on the second line: the pair does not merge, so
+    # each line reaches the heading decision on its own
+    digest = [
+        {"line_id": 1, "block_id": 1, "bbox": [54.0, 100.0, 400.0, 122.0],
+         "size": 20.0, "bold": True, "italic": False,
+         "text": "They could not wait to show their mom"},
+        {"line_id": 2, "block_id": 2, "bbox": [54.0, 130.0, 400.0, 152.0],
+         "size": 20.0, "bold": True, "italic": False,
+         "text": "Dad. They ran to the house and through"},
+    ]
+    req = t2.Tier2Request(
+        page_num=1, layout_digest=digest, page_width=420.0, page_height=680.0,
+        bold_is_structural=False,
+    )
+    html = t2._digest_fallback(req)
+    assert "<h4>" not in html
+    assert html.count("<p>") == 2
+
+    legacy = t2.Tier2Request(
+        page_num=1, layout_digest=digest, page_width=420.0, page_height=680.0,
+    )
+    assert "<h4>" in t2._digest_fallback(legacy)
+
+
+def test_digest_fallback_merges_cross_block_sentences():
+    """Digest-native twin of the cross-block continuation rule: a
+    lowercase, unterminated flow across block boundaries welds into one
+    paragraph even on tier2 pages."""
+    digest = [
+        {"line_id": 1, "block_id": 1, "bbox": [54.0, 100.0, 400.0, 122.0],
+         "size": 20.0, "bold": True, "italic": False,
+         "text": "They could not wait to show their mom and"},
+        {"line_id": 2, "block_id": 2, "bbox": [54.0, 130.0, 400.0, 152.0],
+         "size": 20.0, "bold": True, "italic": False,
+         "text": "dad. They ran to the house and through"},
+    ]
+    req = t2.Tier2Request(
+        page_num=1, layout_digest=digest, page_width=420.0, page_height=680.0,
+    )
+    html = t2._digest_fallback(req)
+    assert html.count("<p>") == 1
+    assert "their mom and dad." in html

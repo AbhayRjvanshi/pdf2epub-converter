@@ -103,15 +103,67 @@ def test_paragraph_break_on_larger_gap():
 def test_different_blocks_do_not_merge():
     profile = t1.DocumentFontProfile(body_size=10.0, line_height=14.0, main_font="x")
 
-    def line(y, block):
+    def line(y, block, text="t"):
         return t1.ClassifiedLine(
-            text="t", raw_text="t", tag="p", level=0, monospace=False, wrapped=True,
-            bbox=(54.0, y, 314.0, y + 12), size=10.0, block_id=block,
-            block_margin=314.0, first_word_width=20.0,
+            text=text, raw_text=text, tag="p", level=0, monospace=False,
+            wrapped=True, bbox=(54.0, y, 314.0, y + 12), size=10.0,
+            block_id=block, block_margin=314.0, first_word_width=20.0,
         )
 
     merged = t1.build_paragraphs([line(100, 1), line(114, 2)], profile)
-    assert len(merged) == 2
+    assert len(merged) == 1  # identical lowercase unterminated flow: a continuation
+
+
+def test_cross_block_merge_needs_full_evidence():
+    """Block identity alone no longer splits paragraphs (children's-book
+    producers emit one text object per visual line), but the cross-block
+    rule is over-determined: any missing piece of evidence -- column,
+    alignment, list boundary, punctuation, case flow -- keeps the pair
+    separate."""
+    profile = t1.DocumentFontProfile(body_size=10.0, line_height=14.0, main_font="x")
+
+    def line(y, block, text, x0=54.0):
+        return t1.ClassifiedLine(
+            text=text, raw_text=text, tag="p", level=0, monospace=False,
+            wrapped=True, bbox=(x0, y, x0 + 260.0, y + 12), size=10.0,
+            block_id=block, block_margin=x0 + 260.0, first_word_width=20.0,
+        )
+
+    # capital start on the next line: no case-flow continuation
+    assert len(t1.build_paragraphs(
+        [line(100, 1, "First one."), line(114, 2, "Second one.")], profile
+    )) == 2
+    # terminal punctuation closes the previous sentence
+    assert len(t1.build_paragraphs(
+        [line(100, 1, "Sentence ends here."), line(114, 2, "and so on")], profile
+    )) == 2
+    # list markers are structural boundaries, never prose continuations
+    assert len(t1.build_paragraphs(
+        [line(100, 1, "then one item"), line(114, 2, "2. second item")], profile
+    )) == 2
+    # a shifted left edge is a new paragraph, a quote or another column
+    assert len(t1.build_paragraphs(
+        [line(100, 1, "and it runs on"), line(114, 2, "into more text", x0=120.0)],
+        profile,
+    )) == 2
+    # disjoint x-ranges are different columns
+    assert len(t1.build_paragraphs(
+        [line(100, 1, "and it runs on"), line(114, 2, "into more text", x0=400.0)],
+        profile,
+    )) == 2
+    # a paragraph break in the vertical flow
+    assert len(t1.build_paragraphs(
+        [line(100, 1, "and it runs on"), line(160, 2, "into more text")], profile
+    )) == 2
+    # with the full evidence stack, the pair welds across the boundary
+    merged = t1.build_paragraphs(
+        [line(100, 1, "The sentence continues onto"),
+         line(114, 2, "the next line of the pair")], profile
+    )
+    assert len(merged) == 1
+    assert merged[0].raw_text == (
+        "The sentence continues onto the next line of the pair"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -446,3 +498,69 @@ def test_size_ladder_never_promotes_page_number_lines():
     assert (tag, level) == ("p", 0)
     tag, level = t1.classify_line_tag(11.0, True, profile, raw_text="Page 2")
     assert (tag, level) == ("p", 0)
+
+
+# ---------------------------------------------------------------------------
+# Round 1 / WS2: document-norm boldness (flower-garden class)
+# ---------------------------------------------------------------------------
+
+
+def test_font_family_normalizes_weight_variants():
+    """SegoePrint-Bold and SegoePrint are one family; base-14 aliases of
+    different weights stay distinct families (bold evidence survives)."""
+    assert t1.font_family("SegoePrint-Bold") == t1.font_family("SegoePrint")
+    assert t1.font_family("SegoePrint-Bold") == "segoeprint"
+    assert t1.font_family("helv") != t1.font_family("hebo")
+    assert t1.font_family("") == ""
+    assert t1.font_family("Helvetica-BoldItalic") == "helvetica"
+
+
+def test_bold_body_narrative_discounts_boldness(fixture_pdfs):
+    """An all-bold book: boldness is the document's voice, not signal.
+
+    Profile must report it, narrative lines must stay <p> with no
+    <strong>, the ladder-band line must not become h4, and the genuinely
+    larger title must still climb the size ladder."""
+    import fitz
+
+    doc = fitz.open(fixture_pdfs["bold_body_narrative"])
+    try:
+        profile = t1.DocumentFontProfile.build(doc)
+        assert profile.bold_char_share >= t1.BOLD_NOISE_SHARE
+        assert profile.bold_is_structural is False
+        lines = t1.classify_page(doc[0], profile)
+        tags = {}
+        for ln in lines:
+            assert "<strong>" not in ln.text, ln.raw_text
+            tags[ln.raw_text.strip()] = ln.tag
+        for narrative in (
+            "They could not wait to show their",
+            "dad. They ran to the house and",
+            "the garden gate and into the yard.",
+            "hurry!",
+            "gardens.",
+            "A slightly larger bold line",
+        ):
+            assert tags[narrative] == "p", (narrative, tags[narrative])
+        assert tags["Your Garden"] == "h1"
+    finally:
+        doc.close()
+
+
+def test_mixed_typography_keeps_bold_evidence():
+    """Bold stays structural evidence while it is rare: a mostly-regular
+    document with a few bold words must not lose its heading signal."""
+    import fitz
+
+    doc = fitz.open()
+    p = doc.new_page(width=420.0, height=680.0)
+    p.insert_text((54.0, 100.0), "Regular body prose filling the page.",
+                  fontname="helv", fontsize=10.0)
+    for i in range(6):
+        p.insert_text((54.0, 120.0 + i * 14.0), "More regular prose to balance the document.",
+                      fontname="helv", fontsize=10.0)
+    p.insert_text((54.0, 240.0), "A Bold Emphatic Word", fontname="hebo", fontsize=10.0)
+    profile = t1.DocumentFontProfile.build(doc)
+    doc.close()
+    assert profile.bold_char_share < t1.BOLD_NOISE_SHARE
+    assert profile.bold_is_structural is True
