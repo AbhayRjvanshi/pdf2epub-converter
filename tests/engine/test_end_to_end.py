@@ -8,6 +8,7 @@ converts or dies.
 
 import os
 import shutil
+import subprocess
 import sys
 import time
 import zipfile
@@ -606,37 +607,100 @@ def test_triage_of_a_long_document_holds_no_payloads(large_pdf):
     doc.close()
 
 
-# Peak-memory budget for the long-document conversion gate below.
+# Round 3 M0 correction (run #5 investigation): the previous gate
+# subtracted two ru_maxrss readings of one long-lived pytest process --
+# measuring overshoot of the session's historical peak (allocator
+# noise), with macOS values in kilobytes mislabelled as megabytes
+# (Darwin reports ru_maxrss in BYTES, Linux in KiB). The gate now
+# converts the 120-page fixture in a FRESH subprocess (tests/memprobe.py)
+# and asserts the child's own total peak, unit-normalized per platform.
 #
-# CI run #2 (dee9e43) evidence -- every leg ran the same
-# pymupdf-1.28.2 cp310-abi3 wheel: the 120-page conversion stayed
-# under 400MB of ru_maxrss growth on Linux across Python 3.10-3.13,
-# and measured 416MB (3.10) / 480MB (3.13) on macOS arm64. ru_maxrss
-# is PEAK resident memory, not live allocations: macOS retains freed
-# allocator pages far longer than Linux, and the arm64 MuPDF build
-# peaks higher for identical work. The budget guards against
-# unbounded-growth regressions (page payloads held resident), not an
-# absolute platform benchmark: Linux keeps the calibrated 400MB, macOS
-# gets evidence-based headroom (480MB observed + 25%) instead of a
-# skipped gate. If macOS measurements rise substantially in later
-# runs, investigate the cause rather than raising the threshold.
-MEMORY_BUDGET_MB = 400 if sys.platform.startswith("linux") else 600
+# This budget is PROVISIONAL at 400 MiB on every platform: the first
+# CI run supplies the missing measurement (the fresh-process peak),
+# and the value is then tightened ONCE from that evidence -- never
+# ratcheted against runner noise. Context, not proof: Linux legs
+# passed a <400 MiB real-MB delta gate in runs #2-#5, and the README's
+# verified figure for a 500-page book is 95 MB peak RSS.
+SUBPROCESS_BUDGET_MIB = 400
+
+_MEMPROBE = Path(__file__).resolve().parent.parent / "memprobe.py"
 
 
 @pytest.mark.skipif(
     not HAS_RESOURCE, reason="'resource' module not available on this platform"
 )
 def test_long_document_converts_within_budget(large_pdf, tmp_path):
-    before = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    started = time.monotonic()
-    result = _run(large_pdf, tmp_path / "large.epub")
-    elapsed = time.monotonic() - started
-    growth_mb = (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss - before) / 1024
-
-    assert result["success"]
+    """The 120-page conversion, measured in a fresh process: its own
+    total peak (no peak-minus-peak subtraction anywhere) must stay
+    within budget, and the elapsed-time guard is preserved."""
+    src = Path(__file__).resolve().parents[2] / "src"
+    out = tmp_path / "large.epub"
+    proc = subprocess.run(
+        [sys.executable, str(_MEMPROBE), str(src), str(large_pdf), str(out)],
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert proc.returncode == 0, f"probe failed:\n{proc.stderr[-2000:]}"
+    metrics = dict(
+        line.split("=", 1) for line in proc.stdout.splitlines() if "=" in line
+    )
+    peak = float(metrics["PEAK_MIB"])
+    elapsed = float(metrics["ELAPSED"])
+    print(f"fresh-process peak: {peak:.1f} MiB, elapsed {elapsed:.1f}s")
+    assert int(metrics["CHAPTERS"]) == 5  # a heading every 25 pages
     assert elapsed < 90, f"120 pages took {elapsed:.1f}s"
-    assert growth_mb < MEMORY_BUDGET_MB, f"resident set grew {growth_mb:.0f}MB"
-    assert len(result["build"].chapters) == 5  # a heading every 25 pages
+    assert peak < SUBPROCESS_BUDGET_MIB, f"fresh-process peak {peak:.0f}MiB"
+
+
+@pytest.mark.skipif(
+    not HAS_RESOURCE, reason="'resource' module not available on this platform"
+)
+def test_memprobe_reports_its_own_peak(large_pdf, tmp_path):
+    """Gate verification: the probe actually reports a positive,
+    plausible peak and the elapsed time for a real conversion."""
+    src = Path(__file__).resolve().parents[2] / "src"
+    out = tmp_path / "large.epub"
+    proc = subprocess.run(
+        [sys.executable, str(_MEMPROBE), str(src), str(large_pdf), str(out)],
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert proc.returncode == 0, proc.stderr[-2000:]
+    metrics = dict(
+        line.split("=", 1) for line in proc.stdout.splitlines() if "=" in line
+    )
+    peak = float(metrics["PEAK_MIB"])
+    assert 20 < peak < 4096  # plausible: interpreter+pymupdf+conversion
+    assert float(metrics["ELAPSED"]) > 0
+
+
+def test_peak_mib_normalizes_both_platform_conventions():
+    """Gate verification: 512 MiB expressed in each platform's native
+    unit normalizes to 512 MiB -- Darwin's bytes and Linux's KiB."""
+    import memprobe
+
+    assert memprobe.peak_mib(512 * 1024 * 1024, platform="darwin") == pytest.approx(512.0)
+    assert memprobe.peak_mib(512 * 1024, platform="linux") == pytest.approx(512.0)
+
+
+@pytest.mark.skipif(
+    not HAS_RESOURCE, reason="'resource' module not available on this platform"
+)
+def test_probe_failure_propagates(tmp_path):
+    """Gate verification: a failed child conversion exits non-zero and
+    the parent's returncode assertion turns it into a test failure --
+    the gate can never silently pass on a broken conversion."""
+    src = Path(__file__).resolve().parents[2] / "src"
+    missing = tmp_path / "no-such-document.pdf"
+    proc = subprocess.run(
+        [sys.executable, str(_MEMPROBE), str(src), str(missing), str(tmp_path / "x.epub")],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert proc.returncode != 0
 
 
 def test_repeated_images_are_stored_once(large_pdf, tmp_path):

@@ -20,13 +20,44 @@ reproduction commands. Dates: 2026-10-13/14.
   `pymupdf-1.28.2 cp310-abi3` wheel: test calibration, not a
   dependency issue. Fixed with a platform-aware budget (`c6ecb21`):
   Linux keeps 400 MB; macOS gets an evidence-based 600 MB (measured
-  480 MB + 25%). The rule is recorded at the constant: if macOS
-  measurements rise substantially in later runs, investigate — do not
-  ratchet the threshold.
+  480 MB + 25%). *(Corrected below: the macOS figures in this
+  paragraph were kilobytes mislabelled as megabytes, and this
+  platform-specific budget was based on an invalid interpretation.)*
 * Run #3 (`c6ecb21`): **14/14 green** — the workflow's first complete
   execution ever, including the clean-install-from-wheel job and the
   real pinned EPUBCheck 5.1.0 conformance job (hard-fail mode).
 * Run #4 (`5dd3135`, M0b): 14/14 green.
+* Run #5 (`ba935e9`, M3a): 13/14 green; `macos-latest` Python 3.13
+  failed the same gate at "624 MB" — a +30% swing on a code path M3a
+  never touches. The investigate-don't-ratchet rule was applied and
+  the investigation overturned the run-#2 calibration:
+
+  **M0 correction — mislabelled units and a flawed measurement
+  design.** Darwin reports `ru_maxrss` in **bytes** (BSD
+  getrusage(2)); Linux reports **KiB** (getrusage(2)). The gate
+  divided by 1024 on both platforms, so the "416 / 480 / 624 MB"
+  macOS figures were kilobytes — real peak-deltas of roughly
+  0.4–0.6 MB. The gate also subtracted two readings of one
+  long-lived pytest process's historical peak, so it measured how
+  far this conversion overshot the session's existing high-water
+  mark — allocator noise, not the conversion's footprint. The
+  platform-split budget of `c6ecb21` was therefore based on an
+  invalid interpretation: it passed runs #3/#4 by luck and failed
+  #5 by noise.
+
+  **The corrected gate**: the 120-page conversion now runs in a
+  fresh subprocess (`tests/memprobe.py`) that reports its **own
+  total peak** with platform-normalized units (Darwin bytes/1024²,
+  Linux KiB/1024 — both conventions pinned by unit tests), no
+  subtraction anywhere, under a single **provisional budget of
+  400 MiB on every platform**. The elapsed-time guard (< 90 s) is
+  preserved. The budget is explicitly provisional: the first CI run
+  supplies the missing fresh-process peak measurement and the value
+  is tightened once from that evidence — the 95 MB peak-RSS figure
+  for a 500-page book is context, not proof for this fixture.
+  Gate-verification tests pin that the probe reports a plausible
+  peak of its own, that a failed child conversion propagates into a
+  test failure, and that both unit conventions normalize correctly.
 
 ## M0b — Image inventory and size attribution (complete)
 
