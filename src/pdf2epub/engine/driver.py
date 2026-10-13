@@ -79,6 +79,19 @@ BCP47_RE = re.compile(r"^[A-Za-z]{1,8}(-[A-Za-z0-9]{1,8})*$")
 COVER_MIN_AREA_SHARE = 0.90
 COVER_MAX_PAGE_TEXT = 200  # characters; a cover is not a prose page
 
+# Round 3 M3a: vision-embedded scanned pages are photographic page
+# renders. The C1 corpus document carries 74 of them at 89.57 MB as
+# PNG against 15.43 MB of source JPEGs -- a 5.8x inflation
+# (docs/round3_image_inventory.md). JPEG q90 is the evidence-based
+# default; q85 was compared against it on representative C1 pages
+# (Round 3 record) and adopted only if its extra savings are material
+# and the reviewed visual difference stays acceptable. Two hard
+# guards below: alpha-bearing rasters keep lossless PNG (JPEG cannot
+# carry alpha, and flattening is forbidden), and an encoder failure
+# falls back to the PNG -- a page's content must never be lost to an
+# encoding attempt.
+VISION_RASTER_JPEG_QUALITY = 90
+
 BYLINE_RE = re.compile(
     r"^by\s+(?P<name>[A-Z][\w.'’\-]*(?:\s+[A-Z][\w.'’\-]*){0,3})[.!]?$",
     re.IGNORECASE,
@@ -268,11 +281,30 @@ def _embed_visual_page(
     data = report.raster_bytes or confidence_router.render_page_raster(page)
     if not data:
         return []
+    # M3a: eligibility is measured, not guessed. Photographic scan
+    # renders are the classic JPEG case (C1: 74 pages, 89.57 MB as PNG
+    # vs 33.12 MB as q90 JPEG), but a born-digital flat page renders
+    # smaller as PNG (the reference book's vision page: 125 KB PNG vs
+    # 203 KB q90 JPEG) -- so both encodings are computed and the
+    # smaller one is packaged. The raster's content is never altered:
+    # alpha-bearing rasters and encoder failures keep the lossless
+    # PNG in every branch.
+    ext, mime_type = "png", "image/png"
+    try:
+        pix = fitz.Pixmap(data)
+        if not pix.alpha:
+            encoded = pix.tobytes(
+                "jpeg", jpg_quality=VISION_RASTER_JPEG_QUALITY
+            )
+            if encoded and len(encoded) < len(data):
+                data, ext, mime_type = encoded, "jpeg", "image/jpeg"
+    except Exception:
+        pass  # keep the lossless PNG raster
     digest = hashlib.sha1(data).hexdigest()[:16]
-    filename = f"page_{report.page_num:04d}_{digest[:8]}.png"
+    filename = f"page_{report.page_num:04d}_{digest[:8]}.{ext}"
     img = tier1_classifier.ImageElement(
-        ext="png",
-        mime_type="image/png",
+        ext=ext,
+        mime_type=mime_type,
         bbox=(0.0, 0.0, float(page.rect.width), float(page.rect.height)),
         page_num=report.page_index,
         block_id=0,

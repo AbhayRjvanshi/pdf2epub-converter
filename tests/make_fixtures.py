@@ -118,6 +118,27 @@ def make_square_png(size: int = 64) -> bytes:
     return pix.tobytes("png")
 
 
+def make_gradient_png(size: int = 240) -> bytes:
+    """A smooth photographic-like gradient (Round 3 M3a).
+
+    The scanned-page fixture must represent the class it tests:
+    photographic scans, whose page renders JPEG-compress far smaller
+    than PNG (the C1 corpus evidence). A flat square renders smaller
+    as PNG and would exercise the other branch of the measured
+    smaller-encoding rule. The gradient is deterministic -- a pure
+    two-axis color ramp, no noise.
+    """
+    pix = fitz.Pixmap(fitz.csRGB, fitz.IRect(0, 0, size, size), False)
+    step = 255 / max(size - 1, 1)
+    for y in range(size):
+        for x in range(0, size, 1):
+            r = int(x * step)
+            g = int(y * step)
+            b = int((x + y) * step / 2) & 0xFF
+            pix.set_pixel(x, y, (r, g, b))
+    return pix.tobytes("png")
+
+
 # ---------------------------------------------------------------------------
 # Content
 # ---------------------------------------------------------------------------
@@ -283,7 +304,10 @@ def build_interleaved_two_column_page(path: str | Path) -> str:
 def build_scanned_page(path: str | Path) -> str:
     doc = fitz.open()
     p = doc.new_page(width=PAGE_W, height=PAGE_H)
-    p.insert_image(fitz.Rect(40, 40, 380, 380), stream=make_square_png(240))
+    # Photographic-like content (Round 3 M3a): the scanned fixture
+    # represents a photographic scan, whose render the smaller-encoding
+    # rule packages as JPEG q90. A flat square would stay PNG.
+    p.insert_image(fitz.Rect(40, 40, 380, 380), stream=make_gradient_png(240))
     doc.save(str(path))
     doc.close()
     return str(path)
