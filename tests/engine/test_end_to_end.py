@@ -606,6 +606,23 @@ def test_triage_of_a_long_document_holds_no_payloads(large_pdf):
     doc.close()
 
 
+# Peak-memory budget for the long-document conversion gate below.
+#
+# CI run #2 (dee9e43) evidence -- every leg ran the same
+# pymupdf-1.28.2 cp310-abi3 wheel: the 120-page conversion stayed
+# under 400MB of ru_maxrss growth on Linux across Python 3.10-3.13,
+# and measured 416MB (3.10) / 480MB (3.13) on macOS arm64. ru_maxrss
+# is PEAK resident memory, not live allocations: macOS retains freed
+# allocator pages far longer than Linux, and the arm64 MuPDF build
+# peaks higher for identical work. The budget guards against
+# unbounded-growth regressions (page payloads held resident), not an
+# absolute platform benchmark: Linux keeps the calibrated 400MB, macOS
+# gets evidence-based headroom (480MB observed + 25%) instead of a
+# skipped gate. If macOS measurements rise substantially in later
+# runs, investigate the cause rather than raising the threshold.
+MEMORY_BUDGET_MB = 400 if sys.platform.startswith("linux") else 600
+
+
 @pytest.mark.skipif(
     not HAS_RESOURCE, reason="'resource' module not available on this platform"
 )
@@ -618,7 +635,7 @@ def test_long_document_converts_within_budget(large_pdf, tmp_path):
 
     assert result["success"]
     assert elapsed < 90, f"120 pages took {elapsed:.1f}s"
-    assert growth_mb < 400, f"resident set grew {growth_mb:.0f}MB"
+    assert growth_mb < MEMORY_BUDGET_MB, f"resident set grew {growth_mb:.0f}MB"
     assert len(result["build"].chapters) == 5  # a heading every 25 pages
 
 
