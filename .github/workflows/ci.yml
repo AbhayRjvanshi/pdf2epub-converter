@@ -46,7 +46,12 @@ jobs:
         run: pytest tests/packaging -v
 
   epubcheck:
-    name: real EPUBCheck conformance (pinned ${{ env.EPUBCHECK_VERSION }})
+    # The job name hardcodes the pinned version: GitHub's context
+    # rules exclude `env` from jobs.<id>.name (only github, needs,
+    # strategy, matrix, vars are available there), and referencing it
+    # made run #1 fail workflow validation with zero jobs created.
+    # Keep this name in sync with EPUBCHECK_VERSION below.
+    name: real EPUBCheck conformance (pinned 5.1.0)
     runs-on: ubuntu-latest
     needs: test
     env:
