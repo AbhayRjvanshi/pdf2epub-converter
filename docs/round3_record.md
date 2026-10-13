@@ -49,15 +49,40 @@ reproduction commands. Dates: 2026-10-13/14.
   fresh subprocess (`tests/memprobe.py`) that reports its **own
   total peak** with platform-normalized units (Darwin bytes/1024²,
   Linux KiB/1024 — both conventions pinned by unit tests), no
-  subtraction anywhere, under a single **provisional budget of
-  400 MiB on every platform**. The elapsed-time guard (< 90 s) is
-  preserved. The budget is explicitly provisional: the first CI run
-  supplies the missing fresh-process peak measurement and the value
-  is tightened once from that evidence — the 95 MB peak-RSS figure
-  for a 500-page book is context, not proof for this fixture.
+  subtraction anywhere, under a single budget on every platform.
+  The elapsed-time guard (< 90 s) is preserved.
   Gate-verification tests pin that the probe reports a plausible
   peak of its own, that a failed child conversion propagates into a
   test failure, and that both unit conventions normalize correctly.
+
+  **The one-time tightening (2026-10-14).** Run #6 (`870a449`) was
+  14/14 green, but its measurements rode pytest's captured stdout and
+  were not recoverable from green-run logs. The missing measurement
+  was taken directly instead — the same fresh-process conversion on
+  Windows (PeakWorkingSetSize via GetProcessMemoryInfo; `resource`
+  is absent there, which is also why this gate never runs on the
+  Windows CI legs — a recorded gap): **58.9 MiB peak, 10.0 s, 5
+  chapters**. Against the README's verified 95 MB peak for a
+  500-page book, the 400 MiB provisional budget carried ~7x
+  headroom over reality. Tightened **once** to **200 MiB**
+  (~3.4x headroom over the measured peak, tolerant of platform
+  allocator variance, still far below what a payload-holding
+  regression adds). Run #7's eight Unix legs validate the tightened
+  value; any leg exceeding it reports its measured peak in the
+  failure message, closing the evidence loop. The measurement is now
+  also written to the GitHub step summary (`GITHUB_STEP_SUMMARY`)
+  so green runs surface it durably instead of losing it to pytest's
+  capture. Future budget changes require measured evidence, not
+  runner noise.
+
+  Reproduction (Windows measurement):
+
+  ```
+  # fresh-process peak via Win32 GetProcessMemoryInfo
+  python - <<'script'  # convert tests fixture: build_large_book(pages=120)
+  #   -> driver.run_pipeline(validators=()) -> PeakWorkingSetSize / 2**20
+  script
+  ```
 
 ## M0b — Image inventory and size attribution (complete)
 

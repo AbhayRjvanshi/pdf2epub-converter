@@ -615,13 +615,17 @@ def test_triage_of_a_long_document_holds_no_payloads(large_pdf):
 # converts the 120-page fixture in a FRESH subprocess (tests/memprobe.py)
 # and asserts the child's own total peak, unit-normalized per platform.
 #
-# This budget is PROVISIONAL at 400 MiB on every platform: the first
-# CI run supplies the missing measurement (the fresh-process peak),
-# and the value is then tightened ONCE from that evidence -- never
-# ratcheted against runner noise. Context, not proof: Linux legs
-# passed a <400 MiB real-MB delta gate in runs #2-#5, and the README's
-# verified figure for a 500-page book is 95 MB peak RSS.
-SUBPROCESS_BUDGET_MIB = 400
+# This budget was tightened ONCE from measurement evidence (per the
+# investigate-don't-ratchet rule): the fresh-process peak of this
+# 120-page conversion measured 58.9 MiB on Windows (PeakWorkingSetSize
+# via GetProcessMemoryInfo, session of 2026-10-14, reproducible
+# command in docs/round3_record.md), against the README's verified 95
+# MB peak for a 500-page book. 200 MiB gives ~3.4x headroom over the
+# measured peak for platform allocator variance while still catching
+# the gate's failure mode: payload-holding regressions add hundreds
+# of MiB, not tens. Run #7's Unix legs validate the tightened value;
+# a leg exceeding it reports its measured peak in the failure message.
+SUBPROCESS_BUDGET_MIB = 200
 
 _MEMPROBE = Path(__file__).resolve().parent.parent / "memprobe.py"
 
@@ -648,6 +652,16 @@ def test_long_document_converts_within_budget(large_pdf, tmp_path):
     peak = float(metrics["PEAK_MIB"])
     elapsed = float(metrics["ELAPSED"])
     print(f"fresh-process peak: {peak:.1f} MiB, elapsed {elapsed:.1f}s")
+    # pytest discards captured prints on green runs; the GitHub step
+    # summary is the designed channel that makes the measurement
+    # durable and readable in the Actions UI.
+    summary = os.environ.get("GITHUB_STEP_SUMMARY")
+    if summary:
+        with open(summary, "a", encoding="utf-8") as fh:
+            fh.write(
+                f"- long-document fresh-process peak: {peak:.1f} MiB "
+                f"(elapsed {elapsed:.1f}s, {sys.platform})\n"
+            )
     assert int(metrics["CHAPTERS"]) == 5  # a heading every 25 pages
     assert elapsed < 90, f"120 pages took {elapsed:.1f}s"
     assert peak < SUBPROCESS_BUDGET_MIB, f"fresh-process peak {peak:.0f}MiB"
