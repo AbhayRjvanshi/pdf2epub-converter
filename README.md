@@ -255,19 +255,33 @@ binding constraint, and packaging would need to be replaced with direct
 Metadata is derived from the emitted document tree, never asserted by default:
 
 - `structuralNavigation` — only when a heading tree exists
-- `alternativeText` — only when images exist **and** every one has non-empty alt
+- `alternativeText` — only when images exist **and** every one carries a
+  caption-derived description; a location-only stub ("Figure on page 4,
+  block 2") names where to look, not what is there, and never earns the
+  claim
 - `tableOfContents` — only when the navigation document covers top-level headings
-- `dcterms:conformsTo` — `EPUB Accessibility 1.1 - WCAG 2.0 Level AA`
+- `readingOrder` — reflowable linear reading order, by construction
+- `schema:accessibilitySummary` — states plainly what the descriptions
+  are, including the location-only ones
+- **no `dcterms:conformsTo`** — the tool runs EPUBCheck and structural
+  validation, never a WCAG audit, so it emits no conformance claim at all
+  (removed in Round 2; see `docs/round2_publication_record.md`)
 
-Asserting conformance a file does not meet is worse than asserting nothing, so
-the profile is computed after the stream is final.
+Asserting conformance a file does not meet is worse than asserting nothing:
+the profile is computed after the stream is final, and the publication
+language is declared on the OPF `<package>` element (`xml:lang`) and in
+`dc:language` from evidence only — an explicit `--language` override, the
+PDF catalog's `/Lang`, or the honest BCP-47 `und` fallback; never a
+hardcoded guess.
 
 ---
 
 ## Tests
 
 ```bash
-pytest                                        # 508 passed, 15 skipped
+pytest                                        # offline: 738 passed, 21 skipped
+                                              # (+ EPUBCheck/Ace on PATH and
+                                              # PDF2EPUB_FLOWER_PDF set: 746/13)
 RUN_DISTRIBUTION_TESTS=1 pytest tests/packaging  # clean-install: build a
                                               # wheel, install into a fresh
                                               # venv outside the repo, drive
