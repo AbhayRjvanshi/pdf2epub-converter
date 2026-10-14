@@ -1,0 +1,236 @@
+[
+ {
+  "image": 1,
+  "xref": 926,
+  "verdict": "JPEG-ELIGIBLE",
+  "reason": "Photographic portraits; continuous-tone detail",
+  "png": 1171895,
+  "jpeg": 130085,
+  "saving_pct": 88.9
+ },
+ {
+  "image": 2,
+  "xref": 467,
+  "verdict": "LOSSLESS",
+  "reason": "Butterfly details alongside noise-pattern comparisons",
+  "png": 972598,
+  "jpeg": 233017,
+  "saving_pct": 76.0
+ },
+ {
+  "image": 3,
+  "xref": 470,
+  "verdict": "LOSSLESS",
+  "reason": "Fine butterfly markings and noise patterns",
+  "png": 972305,
+  "jpeg": 233118,
+  "saving_pct": 76.0
+ },
+ {
+  "image": 4,
+  "xref": 473,
+  "verdict": "LOSSLESS",
+  "reason": "Fine markings and high-frequency patterns",
+  "png": 922798,
+  "jpeg": 260076,
+  "saving_pct": 71.8
+ },
+ {
+  "image": 5,
+  "xref": 956,
+  "verdict": "JPEG-ELIGIBLE",
+  "reason": "Photographic still life",
+  "png": 663252,
+  "jpeg": 86079,
+  "saving_pct": 87.0
+ },
+ {
+  "image": 6,
+  "xref": 834,
+  "verdict": "JPEG-ELIGIBLE",
+  "reason": "Continuous-tone space artwork; check star and edge quality",
+  "png": 650176,
+  "jpeg": 67172,
+  "saving_pct": 89.7
+ },
+ {
+  "image": 7,
+  "xref": 87,
+  "verdict": "JPEG-ELIGIBLE",
+  "reason": "Outdoor equestrian photograph",
+  "png": 620644,
+  "jpeg": 75141,
+  "saving_pct": 87.9
+ },
+ {
+  "image": 8,
+  "xref": 934,
+  "verdict": "JPEG-ELIGIBLE",
+  "reason": "Landscape photographs",
+  "png": 524836,
+  "jpeg": 85876,
+  "saving_pct": 83.6
+ },
+ {
+  "image": 10,
+  "xref": 436,
+  "verdict": "LOSSLESS",
+  "reason": "Butterfly comparison grid and degraded/noise panels",
+  "png": 500551,
+  "jpeg": 96319,
+  "saving_pct": 80.8
+ },
+ {
+  "image": 11,
+  "xref": 452,
+  "verdict": "LOSSLESS",
+  "reason": "Butterfly wing detail",
+  "png": 486959,
+  "jpeg": 69869,
+  "saving_pct": 85.7
+ },
+ {
+  "image": 12,
+  "xref": 448,
+  "verdict": "LOSSLESS",
+  "reason": "Butterfly wing detail",
+  "png": 464215,
+  "jpeg": 62360,
+  "saving_pct": 86.6
+ },
+ {
+  "image": 13,
+  "xref": 631,
+  "verdict": "JPEG-ELIGIBLE",
+  "reason": "Continuous-tone abstract artwork; verify texture quality",
+  "png": 453184,
+  "jpeg": 84056,
+  "saving_pct": 81.5
+ },
+ {
+  "image": 14,
+  "xref": 913,
+  "verdict": "JPEG-ELIGIBLE",
+  "reason": "Grayscale portrait photograph",
+  "png": 443807,
+  "jpeg": 64036,
+  "saving_pct": 85.6
+ },
+ {
+  "image": 15,
+  "xref": 910,
+  "verdict": "JPEG-ELIGIBLE",
+  "reason": "Grayscale portrait photograph",
+  "png": 440653,
+  "jpeg": 63102,
+  "saving_pct": 85.7
+ },
+ {
+  "image": 16,
+  "xref": 907,
+  "verdict": "JPEG-ELIGIBLE",
+  "reason": "Grayscale portrait photograph",
+  "png": 437141,
+  "jpeg": 63498,
+  "saving_pct": 85.5
+ },
+ {
+  "image": 18,
+  "xref": 367,
+  "verdict": "JPEG-ELIGIBLE",
+  "reason": "Wildlife photograph",
+  "png": 422294,
+  "jpeg": 58309,
+  "saving_pct": 86.2
+ },
+ {
+  "image": 19,
+  "xref": 903,
+  "verdict": "JPEG-ELIGIBLE",
+  "reason": "Photographic/realistic robot collage",
+  "png": 405187,
+  "jpeg": 57726,
+  "saving_pct": 85.8
+ },
+ {
+  "image": 20,
+  "xref": 611,
+  "verdict": "JPEG-ELIGIBLE",
+  "reason": "Cat photograph",
+  "png": 385953,
+  "jpeg": 44363,
+  "saving_pct": 88.5
+ },
+ {
+  "image": 21,
+  "xref": 373,
+  "verdict": "JPEG-ELIGIBLE",
+  "reason": "Wildlife photograph",
+  "png": 384255,
+  "jpeg": 57522,
+  "saving_pct": 85.0
+ },
+ {
+  "image": 22,
+  "xref": 218,
+  "verdict": "JPEG-ELIGIBLE",
+  "reason": "Cat photograph",
+  "png": 352753,
+  "jpeg": 42784,
+  "saving_pct": 87.9
+ },
+ {
+  "image": 23,
+  "xref": 618,
+  "verdict": "JPEG-ELIGIBLE",
+  "reason": "Strip of photographic dog images",
+  "png": 346518,
+  "jpeg": 49238,
+  "saving_pct": 85.8
+ },
+ {
+  "image": 27,
+  "xref": 412,
+  "verdict": "LOSSLESS",
+  "reason": "Noise-pattern sequence and fine image detail",
+  "png": 281861,
+  "jpeg": 85430,
+  "saving_pct": 69.7
+ },
+ {
+  "image": 28,
+  "xref": 848,
+  "verdict": "JPEG-ELIGIBLE",
+  "reason": "Strip of photographic portraits",
+  "png": 281784,
+  "jpeg": 44970,
+  "saving_pct": 84.0
+ },
+ {
+  "image": 29,
+  "xref": 598,
+  "verdict": "JPEG-ELIGIBLE",
+  "reason": "Wildlife photograph",
+  "png": 269502,
+  "jpeg": 32035,
+  "saving_pct": 88.1
+ },
+ {
+  "image": 30,
+  "xref": 590,
+  "verdict": "JPEG-ELIGIBLE",
+  "reason": "Wildlife photograph; visually similar to Image 029",
+  "png": 264507,
+  "jpeg": 31411,
+  "saving_pct": 88.1
+ },
+ {
+  "image": 33,
+  "xref": 416,
+  "verdict": "JPEG-ELIGIBLE",
+  "reason": "Portrait photograph",
+  "png": 154716,
+  "jpeg": 15803,
+  "saving_pct": 89.8
+ }
+]
