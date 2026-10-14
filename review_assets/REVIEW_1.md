@@ -1,111 +1,235 @@
-# REVIEW_1 ? OCR-negative (LIVE decisions), largest first
+# REVIEW 1 ? OCR-negative images (LIVE decisions), Image 001?018, largest first
 
+## Image 001 ? xref 926
 
+- Pages: 297
+- Dimensions: 1024x512
+- Size as lossless PNG: 1,171,895 bytes ? as JPEG q90: 130,085 bytes
+- OCR: **OCR NEGATIVE** ? no text detected. OCR-negative is not proof of JPEG safety: review for thin strokes, high-contrast edges, small geometric features, repeating patterns, ringing risk
+- Full resolution: [Open image](full_p297_x926.png)
 
-### xref 926 ? page 297 ? 1024x512 ? 1,171,895 -> 130,085 bytes as q90 JPEG
+![Image 001 ? xref 926](full_p297_x926.png)
 
-**OCR: no text detected** ? decision is LIVE: review for thin lines, fine detail, ringing risk; flag this xref if JPEG would damage anything
+- **Review verdict: PENDING**
+- Reason: ?
 
-![xref 926](full_p297_x926.png)
+## Image 002 ? xref 467
 
-### xref 467 ? page 148 ? 931x454 ? 972,598 -> 233,017 bytes as q90 JPEG
+- Pages: 148
+- Dimensions: 931x454
+- Size as lossless PNG: 972,598 bytes ? as JPEG q90: 233,017 bytes
+- OCR: **OCR NEGATIVE** ? no text detected. OCR-negative is not proof of JPEG safety: review for thin strokes, high-contrast edges, small geometric features, repeating patterns, ringing risk
+- Full resolution: [Open image](full_p148_x467.png)
 
-**OCR: no text detected** ? decision is LIVE: review for thin lines, fine detail, ringing risk; flag this xref if JPEG would damage anything
+![Image 002 ? xref 467](full_p148_x467.png)
 
-![xref 467](full_p148_x467.png)
+- **Review verdict: PENDING**
+- Reason: ?
 
-### xref 470 ? page 149 ? 931x454 ? 972,305 -> 233,118 bytes as q90 JPEG
+## Image 003 ? xref 470
 
-**OCR: no text detected** ? decision is LIVE: review for thin lines, fine detail, ringing risk; flag this xref if JPEG would damage anything
+- Pages: 149
+- Dimensions: 931x454
+- Size as lossless PNG: 972,305 bytes ? as JPEG q90: 233,118 bytes
+- OCR: **OCR NEGATIVE** ? no text detected. OCR-negative is not proof of JPEG safety: review for thin strokes, high-contrast edges, small geometric features, repeating patterns, ringing risk
+- Full resolution: [Open image](full_p149_x470.png)
 
-![xref 470](full_p149_x470.png)
+![Image 003 ? xref 470](full_p149_x470.png)
 
-### xref 473 ? page 150 ? 931x454 ? 922,798 -> 260,076 bytes as q90 JPEG
+- **Review verdict: PENDING**
+- Reason: ?
 
-**OCR: no text detected** ? decision is LIVE: review for thin lines, fine detail, ringing risk; flag this xref if JPEG would damage anything
+## Image 004 ? xref 473
 
-![xref 473](full_p150_x473.png)
+- Pages: 150
+- Dimensions: 931x454
+- Size as lossless PNG: 922,798 bytes ? as JPEG q90: 260,076 bytes
+- OCR: **OCR NEGATIVE** ? no text detected. OCR-negative is not proof of JPEG safety: review for thin strokes, high-contrast edges, small geometric features, repeating patterns, ringing risk
+- Full resolution: [Open image](full_p150_x473.png)
 
-### xref 956 ? page 305 ? 720x360 ? 663,252 -> 86,079 bytes as q90 JPEG
+![Image 004 ? xref 473](full_p150_x473.png)
 
-**OCR: no text detected** ? decision is LIVE: review for thin lines, fine detail, ringing risk; flag this xref if JPEG would damage anything
+- **Review verdict: PENDING**
+- Reason: ?
 
-![xref 956](full_p305_x956.png)
+## Image 005 ? xref 956
 
-### xref 834 ? page 267 ? 512x512 ? 650,176 -> 67,172 bytes as q90 JPEG
+- Pages: 305
+- Dimensions: 720x360
+- Size as lossless PNG: 663,252 bytes ? as JPEG q90: 86,079 bytes
+- OCR: **OCR NEGATIVE** ? no text detected. OCR-negative is not proof of JPEG safety: review for thin strokes, high-contrast edges, small geometric features, repeating patterns, ringing risk
+- Full resolution: [Open image](full_p305_x956.png)
 
-**OCR: no text detected** ? decision is LIVE: review for thin lines, fine detail, ringing risk; flag this xref if JPEG would damage anything
+![Image 005 ? xref 956](full_p305_x956.png)
 
-![xref 834](full_p267_x834.png)
+- **Review verdict: PENDING**
+- Reason: ?
 
-### xref 87 ? page 26 ? 512x512 ? 620,644 -> 75,141 bytes as q90 JPEG
+## Image 006 ? xref 834
 
-**OCR: no text detected** ? decision is LIVE: review for thin lines, fine detail, ringing risk; flag this xref if JPEG would damage anything
+- Pages: 267
+- Dimensions: 512x512
+- Size as lossless PNG: 650,176 bytes ? as JPEG q90: 67,172 bytes
+- OCR: **OCR NEGATIVE** ? no text detected. OCR-negative is not proof of JPEG safety: review for thin strokes, high-contrast edges, small geometric features, repeating patterns, ringing risk
+- Full resolution: [Open image](full_p267_x834.png)
 
-![xref 87](full_p026_x87.png)
+![Image 006 ? xref 834](full_p267_x834.png)
 
-### xref 934 ? page 299 ? 720x360 ? 524,836 -> 85,876 bytes as q90 JPEG
+- **Review verdict: PENDING**
+- Reason: ?
 
-**OCR: no text detected** ? decision is LIVE: review for thin lines, fine detail, ringing risk; flag this xref if JPEG would damage anything
+## Image 007 ? xref 87
 
-![xref 934](full_p299_x934.png)
+- Pages: 26
+- Dimensions: 512x512
+- Size as lossless PNG: 620,644 bytes ? as JPEG q90: 75,141 bytes
+- OCR: **OCR NEGATIVE** ? no text detected. OCR-negative is not proof of JPEG safety: review for thin strokes, high-contrast edges, small geometric features, repeating patterns, ringing risk
+- Full resolution: [Open image](full_p026_x87.png)
 
-### xref 575 ? page 181 ? 512x512 ? 504,866 -> 68,712 bytes as q90 JPEG
+![Image 007 ? xref 87](full_p026_x87.png)
 
-**OCR: no text detected** ? decision is LIVE: review for thin lines, fine detail, ringing risk; flag this xref if JPEG would damage anything
+- **Review verdict: PENDING**
+- Reason: ?
 
-![xref 575](full_p181_x575.png)
+## Image 008 ? xref 934
 
-### xref 436 ? page 139 ? 720x351 ? 500,551 -> 96,319 bytes as q90 JPEG
+- Pages: 299
+- Dimensions: 720x360
+- Size as lossless PNG: 524,836 bytes ? as JPEG q90: 85,876 bytes
+- OCR: **OCR NEGATIVE** ? no text detected. OCR-negative is not proof of JPEG safety: review for thin strokes, high-contrast edges, small geometric features, repeating patterns, ringing risk
+- Full resolution: [Open image](full_p299_x934.png)
 
-**OCR: no text detected** ? decision is LIVE: review for thin lines, fine detail, ringing risk; flag this xref if JPEG would damage anything
+![Image 008 ? xref 934](full_p299_x934.png)
 
-![xref 436](full_p139_x436.png)
+- **Review verdict: PENDING**
+- Reason: ?
 
-### xref 452 ? page 144 ? 931x202 ? 486,959 -> 69,869 bytes as q90 JPEG
+## Image 009 ? xref 575
 
-**OCR: no text detected** ? decision is LIVE: review for thin lines, fine detail, ringing risk; flag this xref if JPEG would damage anything
+- Pages: 181
+- Dimensions: 512x512
+- Size as lossless PNG: 504,866 bytes ? as JPEG q90: 68,712 bytes
+- OCR: **OCR NEGATIVE** ? no text detected. OCR-negative is not proof of JPEG safety: review for thin strokes, high-contrast edges, small geometric features, repeating patterns, ringing risk
+- Full resolution: [Open image](full_p181_x575.png)
 
-![xref 452](full_p144_x452.png)
+![Image 009 ? xref 575](full_p181_x575.png)
 
-### xref 448 ? page 143 ? 931x202 ? 464,215 -> 62,360 bytes as q90 JPEG
+- **Review verdict: PENDING**
+- Reason: ?
 
-**OCR: no text detected** ? decision is LIVE: review for thin lines, fine detail, ringing risk; flag this xref if JPEG would damage anything
+## Image 010 ? xref 436
 
-![xref 448](full_p143_x448.png)
+- Pages: 139
+- Dimensions: 720x351
+- Size as lossless PNG: 500,551 bytes ? as JPEG q90: 96,319 bytes
+- OCR: **OCR NEGATIVE** ? no text detected. OCR-negative is not proof of JPEG safety: review for thin strokes, high-contrast edges, small geometric features, repeating patterns, ringing risk
+- Full resolution: [Open image](full_p139_x436.png)
 
-### xref 631 ? page 197 ? 496x331 ? 453,184 -> 84,056 bytes as q90 JPEG
+![Image 010 ? xref 436](full_p139_x436.png)
 
-**OCR: no text detected** ? decision is LIVE: review for thin lines, fine detail, ringing risk; flag this xref if JPEG would damage anything
+- **Review verdict: PENDING**
+- Reason: ?
 
-![xref 631](full_p197_x631.png)
+## Image 011 ? xref 452
 
-### xref 913 ? page 293 ? 512x512 ? 443,807 -> 64,036 bytes as q90 JPEG
+- Pages: 144
+- Dimensions: 931x202
+- Size as lossless PNG: 486,959 bytes ? as JPEG q90: 69,869 bytes
+- OCR: **OCR NEGATIVE** ? no text detected. OCR-negative is not proof of JPEG safety: review for thin strokes, high-contrast edges, small geometric features, repeating patterns, ringing risk
+- Full resolution: [Open image](full_p144_x452.png)
 
-**OCR: no text detected** ? decision is LIVE: review for thin lines, fine detail, ringing risk; flag this xref if JPEG would damage anything
+![Image 011 ? xref 452](full_p144_x452.png)
 
-![xref 913](full_p293_x913.png)
+- **Review verdict: PENDING**
+- Reason: ?
 
-### xref 910 ? page 292 ? 512x512 ? 440,653 -> 63,102 bytes as q90 JPEG
+## Image 012 ? xref 448
 
-**OCR: no text detected** ? decision is LIVE: review for thin lines, fine detail, ringing risk; flag this xref if JPEG would damage anything
+- Pages: 143
+- Dimensions: 931x202
+- Size as lossless PNG: 464,215 bytes ? as JPEG q90: 62,360 bytes
+- OCR: **OCR NEGATIVE** ? no text detected. OCR-negative is not proof of JPEG safety: review for thin strokes, high-contrast edges, small geometric features, repeating patterns, ringing risk
+- Full resolution: [Open image](full_p143_x448.png)
 
-![xref 910](full_p292_x910.png)
+![Image 012 ? xref 448](full_p143_x448.png)
 
-### xref 907 ? page 291 ? 512x512 ? 437,141 -> 63,498 bytes as q90 JPEG
+- **Review verdict: PENDING**
+- Reason: ?
 
-**OCR: no text detected** ? decision is LIVE: review for thin lines, fine detail, ringing risk; flag this xref if JPEG would damage anything
+## Image 013 ? xref 631
 
-![xref 907](full_p291_x907.png)
+- Pages: 197
+- Dimensions: 496x331
+- Size as lossless PNG: 453,184 bytes ? as JPEG q90: 84,056 bytes
+- OCR: **OCR NEGATIVE** ? no text detected. OCR-negative is not proof of JPEG safety: review for thin strokes, high-contrast edges, small geometric features, repeating patterns, ringing risk
+- Full resolution: [Open image](full_p197_x631.png)
 
-### xref 432 ? page 138 ? 720x351 ? 424,440 -> 71,034 bytes as q90 JPEG
+![Image 013 ? xref 631](full_p197_x631.png)
 
-**OCR: no text detected** ? decision is LIVE: review for thin lines, fine detail, ringing risk; flag this xref if JPEG would damage anything
+- **Review verdict: PENDING**
+- Reason: ?
 
-![xref 432](full_p138_x432.png)
+## Image 014 ? xref 913
 
-### xref 367 ? page 116 ? 600x400 ? 422,294 -> 58,309 bytes as q90 JPEG
+- Pages: 293
+- Dimensions: 512x512
+- Size as lossless PNG: 443,807 bytes ? as JPEG q90: 64,036 bytes
+- OCR: **OCR NEGATIVE** ? no text detected. OCR-negative is not proof of JPEG safety: review for thin strokes, high-contrast edges, small geometric features, repeating patterns, ringing risk
+- Full resolution: [Open image](full_p293_x913.png)
 
-**OCR: no text detected** ? decision is LIVE: review for thin lines, fine detail, ringing risk; flag this xref if JPEG would damage anything
+![Image 014 ? xref 913](full_p293_x913.png)
 
-![xref 367](full_p116_x367.png)
+- **Review verdict: PENDING**
+- Reason: ?
+
+## Image 015 ? xref 910
+
+- Pages: 292
+- Dimensions: 512x512
+- Size as lossless PNG: 440,653 bytes ? as JPEG q90: 63,102 bytes
+- OCR: **OCR NEGATIVE** ? no text detected. OCR-negative is not proof of JPEG safety: review for thin strokes, high-contrast edges, small geometric features, repeating patterns, ringing risk
+- Full resolution: [Open image](full_p292_x910.png)
+
+![Image 015 ? xref 910](full_p292_x910.png)
+
+- **Review verdict: PENDING**
+- Reason: ?
+
+## Image 016 ? xref 907
+
+- Pages: 291
+- Dimensions: 512x512
+- Size as lossless PNG: 437,141 bytes ? as JPEG q90: 63,498 bytes
+- OCR: **OCR NEGATIVE** ? no text detected. OCR-negative is not proof of JPEG safety: review for thin strokes, high-contrast edges, small geometric features, repeating patterns, ringing risk
+- Full resolution: [Open image](full_p291_x907.png)
+
+![Image 016 ? xref 907](full_p291_x907.png)
+
+- **Review verdict: PENDING**
+- Reason: ?
+
+## Image 017 ? xref 432
+
+- Pages: 138
+- Dimensions: 720x351
+- Size as lossless PNG: 424,440 bytes ? as JPEG q90: 71,034 bytes
+- OCR: **OCR NEGATIVE** ? no text detected. OCR-negative is not proof of JPEG safety: review for thin strokes, high-contrast edges, small geometric features, repeating patterns, ringing risk
+- Full resolution: [Open image](full_p138_x432.png)
+
+![Image 017 ? xref 432](full_p138_x432.png)
+
+- **Review verdict: PENDING**
+- Reason: ?
+
+## Image 018 ? xref 367
+
+- Pages: 116
+- Dimensions: 600x400
+- Size as lossless PNG: 422,294 bytes ? as JPEG q90: 58,309 bytes
+- OCR: **OCR NEGATIVE** ? no text detected. OCR-negative is not proof of JPEG safety: review for thin strokes, high-contrast edges, small geometric features, repeating patterns, ringing risk
+- Full resolution: [Open image](full_p116_x367.png)
+
+![Image 018 ? xref 367](full_p116_x367.png)
+
+- **Review verdict: PENDING**
+- Reason: ?

@@ -1,171 +1,393 @@
-# REVIEW_3 ? OCR-flagged (uncertain/lossless by rule), for confirmation
+# REVIEW 3 ? OCR-positive images (policy default: UNCERTAIN/lossless), Image 037?064
 
+## Image 037 ? xref 1156
 
+- Pages: 371
+- Dimensions: 720x757
+- Size as lossless PNG: 1,321,349 bytes ? as JPEG q90: 205,177 bytes
+- OCR: **TEXT DETECTED** ? 2 item(s): 'Before RLHFfine-tuning' (h27px); 'After RLHFfine-tuning' (h28px)
+- Policy default: **UNCERTAIN ? lossless PNG** (OCR-positive); any reconsideration requires recorded rationale under a revised policy, never a silent override
+- Full resolution: [Open image](full_p371_x1156.png)
 
-### xref 1156 ? page 371 ? 720x757 ? 1,321,349 -> 205,177 bytes as q90 JPEG
+![Image 037 ? xref 1156](full_p371_x1156.png)
 
-**OCR: 2 text items** (e.g. 'Before RLHFfine-tuning'; 'After RLHFfine-tuning') -> uncertain/lossless by the conservative rule; confirm
+- **Review verdict: PENDING**
+- Reason: ?
 
-![xref 1156](full_p371_x1156.png)
+## Image 038 ? xref 930
 
-### xref 930 ? page 298 ? 720x616 ? 853,956 -> 123,657 bytes as q90 JPEG
+- Pages: 298
+- Dimensions: 720x616
+- Size as lossless PNG: 853,956 bytes ? as JPEG q90: 123,657 bytes
+- OCR: **TEXT DETECTED** ? 6 item(s): 'Inputimage' (h25px); '"addclownfacepaint"' (h21px); '"turnherintoabeardedman”' (h19px); '"giveherabigsmile"' (h24px)
+- Policy default: **UNCERTAIN ? lossless PNG** (OCR-positive); any reconsideration requires recorded rationale under a revised policy, never a silent override
+- Full resolution: [Open image](full_p298_x930.png)
 
-**OCR: 6 text items** (e.g. 'Inputimage'; '"addclownfacepaint"'; '"turnherintoabeardedman”'; '"giveherabigsmile"') -> uncertain/lossless by the conservative rule; confirm
+![Image 038 ? xref 930](full_p298_x930.png)
 
-![xref 930](full_p298_x930.png)
+- **Review verdict: PENDING**
+- Reason: ?
 
-### xref 419 ? page 134 ? 721x488 ? 800,162 -> 150,609 bytes as q90 JPEG
+## Image 039 ? xref 419
 
-**OCR: 8 text items** (e.g. 'Currentx(stepO)'; 'Predicteddenoisedimages(step0)'; 'Currentx(step10)'; 'Predicted denoised images(step10)') -> uncertain/lossless by the conservative rule; confirm
+- Pages: 134
+- Dimensions: 721x488
+- Size as lossless PNG: 800,162 bytes ? as JPEG q90: 150,609 bytes
+- OCR: **TEXT DETECTED** ? 8 item(s): 'Currentx(stepO)' (h20px); 'Predicteddenoisedimages(step0)' (h19px); 'Currentx(step10)' (h18px); 'Predicted denoised images(step10)' (h21px)
+- Policy default: **UNCERTAIN ? lossless PNG** (OCR-positive); any reconsideration requires recorded rationale under a revised policy, never a silent override
+- Full resolution: [Open image](full_p134_x419.png)
 
-![xref 419](full_p134_x419.png)
+![Image 039 ? xref 419](full_p134_x419.png)
 
-### xref 602 ? page 188 ? 721x845 ? 736,791 -> 168,778 bytes as q90 JPEG
+- **Review verdict: PENDING**
+- Reason: ?
 
-**OCR: 34 text items** (e.g. 'Prompt'; 'Timestept'; 'Noisyx'; 'CrossAttnDown') -> uncertain/lossless by the conservative rule; confirm
+## Image 040 ? xref 602
 
-![xref 602](full_p188_x602.png)
+- Pages: 188
+- Dimensions: 721x845
+- Size as lossless PNG: 736,791 bytes ? as JPEG q90: 168,778 bytes
+- OCR: **TEXT DETECTED** ? 34 item(s): 'Prompt' (h24px); 'Timestept' (h23px); 'Noisyx' (h27px); 'CrossAttnDown' (h23px)
+- Policy default: **UNCERTAIN ? lossless PNG** (OCR-positive); any reconsideration requires recorded rationale under a revised policy, never a silent override
+- Full resolution: [Open image](full_p188_x602.png)
 
-### xref 962 ? page 307 ? 720x360 ? 720,632 -> 102,939 bytes as q90 JPEG
+![Image 040 ? xref 602](full_p188_x602.png)
 
-**OCR: 1 text items** (e.g. 'M米米') -> uncertain/lossless by the conservative rule; confirm
+- **Review verdict: PENDING**
+- Reason: ?
 
-![xref 962](full_p307_x962.png)
+## Image 041 ? xref 962
 
-### xref 463 ? page 147 ? 721x415 ? 719,227 -> 124,838 bytes as q90 JPEG
+- Pages: 307
+- Dimensions: 720x360
+- Size as lossless PNG: 720,632 bytes ? as JPEG q90: 102,939 bytes
+- OCR: **TEXT DETECTED** ? 1 item(s): 'M米米' (h67px)
+- Policy default: **UNCERTAIN ? lossless PNG** (OCR-positive); any reconsideration requires recorded rationale under a revised policy, never a silent override
+- Full resolution: [Open image](full_p307_x962.png)
 
-**OCR: 9 text items** (e.g. 'Forward'; 'Reverse'; 'Original'; 'Degraded') -> uncertain/lossless by the conservative rule; confirm
+![Image 041 ? xref 962](full_p307_x962.png)
 
-![xref 463](full_p147_x463.png)
+- **Review verdict: PENDING**
+- Reason: ?
 
-### xref 513 ? page 162 ? 708x792 ? 687,390 -> 154,955 bytes as q90 JPEG
+## Image 042 ? xref 463
 
-**OCR: 47 text items** (e.g. 'UNet'; 'Embedinput'; 'Project output'; 'ResBlock') -> uncertain/lossless by the conservative rule; confirm
+- Pages: 147
+- Dimensions: 721x415
+- Size as lossless PNG: 719,227 bytes ? as JPEG q90: 124,838 bytes
+- OCR: **TEXT DETECTED** ? 9 item(s): 'Forward' (h17px); 'Reverse' (h20px); 'Original' (h20px); 'Degraded' (h21px)
+- Policy default: **UNCERTAIN ? lossless PNG** (OCR-positive); any reconsideration requires recorded rationale under a revised policy, never a silent override
+- Full resolution: [Open image](full_p147_x463.png)
 
-![xref 513](full_p162_x513.png)
+![Image 042 ? xref 463](full_p147_x463.png)
 
-### xref 193 ? page 60 ? 714x811 ? 641,765 -> 176,711 bytes as q90 JPEG
+- **Review verdict: PENDING**
+- Reason: ?
 
-**OCR: 54 text items** (e.g. 'DeepSeek2.5'; 'Llama3.2'; 'OLMoE'; 'SmoLM') -> uncertain/lossless by the conservative rule; confirm
+## Image 043 ? xref 513
 
-![xref 193](full_p060_x193.png)
+- Pages: 162
+- Dimensions: 708x792
+- Size as lossless PNG: 687,390 bytes ? as JPEG q90: 154,955 bytes
+- OCR: **TEXT DETECTED** ? 47 item(s): 'UNet' (h23px); 'Embedinput' (h98px); 'Project output' (h108px); 'ResBlock' (h68px)
+- Policy default: **UNCERTAIN ? lossless PNG** (OCR-positive); any reconsideration requires recorded rationale under a revised policy, never a silent override
+- Full resolution: [Open image](full_p162_x513.png)
 
-### xref 520 ? page 164 ? 721x494 ? 621,308 -> 119,856 bytes as q90 JPEG
+![Image 043 ? xref 513](full_p162_x513.png)
 
-**OCR: 12 text items** (e.g. 'Inputimage'; 'Inputimage'; 'Inputimage'; 'Input image') -> uncertain/lossless by the conservative rule; confirm
+- **Review verdict: PENDING**
+- Reason: ?
 
-![xref 520](full_p164_x520.png)
+## Image 044 ? xref 193
 
-### xref 1188 ? page 381 ? 676x449 ? 544,759 -> 77,025 bytes as q90 JPEG
+- Pages: 60
+- Dimensions: 714x811
+- Size as lossless PNG: 641,765 bytes ? as JPEG q90: 176,711 bytes
+- OCR: **TEXT DETECTED** ? 54 item(s): 'DeepSeek2.5' (h22px); 'Llama3.2' (h19px); 'OLMoE' (h18px); 'SmoLM' (h25px)
+- Policy default: **UNCERTAIN ? lossless PNG** (OCR-positive); any reconsideration requires recorded rationale under a revised policy, never a silent override
+- Full resolution: [Open image](full_p060_x193.png)
 
-**OCR: 4 text items** (e.g. 'person0.93'; 'boat0.69'; 'perso'; 'boat0.351') -> uncertain/lossless by the conservative rule; confirm
+![Image 044 ? xref 193](full_p060_x193.png)
 
-![xref 1188](full_p381_x1188.png)
+- **Review verdict: PENDING**
+- Reason: ?
 
-### xref 788 ? page 252 ? 1049x623 ? 534,738 -> 168,360 bytes as q90 JPEG
+## Image 045 ? xref 520
 
-**OCR: 88 text items** (e.g. 'Arena'; 'NEW:Arena (Vision)'; 'Arena-Hard-Auto'; 'Full Leaderboard') -> uncertain/lossless by the conservative rule; confirm
+- Pages: 164
+- Dimensions: 721x494
+- Size as lossless PNG: 621,308 bytes ? as JPEG q90: 119,856 bytes
+- OCR: **TEXT DETECTED** ? 12 item(s): 'Inputimage' (h18px); 'Inputimage' (h18px); 'Inputimage' (h18px); 'Input image' (h18px)
+- Policy default: **UNCERTAIN ? lossless PNG** (OCR-positive); any reconsideration requires recorded rationale under a revised policy, never a silent override
+- Full resolution: [Open image](full_p164_x520.png)
 
-![xref 788](full_p252_x788.png)
+![Image 045 ? xref 520](full_p164_x520.png)
 
-### xref 888 ? page 285 ? 720x345 ? 524,462 -> 73,333 bytes as q90 JPEG
+- **Review verdict: PENDING**
+- Reason: ?
 
-**OCR: 10 text items** (e.g. '0.1'; '0.2'; '0.3'; '0.4') -> uncertain/lossless by the conservative rule; confirm
+## Image 046 ? xref 1188
 
-![xref 888](full_p285_x888.png)
+- Pages: 381
+- Dimensions: 676x449
+- Size as lossless PNG: 544,759 bytes ? as JPEG q90: 77,025 bytes
+- OCR: **TEXT DETECTED** ? 4 item(s): 'person0.93' (h21px); 'boat0.69' (h22px); 'perso' (h19px); 'boat0.351' (h23px)
+- Policy default: **UNCERTAIN ? lossless PNG** (OCR-positive); any reconsideration requires recorded rationale under a revised policy, never a silent override
+- Full resolution: [Open image](full_p381_x1188.png)
 
-### xref 243 ? page 76 ? 712x461 ? 502,192 -> 93,954 bytes as q90 JPEG
+![Image 046 ? xref 1188](full_p381_x1188.png)
 
-**OCR: 17 text items** (e.g. 'Obtainrepresentations'; 'usinga differentmethod'; 'Encoder'; 'Encoder') -> uncertain/lossless by the conservative rule; confirm
+- **Review verdict: PENDING**
+- Reason: ?
 
-![xref 243](full_p076_x243.png)
+## Image 047 ? xref 788
 
-### xref 342 ? page 109 ? 721x575 ? 498,704 -> 145,803 bytes as q90 JPEG
+- Pages: 252
+- Dimensions: 1049x623
+- Size as lossless PNG: 534,738 bytes ? as JPEG q90: 168,360 bytes
+- OCR: **TEXT DETECTED** ? 88 item(s): 'Arena' (h18px); 'NEW:Arena (Vision)' (h21px); 'Arena-Hard-Auto' (h17px); 'Full Leaderboard' (h17px)
+- Policy default: **UNCERTAIN ? lossless PNG** (OCR-positive); any reconsideration requires recorded rationale under a revised policy, never a silent override
+- Full resolution: [Open image](full_p252_x788.png)
 
-**OCR: 14 text items** (e.g. '3'; '2'; '2'; '0') -> uncertain/lossless by the conservative rule; confirm
+![Image 047 ? xref 788](full_p252_x788.png)
 
-![xref 342](full_p109_x342.png)
+- **Review verdict: PENDING**
+- Reason: ?
 
-### xref 302 ? page 96 ? 721x572 ? 494,323 -> 152,908 bytes as q90 JPEG
+## Image 048 ? xref 888
 
-**OCR: 14 text items** (e.g. '0'; '6'; '1'; '7') -> uncertain/lossless by the conservative rule; confirm
+- Pages: 285
+- Dimensions: 720x345
+- Size as lossless PNG: 524,462 bytes ? as JPEG q90: 73,333 bytes
+- OCR: **TEXT DETECTED** ? 10 item(s): '0.1' (h20px); '0.2' (h20px); '0.3' (h19px); '0.4' (h21px)
+- Policy default: **UNCERTAIN ? lossless PNG** (OCR-positive); any reconsideration requires recorded rationale under a revised policy, never a silent override
+- Full resolution: [Open image](full_p285_x888.png)
 
-![xref 302](full_p096_x302.png)
+![Image 048 ? xref 888](full_p285_x888.png)
 
-### xref 937 ? page 300 ? 601x458 ? 493,460 -> 94,964 bytes as q90 JPEG
+- **Review verdict: PENDING**
+- Reason: ?
 
-**OCR: 8 text items** (e.g. 'Imageinput'; 'Inputcannyedges'; 'Output:'; '"acapybaraonthesnow”') -> uncertain/lossless by the conservative rule; confirm
+## Image 049 ? xref 243
 
-![xref 937](full_p300_x937.png)
+- Pages: 76
+- Dimensions: 712x461
+- Size as lossless PNG: 502,192 bytes ? as JPEG q90: 93,954 bytes
+- OCR: **TEXT DETECTED** ? 17 item(s): 'Obtainrepresentations' (h19px); 'usinga differentmethod' (h19px); 'Encoder' (h20px); 'Encoder' (h20px)
+- Policy default: **UNCERTAIN ? lossless PNG** (OCR-positive); any reconsideration requires recorded rationale under a revised policy, never a silent override
+- Full resolution: [Open image](full_p076_x243.png)
 
-### xref 299 ? page 95 ? 721x572 ? 492,070 -> 151,975 bytes as q90 JPEG
+![Image 049 ? xref 243](full_p076_x243.png)
 
-**OCR: 12 text items** (e.g. '0'; '5'; '1'; '6') -> uncertain/lossless by the conservative rule; confirm
+- **Review verdict: PENDING**
+- Reason: ?
 
-![xref 299](full_p095_x299.png)
+## Image 050 ? xref 342
 
-### xref 1028 ? page 327 ? 556x413 ? 477,985 -> 79,794 bytes as q90 JPEG
+- Pages: 109
+- Dimensions: 721x575
+- Size as lossless PNG: 498,704 bytes ? as JPEG q90: 145,803 bytes
+- OCR: **TEXT DETECTED** ? 14 item(s): '3' (h14px); '2' (h10px); '2' (h11px); '0' (h13px)
+- Policy default: **UNCERTAIN ? lossless PNG** (OCR-positive); any reconsideration requires recorded rationale under a revised policy, never a silent override
+- Full resolution: [Open image](full_p109_x342.png)
 
-**OCR: 25 text items** (e.g. '+0dB'; '-10dB'; '4096'; '-20dB') -> uncertain/lossless by the conservative rule; confirm
+![Image 050 ? xref 342](full_p109_x342.png)
 
-![xref 1028](full_p327_x1028.png)
+- **Review verdict: PENDING**
+- Reason: ?
 
-### xref 1114 ? page 357 ? 556x413 ? 473,601 -> 81,460 bytes as q90 JPEG
+## Image 051 ? xref 302
 
-**OCR: 26 text items** (e.g. '+0dB'; '8192'; '-10dB'; '4096') -> uncertain/lossless by the conservative rule; confirm
+- Pages: 96
+- Dimensions: 721x572
+- Size as lossless PNG: 494,323 bytes ? as JPEG q90: 152,908 bytes
+- OCR: **TEXT DETECTED** ? 14 item(s): '0' (h15px); '6' (h16px); '1' (h12px); '7' (h17px)
+- Policy default: **UNCERTAIN ? lossless PNG** (OCR-positive); any reconsideration requires recorded rationale under a revised policy, never a silent override
+- Full resolution: [Open image](full_p096_x302.png)
 
-![xref 1114](full_p357_x1114.png)
+![Image 051 ? xref 302](full_p096_x302.png)
 
-### xref 346 ? page 110 ? 721x573 ? 472,828 -> 138,108 bytes as q90 JPEG
+- **Review verdict: PENDING**
+- Reason: ?
 
-**OCR: 14 text items** (e.g. '4'; '3'; '2'; '2') -> uncertain/lossless by the conservative rule; confirm
+## Image 052 ? xref 937
 
-![xref 346](full_p110_x346.png)
+- Pages: 300
+- Dimensions: 601x458
+- Size as lossless PNG: 493,460 bytes ? as JPEG q90: 94,964 bytes
+- OCR: **TEXT DETECTED** ? 8 item(s): 'Imageinput' (h23px); 'Inputcannyedges' (h22px); 'Output:' (h21px); '"acapybaraonthesnow”' (h20px)
+- Policy default: **UNCERTAIN ? lossless PNG** (OCR-positive); any reconsideration requires recorded rationale under a revised policy, never a silent override
+- Full resolution: [Open image](full_p300_x937.png)
 
-### xref 1023 ? page 325 ? 556x413 ? 468,010 -> 91,985 bytes as q90 JPEG
+![Image 052 ? xref 937](full_p300_x937.png)
 
-**OCR: 27 text items** (e.g. '8000'; '+0dB'; '7000'; '-10dB') -> uncertain/lossless by the conservative rule; confirm
+- **Review verdict: PENDING**
+- Reason: ?
 
-![xref 1023](full_p325_x1023.png)
+## Image 053 ? xref 299
 
-### xref 735 ? page 234 ? 716x414 ? 464,864 -> 122,621 bytes as q90 JPEG
+- Pages: 95
+- Dimensions: 721x572
+- Size as lossless PNG: 492,070 bytes ? as JPEG q90: 151,975 bytes
+- OCR: **TEXT DETECTED** ? 12 item(s): '0' (h15px); '5' (h18px); '1' (h13px); '6' (h19px)
+- Policy default: **UNCERTAIN ? lossless PNG** (OCR-positive); any reconsideration requires recorded rationale under a revised policy, never a silent override
+- Full resolution: [Open image](full_p095_x299.png)
 
-**OCR: 25 text items** (e.g. 'Instructionfine-tuning'; 'Pleaseanswerthefollowingquestion:'; 'Whatistheboilingpointofnitrogen?'; '-320.4°F') -> uncertain/lossless by the conservative rule; confirm
+![Image 053 ? xref 299](full_p095_x299.png)
 
-![xref 735](full_p234_x735.png)
+- **Review verdict: PENDING**
+- Reason: ?
 
-### xref 1163 ? page 373 ? 718x452 ? 460,627 -> 119,981 bytes as q90 JPEG
+## Image 054 ? xref 1028
 
-**OCR: 40 text items** (e.g. 'TestingmodelviaNeedleinaHaystack'; 'Topof'; 'document'; '100%accuracy') -> uncertain/lossless by the conservative rule; confirm
+- Pages: 327
+- Dimensions: 556x413
+- Size as lossless PNG: 477,985 bytes ? as JPEG q90: 79,794 bytes
+- OCR: **TEXT DETECTED** ? 25 item(s): '+0dB' (h11px); '-10dB' (h17px); '4096' (h16px); '-20dB' (h15px)
+- Policy default: **UNCERTAIN ? lossless PNG** (OCR-positive); any reconsideration requires recorded rationale under a revised policy, never a silent override
+- Full resolution: [Open image](full_p327_x1028.png)
 
-![xref 1163](full_p373_x1163.png)
+![Image 054 ? xref 1028](full_p327_x1028.png)
 
-### xref 1105 ? page 354 ? 690x721 ? 450,360 -> 117,983 bytes as q90 JPEG
+- **Review verdict: PENDING**
+- Reason: ?
 
-**OCR: 32 text items** (e.g. 'Training'; 'Acoustic'; 'MuLan tokensM'; 'SemantictokensS') -> uncertain/lossless by the conservative rule; confirm
+## Image 055 ? xref 1114
 
-![xref 1105](full_p354_x1105.png)
+- Pages: 357
+- Dimensions: 556x413
+- Size as lossless PNG: 473,601 bytes ? as JPEG q90: 81,460 bytes
+- OCR: **TEXT DETECTED** ? 26 item(s): '+0dB' (h11px); '8192' (h16px); '-10dB' (h13px); '4096' (h16px)
+- Policy default: **UNCERTAIN ? lossless PNG** (OCR-positive); any reconsideration requires recorded rationale under a revised policy, never a silent override
+- Full resolution: [Open image](full_p357_x1114.png)
 
-### xref 916 ? page 294 ? 512x512 ? 438,839 -> 64,473 bytes as q90 JPEG
+![Image 055 ? xref 1114](full_p357_x1114.png)
 
-**OCR: 1 text items** (e.g. 'RORLS') -> uncertain/lossless by the conservative rule; confirm
+- **Review verdict: PENDING**
+- Reason: ?
 
-![xref 916](full_p294_x916.png)
+## Image 056 ? xref 346
 
-### xref 1207 ? page 386 ? 448x420 ? 432,905 -> 76,215 bytes as q90 JPEG
+- Pages: 110
+- Dimensions: 721x573
+- Size as lossless PNG: 472,828 bytes ? as JPEG q90: 138,108 bytes
+- OCR: **TEXT DETECTED** ? 14 item(s): '4' (h10px); '3' (h12px); '2' (h9px); '2' (h9px)
+- Policy default: **UNCERTAIN ? lossless PNG** (OCR-positive); any reconsideration requires recorded rationale under a revised policy, never a silent override
+- Full resolution: [Open image](full_p110_x346.png)
 
-**OCR: 1 text items** (e.g. 'Apizzawithpepperoniandcheeseonaplate') -> uncertain/lossless by the conservative rule; confirm
+![Image 056 ? xref 346](full_p110_x346.png)
 
-![xref 1207](full_p386_x1207.png)
+- **Review verdict: PENDING**
+- Reason: ?
 
-### xref 489 ? page 155 ? 721x248 ? 418,170 -> 115,829 bytes as q90 JPEG
+## Image 057 ? xref 1023
 
-**OCR: 3 text items** (e.g. 'Original'; 'Noisy（t=500,size=512)'; 'Noisy（t=500,size=64）') -> uncertain/lossless by the conservative rule; confirm
+- Pages: 325
+- Dimensions: 556x413
+- Size as lossless PNG: 468,010 bytes ? as JPEG q90: 91,985 bytes
+- OCR: **TEXT DETECTED** ? 27 item(s): '8000' (h15px); '+0dB' (h11px); '7000' (h16px); '-10dB' (h15px)
+- Policy default: **UNCERTAIN ? lossless PNG** (OCR-positive); any reconsideration requires recorded rationale under a revised policy, never a silent override
+- Full resolution: [Open image](full_p325_x1023.png)
 
-![xref 489](full_p155_x489.png)
+![Image 057 ? xref 1023](full_p325_x1023.png)
 
-### xref 1118 ? page 358 ? 567x415 ? 402,626 -> 85,308 bytes as q90 JPEG
+- **Review verdict: PENDING**
+- Reason: ?
 
-**OCR: 26 text items** (e.g. '+0dB'; '16384'; '-10dB'; '8192') -> uncertain/lossless by the conservative rule; confirm
+## Image 058 ? xref 735
 
-![xref 1118](full_p358_x1118.png)
+- Pages: 234
+- Dimensions: 716x414
+- Size as lossless PNG: 464,864 bytes ? as JPEG q90: 122,621 bytes
+- OCR: **TEXT DETECTED** ? 25 item(s): 'Instructionfine-tuning' (h23px); 'Pleaseanswerthefollowingquestion:' (h22px); 'Whatistheboilingpointofnitrogen?' (h20px); '-320.4°F' (h19px)
+- Policy default: **UNCERTAIN ? lossless PNG** (OCR-positive); any reconsideration requires recorded rationale under a revised policy, never a silent override
+- Full resolution: [Open image](full_p234_x735.png)
+
+![Image 058 ? xref 735](full_p234_x735.png)
+
+- **Review verdict: PENDING**
+- Reason: ?
+
+## Image 059 ? xref 1163
+
+- Pages: 373
+- Dimensions: 718x452
+- Size as lossless PNG: 460,627 bytes ? as JPEG q90: 119,981 bytes
+- OCR: **TEXT DETECTED** ? 40 item(s): 'TestingmodelviaNeedleinaHaystack' (h20px); 'Topof' (h22px); 'document' (h19px); '100%accuracy' (h22px)
+- Policy default: **UNCERTAIN ? lossless PNG** (OCR-positive); any reconsideration requires recorded rationale under a revised policy, never a silent override
+- Full resolution: [Open image](full_p373_x1163.png)
+
+![Image 059 ? xref 1163](full_p373_x1163.png)
+
+- **Review verdict: PENDING**
+- Reason: ?
+
+## Image 060 ? xref 1105
+
+- Pages: 354
+- Dimensions: 690x721
+- Size as lossless PNG: 450,360 bytes ? as JPEG q90: 117,983 bytes
+- OCR: **TEXT DETECTED** ? 32 item(s): 'Training' (h33px); 'Acoustic' (h20px); 'MuLan tokensM' (h22px); 'SemantictokensS' (h19px)
+- Policy default: **UNCERTAIN ? lossless PNG** (OCR-positive); any reconsideration requires recorded rationale under a revised policy, never a silent override
+- Full resolution: [Open image](full_p354_x1105.png)
+
+![Image 060 ? xref 1105](full_p354_x1105.png)
+
+- **Review verdict: PENDING**
+- Reason: ?
+
+## Image 061 ? xref 916
+
+- Pages: 294
+- Dimensions: 512x512
+- Size as lossless PNG: 438,839 bytes ? as JPEG q90: 64,473 bytes
+- OCR: **TEXT DETECTED** ? 1 item(s): 'RORLS' (h32px)
+- Policy default: **UNCERTAIN ? lossless PNG** (OCR-positive); any reconsideration requires recorded rationale under a revised policy, never a silent override
+- Full resolution: [Open image](full_p294_x916.png)
+
+![Image 061 ? xref 916](full_p294_x916.png)
+
+- **Review verdict: PENDING**
+- Reason: ?
+
+## Image 062 ? xref 1207
+
+- Pages: 386
+- Dimensions: 448x420
+- Size as lossless PNG: 432,905 bytes ? as JPEG q90: 76,215 bytes
+- OCR: **TEXT DETECTED** ? 1 item(s): 'Apizzawithpepperoniandcheeseonaplate' (h17px)
+- Policy default: **UNCERTAIN ? lossless PNG** (OCR-positive); any reconsideration requires recorded rationale under a revised policy, never a silent override
+- Full resolution: [Open image](full_p386_x1207.png)
+
+![Image 062 ? xref 1207](full_p386_x1207.png)
+
+- **Review verdict: PENDING**
+- Reason: ?
+
+## Image 063 ? xref 489
+
+- Pages: 155
+- Dimensions: 721x248
+- Size as lossless PNG: 418,170 bytes ? as JPEG q90: 115,829 bytes
+- OCR: **TEXT DETECTED** ? 3 item(s): 'Original' (h11px); 'Noisy（t=500,size=512)' (h12px); 'Noisy（t=500,size=64）' (h13px)
+- Policy default: **UNCERTAIN ? lossless PNG** (OCR-positive); any reconsideration requires recorded rationale under a revised policy, never a silent override
+- Full resolution: [Open image](full_p155_x489.png)
+
+![Image 063 ? xref 489](full_p155_x489.png)
+
+- **Review verdict: PENDING**
+- Reason: ?
+
+## Image 064 ? xref 1118
+
+- Pages: 358
+- Dimensions: 567x415
+- Size as lossless PNG: 402,626 bytes ? as JPEG q90: 85,308 bytes
+- OCR: **TEXT DETECTED** ? 26 item(s): '+0dB' (h13px); '16384' (h15px); '-10dB' (h14px); '8192' (h14px)
+- Policy default: **UNCERTAIN ? lossless PNG** (OCR-positive); any reconsideration requires recorded rationale under a revised policy, never a silent override
+- Full resolution: [Open image](full_p358_x1118.png)
+
+![Image 064 ? xref 1118](full_p358_x1118.png)
+
+- **Review verdict: PENDING**
+- Reason: ?
