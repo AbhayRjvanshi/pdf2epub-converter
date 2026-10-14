@@ -728,6 +728,26 @@ def build_epub_publication(
     depths = infer_heading_depths(clean_stream)
     index_of = {id(e): i for i, e in enumerate(clean_stream)}
     segments = segment_chapters(clean_stream)
+
+    # Phase F: resolve internal GOTO links to chapter-relative paths.
+    # All chapter files share the XHTML/ directory, so a link from one
+    # chapter to another uses the bare filename (chapter_NNN.xhtml),
+    # which resolves correctly relative to the source chapter's
+    # location in the EPUB.
+    page_to_chapter = {}
+    for ci, (_title, elems) in enumerate(segments):
+        chapter_file = f"chapter_{ci + 1:03d}.xhtml"  # bare: relative to XHTML/
+        for elem in elems:
+            if elem.page_num not in page_to_chapter:
+                page_to_chapter[elem.page_num] = chapter_file
+    for elem in clean_stream:
+        if elem.link_target_page is not None and elem.link_uri is None:
+            target = page_to_chapter.get(elem.link_target_page)
+            if target:
+                elem.link_uri = target
+            # if the target page has no chapter (shouldn't happen),
+            # the link is silently dropped — never a broken reference
+
     chapters: list[epub.EpubHtml] = []
     records: list[ChapterRecord] = []
     toc: list = []

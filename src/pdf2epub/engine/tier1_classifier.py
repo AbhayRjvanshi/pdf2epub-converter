@@ -130,12 +130,23 @@ class StreamElement:
     anchor_id: str = ""
     image_data: ImageElement | None = None
     attrs: str = ""  # extra opening-tag attributes, e.g. ol start="N"
+    # Phase F: PDF link annotations. `link_uri` is the resolved href
+    # (external URI or internal chapter path); `link_target_page` is
+    # the unresolved 0-based PDF page index for GOTO links (resolved
+    # to link_uri during packaging). Applied at render time, after all
+    # stream transformations, so welding/stripping cannot produce
+    # nested links or link dead content.
+    link_uri: str | None = None
+    link_target_page: int | None = None
 
     # -- rendering ---------------------------------------------------------
     def render(self) -> str:
         if self.element_type is ElementType.IMAGE and self.image_data is not None:
             src = f"../images/{self.image_data.filename}"
             alt = escape(self.image_data.alt_text, quote=True)
+            # image links deferred: annotations on images are counted
+            # as dropped (the quality-baseline defect register records
+            # this as a known limitation)
             return (
                 f'<figure{self._id_attr()}>'
                 f'<img src="{src}" alt="{alt}"/>'
@@ -143,10 +154,18 @@ class StreamElement:
             )
         if self.element_type is ElementType.CODE_BLOCK:
             return f"<pre{self._id_attr()}><code>{self.content}</code></pre>"
+        content = self.content
+        if self.link_uri:
+            href = escape(self.link_uri, quote=True)
+            # duplicate prevention: if linkify_urls already created
+            # an <a href> for the same URI inside the content, the
+            # annotation wrapper is redundant — skip it
+            if f'href="{href}"' not in content:
+                content = f'<a href="{href}">{content}</a>'
         cls = f' class="{self.css_class}"' if self.css_class else ""
         if self.element_type is ElementType.BLOCK and self.tag.lower() == "table":
-            return f'<div class="tbl"><table{self._id_attr()}{cls}>{self.content}</table></div>'
-        return f"<{self.tag}{self._id_attr()}{cls}{self.attrs}>{self.content}</{self.tag}>"
+            return f'<div class="tbl"><table{self._id_attr()}{cls}>{content}</table></div>'
+        return f"<{self.tag}{self._id_attr()}{cls}{self.attrs}>{content}</{self.tag}>"
 
     def _id_attr(self) -> str:
         return f' id="{self.anchor_id}"' if self.anchor_id else ""
@@ -1445,6 +1464,127 @@ def extract_tables(
     return [table], rest
 
 
+# Phase F: PDF link annotation extraction constants
+LINK_URI_WHITELIST = frozenset({"http", "https", "mailto"})
+LINK_COVERAGE_THRESHOLD = 0.60  # annotation must cover >= 60% of the element
+
+
+def _rect_area(rect) -> float:
+    return max(0.0, rect[2] - rect[0]) * max(0.0, rect[3] - rect[1])
+
+
+def _rect_overlap(a, b) -> float:
+    """Area of the intersection of two rectangles."""
+    ix = max(0.0, min(a[2], b[2]) - max(a[0], b[0]))
+    iy = max(0.0, min(a[3], b[3]) - max(a[1], b[1]))
+    return ix * iy
+
+
+def _normalize_uri_scheme(uri: str) -> tuple[str | None, str]:
+    """Validate a URI against the whitelist. Returns (scheme, error_reason)."""
+    if not uri or not uri.strip():
+        return None, "empty URI"
+    parsed = uri.strip().split(":", 1)
+    if len(parsed) < 2:
+        return None, "no scheme"
+    scheme = parsed[0].lower()
+    if scheme not in LINK_URI_WHITELIST:
+        return None, f"unsupported scheme {scheme!r}"
+    return scheme, ""
+
+
+def extract_page_links(page: "fitz.Page") -> list[dict]:
+    """Collect and filter PDF link annotations for one page.
+
+    Returns a list of dicts, each with:
+    - kind: "uri" | "goto"
+    - from: the annotation rectangle (x0, y0, x1, y1)
+    - uri: the URI string (for kind="uri")
+    - page: the 0-based target page index (for kind="goto")
+
+    Unsupported link kinds (LAUNCH, NAMED without resolvable targets)
+    and non-whitelisted URI schemes are dropped.
+    """
+    links = []
+    try:
+        raw_links = page.get_links()
+    except Exception:
+        return links
+    for link in raw_links:
+        kind = link.get("kind")
+        rect = link.get("from")
+        if rect is None:
+            continue
+        if kind == fitz.LINK_URI:
+            uri = link.get("uri", "")
+            scheme, _err = _normalize_uri_scheme(uri)
+            if scheme is not None:
+                links.append({"kind": "uri", "from": tuple(rect), "uri": uri.strip()})
+        elif kind == fitz.LINK_GOTO:
+            target = link.get("page", -1)
+            if target >= 0:
+                links.append({"kind": "goto", "from": tuple(rect), "page": target})
+    return links
+
+
+def apply_link_annotations(elements: list, links: list[dict]) -> dict:
+    """Match link annotations to StreamElements by bbox coverage.
+
+    For each link, finds the element with the highest overlap between
+    the annotation rectangle and the element's bbox. The link is
+    applied only when the annotation covers at least
+    LINK_COVERAGE_THRESHOLD of the element's area (whole-element
+    wrapping guard: an annotation that covers only a small phrase
+    within a larger paragraph must not make the entire paragraph
+    clickable).
+
+    Returns a stats dict: {"applied": N, "dropped_partial": N,
+    "dropped_no_match": N, "dropped_image": N, "dropped_multiple": N}
+    """
+    stats = {"applied": 0, "dropped_partial": 0, "dropped_no_match": 0,
+             "dropped_image": 0, "dropped_multiple": 0}
+    if not links or not elements:
+        return stats
+    for link in links:
+        best_elem = None
+        best_coverage = 0.0
+        for elem in elements:
+            if elem.element_type is ElementType.IMAGE:
+                continue  # image links deferred
+            if elem.element_type is ElementType.CODE_BLOCK:
+                continue  # links inside code blocks deferred
+            elem_area = _rect_area(elem.bbox)
+            if elem_area <= 0:
+                continue
+            overlap = _rect_overlap(link["from"], elem.bbox)
+            coverage = overlap / elem_area
+            if coverage > best_coverage:
+                best_coverage = coverage
+                best_elem = elem
+        if best_elem is None:
+            # check if there was an image-only match
+            for elem in elements:
+                if elem.element_type is ElementType.IMAGE:
+                    if _rect_overlap(link["from"], elem.bbox) > 0:
+                        stats["dropped_image"] += 1
+                        break
+            else:
+                stats["dropped_no_match"] += 1
+            continue
+        if best_coverage < LINK_COVERAGE_THRESHOLD:
+            stats["dropped_partial"] += 1
+            continue
+        if best_elem.link_uri is not None or best_elem.link_target_page is not None:
+            stats["dropped_multiple"] += 1
+            continue
+        if link["kind"] == "uri":
+            best_elem.link_uri = link["uri"]
+        elif link["kind"] == "goto":
+            best_elem.link_target_page = link["page"]
+        stats["applied"] += 1
+    return stats
+
+
 def build_page_stream(
     page: "fitz.Page",
     profile: DocumentFontProfile,
@@ -1459,6 +1599,13 @@ def build_page_stream(
     elements.extend(tables)
     # Restore spatial order: images were appended after text.
     elements.sort(key=lambda e: (round(e.bbox[1], 1), round(e.bbox[0], 1)))
+    # Phase F: extract and apply PDF link annotations (metadata only;
+    # the link wrapper is applied at render time after all stream
+    # transformations, so welding and stripping cannot create nested
+    # links or link dead content)
+    page_links = extract_page_links(page)
+    if page_links:
+        apply_link_annotations(elements, page_links)
     return elements
 
 
