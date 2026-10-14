@@ -1,4 +1,4 @@
-# REVIEW 2 ? OCR-negative images (LIVE decisions), Image 019?036
+# REVIEW 2 ? OCR-negative images, Image 019?036 (verdicts closed)
 
 ## Image 019 ? xref 903
 
@@ -12,7 +12,7 @@
 
 - **Review verdict: JPEG-ELIGIBLE**
 - Reason: Mixed photographic/realistic collage; no obvious material degradation at the reviewed scale.
-- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 020 ? xref 611
 
@@ -26,7 +26,7 @@
 
 - **Review verdict: JPEG-ELIGIBLE**
 - Reason: Cat photograph; no obvious material degradation.
-- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 021 ? xref 373
 
@@ -40,7 +40,7 @@
 
 - **Review verdict: JPEG-ELIGIBLE**
 - Reason: Wildlife photograph; no obvious material degradation.
-- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 022 ? xref 218
 
@@ -54,7 +54,7 @@
 
 - **Review verdict: JPEG-ELIGIBLE**
 - Reason: Cat photograph; no obvious material degradation.
-- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 023 ? xref 618
 
@@ -68,7 +68,7 @@
 
 - **Review verdict: JPEG-ELIGIBLE**
 - Reason: Photographic strip; no obvious material degradation at the reviewed scale.
-- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 024 ? xref 625
 
@@ -80,8 +80,9 @@
 
 ![Image 024 ? xref 625](full_p195_x625.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Stylized flower painting with strong outlines and texture.
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 025 ? xref 965
 
@@ -93,8 +94,9 @@
 
 ![Image 025 ? xref 965](full_p308_x965.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Mixed photographic, illustrated, and silhouette panels.
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 026 ? xref 892
 
@@ -106,8 +108,9 @@
 
 ![Image 026 ? xref 892](full_p286_x892.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Photographs combined with a high-contrast silhouette mask.
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 027 ? xref 412
 
@@ -121,7 +124,7 @@
 
 - **Review verdict: LOSSLESS**
 - Reason: Preserve the noise-pattern sequence and small embedded imagery.
-- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 028 ? xref 848
 
@@ -135,7 +138,7 @@
 
 - **Review verdict: JPEG-ELIGIBLE**
 - Reason: Portrait strip; no obvious material degradation.
-- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 029 ? xref 598
 
@@ -149,7 +152,7 @@
 
 - **Review verdict: JPEG-ELIGIBLE**
 - Reason: Wildlife photograph; no obvious material degradation.
-- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 030 ? xref 590
 
@@ -163,7 +166,7 @@
 
 - **Review verdict: JPEG-ELIGIBLE**
 - Reason: Wildlife photograph; no obvious material degradation.
-- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 031 ? xref 945
 
@@ -175,8 +178,9 @@
 
 ![Image 031 ? xref 945](full_p302_x945.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Mixed photographic and silhouette content.
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 032 ? xref 860
 
@@ -188,8 +192,9 @@
 
 ![Image 032 ? xref 860](full_p275_x860.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Flat-color illustration with crisp boundaries.
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 033 ? xref 416
 
@@ -203,7 +208,7 @@
 
 - **Review verdict: JPEG-ELIGIBLE**
 - Reason: Portrait photograph; no obvious material degradation.
-- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 034 ? xref 1196
 
@@ -215,8 +220,9 @@
 
 ![Image 034 ? xref 1196](full_p383_x1196.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Diagram with thin outlines and geometric detail.
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 035 ? xref 1339
 
@@ -228,8 +234,9 @@
 
 ![Image 035 ? xref 1339](full_p016_x1339.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Small, sharply defined green illustration.
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 036 ? xref 1338
 
@@ -241,5 +248,6 @@
 
 ![Image 036 ? xref 1338](full_p016_x1338.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Small, sharply defined bird illustration.
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)

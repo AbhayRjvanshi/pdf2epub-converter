@@ -1,4 +1,4 @@
-# REVIEW 1 ? OCR-negative images (LIVE decisions), Image 001?018, largest first
+# REVIEW 1 ? OCR-negative images, Image 001?018 (verdicts closed)
 
 ## Image 001 ? xref 926
 
@@ -12,7 +12,7 @@
 
 - **Review verdict: JPEG-ELIGIBLE**
 - Reason: Portrait detail appears preserved at the reviewed scale.
-- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 002 ? xref 467
 
@@ -26,7 +26,7 @@
 
 - **Review verdict: LOSSLESS**
 - Reason: Butterfly markings and noise-pattern panels are content that compression may alter.
-- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 003 ? xref 470
 
@@ -40,7 +40,7 @@
 
 - **Review verdict: LOSSLESS**
 - Reason: Fine markings and noise patterns should remain unchanged.
-- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 004 ? xref 473
 
@@ -54,7 +54,7 @@
 
 - **Review verdict: LOSSLESS**
 - Reason: High-frequency patterns and fine detail warrant preservation.
-- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 005 ? xref 956
 
@@ -68,7 +68,7 @@
 
 - **Review verdict: JPEG-ELIGIBLE**
 - Reason: Photographic still life; no obvious material degradation.
-- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 006 ? xref 834
 
@@ -82,7 +82,7 @@
 
 - **Review verdict: JPEG-ELIGIBLE**
 - Reason: Star flare, stars, and broad gradients appear intact at the reviewed scale.
-- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 007 ? xref 87
 
@@ -96,7 +96,7 @@
 
 - **Review verdict: JPEG-ELIGIBLE**
 - Reason: Photograph; no obvious material degradation.
-- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 008 ? xref 934
 
@@ -110,7 +110,7 @@
 
 - **Review verdict: JPEG-ELIGIBLE**
 - Reason: Landscape gradients and mountain edges appear acceptable.
-- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 009 ? xref 575
 
@@ -122,8 +122,9 @@
 
 ![Image 009 ? xref 575](full_p181_x575.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Watercolor-style flower illustration with defined edges.
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 010 ? xref 436
 
@@ -137,7 +138,7 @@
 
 - **Review verdict: LOSSLESS**
 - Reason: Comparison grid and degraded/noise panels should remain faithful to the source.
-- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 011 ? xref 452
 
@@ -151,7 +152,7 @@
 
 - **Review verdict: LOSSLESS**
 - Reason: Preserve butterfly-wing detail.
-- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 012 ? xref 448
 
@@ -165,7 +166,7 @@
 
 - **Review verdict: LOSSLESS**
 - Reason: Preserve butterfly-wing detail.
-- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 013 ? xref 631
 
@@ -177,9 +178,9 @@
 
 ![Image 013 ? xref 631](full_p197_x631.png)
 
-- **Review verdict: UNCERTAIN**
-- Reason: Painterly texture is important; retain PNG pending closer native-resolution inspection.
-- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
+- **Review verdict: LOSSLESS**
+- Reason: Painterly texture is important; texture fidelity was not sufficiently established for JPEG approval, so the image stays lossless.
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 014 ? xref 913
 
@@ -193,7 +194,7 @@
 
 - **Review verdict: JPEG-ELIGIBLE**
 - Reason: Grayscale portrait detail appears acceptable.
-- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 015 ? xref 910
 
@@ -207,7 +208,7 @@
 
 - **Review verdict: JPEG-ELIGIBLE**
 - Reason: Grayscale portrait detail appears acceptable.
-- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 016 ? xref 907
 
@@ -221,7 +222,7 @@
 
 - **Review verdict: JPEG-ELIGIBLE**
 - Reason: Grayscale portrait detail appears acceptable.
-- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 017 ? xref 432
 
@@ -233,8 +234,9 @@
 
 ![Image 017 ? xref 432](full_p138_x432.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Butterfly reference grid with fine markings.
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
 
 ## Image 018 ? xref 367
 
@@ -248,4 +250,4 @@
 
 - **Review verdict: JPEG-ELIGIBLE**
 - Reason: Wildlife photograph; no obvious material degradation.
-- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
+- Reviewed: 2026-10-14 (reviewer verdict; Images 001-036 closed)
