@@ -189,13 +189,18 @@ def test_transcode_preserves_no_alpha_when_source_has_none():
 
 
 def test_size_fallback_contract_documented():
-    """Requirement 4: the size-comparison baseline is the packaged lossless
-    PNG bytes. No exception mechanism currently exists, so this test
-    documents the contract for future implementation: if a JPEG candidate
-    is not strictly smaller than the PNG, the PNG must win.
+    """Requirement 4 — POLICY-CONTRACT DOCUMENTATION, NOT A BEHAVIORAL GATE TEST.
 
-    This is a contract test: it verifies that _transcode_to_core always
-    produces the lossless PNG (which IS the size baseline)."""
+    This test documents the future size-comparison baseline (packaged
+    lossless PNG bytes) and verifies that _transcode_to_core produces
+    the lossless PNG that IS that baseline. It does NOT exercise a
+    JPEG candidate that is equal to or larger than the PNG, because
+    no exception mechanism exists to produce such a candidate.
+
+    When an exception workflow is approved, this test must be
+    supplemented with behavioral tests covering: JPEG-smaller-proceeds,
+    JPEG-equal-keeps-PNG, and JPEG-larger-keeps-PNG.
+    """
     pix = fitz.Pixmap(fitz.csRGB, fitz.IRect(0, 0, 64, 64), False)
     source_bytes = pix.tobytes("png")
     png_output = t1._transcode_to_core(source_bytes)
@@ -211,13 +216,19 @@ def test_size_fallback_contract_documented():
 
 
 def test_fidelity_fallback_contract_documented():
-    """Requirement 5: if a fidelity gate fails or is indeterminate, the
-    lossless PNG remains the output. No exception mechanism currently
-    exists; this test documents that the current path has NO fidelity
-    gate because it never produces a lossy candidate to gate.
+    """Requirement 5 — POLICY-CONTRACT DOCUMENTATION, NOT A BEHAVIORAL GATE TEST.
 
-    The invariant is: _transcode_to_core always produces the lossless
-    output; there is no lossy candidate to evaluate."""
+    This test verifies that the current path always produces lossless
+    output (there is no lossy candidate to gate). It does NOT exercise
+    a fidelity check that fails or returns an indeterminate result,
+    because no exception mechanism exists to produce a candidate.
+
+    When an exception workflow is approved, this test must be
+    supplemented with behavioral tests covering: fidelity-pass-allows-
+    JPEG, fidelity-fail-keeps-PNG, and fidelity-indeterminate-keeps-PNG.
+    Formal numerical fidelity thresholds for M3b have not been pinned
+    (documented in PHASE5_DECISION.md).
+    """
     pix = fitz.Pixmap(fitz.csRGB, fitz.IRect(0, 0, 32, 32), False)
     result = t1._transcode_to_core(pix.tobytes("png"))
     assert result is not None
@@ -293,8 +304,11 @@ def test_image_dedup_uses_content_hash_not_dimensions(tmp_path):
 def test_m3a_page_raster_optimization_unchanged(fixture_pdfs, tmp_path):
     """Requirement 8: the M3a path (vision-embedded scanned-page rasters)
     still uses its measured-eligibility approach (encode both, keep the
-    smaller). This test runs the existing M3a fixture through the real
-    pipeline and verifies JPEG encoding still occurs for eligible pages."""
+    smaller). The scanned fixture uses a photographic-like gradient that
+    JPEG-compresses far smaller than PNG, so the EXPECTED deterministic
+    result is JPEG. This tight assertion catches an M3a regression where
+    the measured-eligibility behavior stops selecting JPEG for a
+    photographic page raster."""
     from pdf2epub.engine import driver
 
     out = tmp_path / "scan.epub"
@@ -308,11 +322,13 @@ def test_m3a_page_raster_optimization_unchanged(fixture_pdfs, tmp_path):
     with zipfile.ZipFile(str(out)) as zf:
         images = [n for n in zf.namelist() if n.startswith("EPUB/images/")]
         assert len(images) >= 1, "scanned page raster was not packaged"
-        # M3a: the page raster should be JPEG (the photographic scan
-        # wins the measured comparison) — this is the UNCHANGED M3a path
         data = zf.read(images[0])
-        assert data[:3] == b"\xff\xd8\xff" or data[:8] == b"\x89PNG\r\n\x1a\n", (
-            "M3a output must be a valid core format"
+        # TIGHT: the gradient fixture must produce JPEG (measured
+        # eligibility selects JPEG for this photographic content).
+        # Allowing PNG here would let an M3a regression slip through.
+        assert data[:3] == b"\xff\xd8\xff", (
+            f"M3a regression: scanned-page raster must be JPEG for this "
+            f"photographic fixture, got {data[:8]!r}"
         )
 
 
