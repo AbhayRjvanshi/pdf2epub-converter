@@ -18,4 +18,4 @@ JPEG-ELIGIBLE verdicts are provisional visual approvals, not guarantees of nativ
 - [COMPARISONS ? JPEG q90 test copies and amplified difference maps](comparisons/COMPARISONS.md)
 - [RULES ? the three candidate encoding rules, exactly as measured](RULES.md)
 
-OCR evidence: rapidocr-onnxruntime 1.4.4 / onnxruntime 1.23.2, confidence filter >= 0.5, 147/147 processed, runtime 1402 s, results JSON SHA-256 `1ed2d258143934b33d4403767812a4e22a1b3bf59f562a9aae9a412ab9048cd2`. OCR is a prioritization and exclusion signal, not proof of JPEG safety.
+OCR evidence: rapidocr-onnxruntime 1.4.4 / onnxruntime 1.23.2, confidence filter >= 0.5, 147/147 processed, runtime 1402 s, results JSON SHA-256 `1ed2d258143934b33d4403767812a4e22a1b3bf59f562a9aae9a412ab9048cd2`. OCR is a prioritization and exclusion signal, not proof of JPEG safety.- [Phase 2 batches — JPEG q90 comparisons for Images 037-147](comparisons/BATCH_037_147.md)

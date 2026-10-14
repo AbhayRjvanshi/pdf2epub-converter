@@ -1,0 +1,50 @@
+[
+ {
+  "image": 48,
+  "xref": 888,
+  "dims": "720x345",
+  "png": 524462,
+  "jpeg": 73333,
+  "saving_pct": 86.0,
+  "max_abs_diff": 17,
+  "mean_abs_diff": 1.3,
+  "share_px_diff_gt8": 0.0044,
+  "screen_reason": "Astronaut image sequence; check whether labels or fine details affect the decision"
+ },
+ {
+  "image": 61,
+  "xref": 916,
+  "dims": "512x512",
+  "png": 438839,
+  "jpeg": 64473,
+  "saving_pct": 85.3,
+  "max_abs_diff": 17,
+  "mean_abs_diff": 1.43,
+  "share_px_diff_gt8": 0.0074,
+  "screen_reason": "Black-and-white portrait photograph; a plausible photographic candidate"
+ },
+ {
+  "image": 62,
+  "xref": 1207,
+  "dims": "448x420",
+  "png": 432905,
+  "jpeg": 76215,
+  "saving_pct": 82.4,
+  "max_abs_diff": 24,
+  "mean_abs_diff": 1.91,
+  "share_px_diff_gt8": 0.0377,
+  "screen_reason": "Pizza photograph; a plausible photographic candidate"
+ },
+ {
+  "image": 86,
+  "xref": 1200,
+  "dims": "709x197",
+  "png": 257018,
+  "jpeg": 53532,
+  "saving_pct": 79.2,
+  "max_abs_diff": 31,
+  "mean_abs_diff": 1.45,
+  "share_px_diff_gt8": 0.0252,
+  "screen_reason": "Dog photograph sequence; check photographic detail and any meaningful frame labels"
+ }
+]
