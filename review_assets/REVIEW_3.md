@@ -1,4 +1,4 @@
-# REVIEW 3 ? OCR-positive images (policy default: UNCERTAIN/lossless), Image 037?064
+# REVIEW 3 ? OCR-positive images, Image 037?064 (policy default UNCERTAIN/lossless unless reviewed)
 
 ## Image 037 ? xref 1156
 
@@ -165,8 +165,9 @@
 
 ![Image 048 ? xref 888](full_p285_x888.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: JPEG-ELIGIBLE**
+- Reason: Photographic astronaut sequence; the comparison shows no material loss of the sequence's visible numeric labels or meaningful detail at q90 (mean 1.30/255, 0.4% of pixels >8/255). Recorded as a documented, reviewer-approved reconsideration of the OCR-positive default.
+- Reviewed: 2026-10-14 (reviewer verdict from inspection of the published PNG/JPEG/difference-map ZIP)
 
 ## Image 049 ? xref 243
 
@@ -347,8 +348,9 @@
 
 ![Image 061 ? xref 916](full_p294_x916.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: JPEG-ELIGIBLE**
+- Reason: Genuine photographic portrait; hair, beard, glasses and grayscale tonal structure remain visually intact at q90 (mean 1.43/255, 0.7% >8/255). Documented reconsideration of the OCR-positive default.
+- Reviewed: 2026-10-14 (reviewer verdict from inspection of the published PNG/JPEG/difference-map ZIP)
 
 ## Image 062 ? xref 1207
 
@@ -361,8 +363,9 @@
 
 ![Image 062 ? xref 1207](full_p386_x1207.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: JPEG-ELIGIBLE**
+- Reason: Food photograph; differences are distributed through photographic texture and the subject and caption remain legible (mean 1.91/255, 3.8% >8/255, max 24/255 ? noted, not disqualifying). Documented reconsideration of the OCR-positive default.
+- Reviewed: 2026-10-14 (reviewer verdict from inspection of the published PNG/JPEG/difference-map ZIP)
 
 ## Image 063 ? xref 489
 

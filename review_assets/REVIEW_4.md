@@ -1,4 +1,4 @@
-# REVIEW 4 ? OCR-positive images (policy default: UNCERTAIN/lossless), Image 065?147
+# REVIEW 4 ? OCR-positive images, Image 065?147 (policy default UNCERTAIN/lossless unless reviewed)
 
 ## Image 065 ? xref 952
 
@@ -207,8 +207,9 @@
 
 ![Image 079 ? xref 1192](full_p382_x1192.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Combines a photograph with a color-coded depth map, arrows and labels; the depth-map boundaries carry meaning and must not be exposed to lossy artifacts (max 34/255 reinforces caution; content type is the primary reason).
+- Reviewed: 2026-10-14 (reviewer verdict from inspection of the published PNG/JPEG/difference-map ZIP)
 
 ## Image 080 ? xref 813
 
@@ -221,8 +222,9 @@
 
 ![Image 080 ? xref 813](full_p260_x813.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Process diagram with small text, arrows, boxes and embedded images ? not photographic; compression artifacts around text and thin lines are avoidable.
+- Reviewed: 2026-10-14 (reviewer verdict from inspection of the published PNG/JPEG/difference-map ZIP)
 
 ## Image 081 ? xref 1211
 
@@ -305,8 +307,9 @@
 
 ![Image 086 ? xref 1200](full_p384_x1200.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Filmstrip-style sequence with thin rectangular borders and an embedded prompt label ? mixed photographic and diagram-like content; lossless retained rather than trading structural fidelity (max 31/255 along structural edges and text).
+- Reviewed: 2026-10-14 (reviewer verdict from inspection of the published PNG/JPEG/difference-map ZIP)
 
 ## Image 087 ? xref 360
 
@@ -319,8 +322,9 @@
 
 ![Image 087 ? xref 360](full_p114_x360.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Technical diagram with labels, arrows, a token matrix and a small dog photograph; the photographic inset does not make the whole image JPEG-suitable ? preserve the complete diagram losslessly.
+- Reviewed: 2026-10-14 (reviewer verdict from inspection of the published PNG/JPEG/difference-map ZIP)
 
 ## Image 088 ? xref 170
 
