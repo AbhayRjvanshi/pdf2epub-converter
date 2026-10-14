@@ -25,3 +25,6 @@ Verdict vocabulary: **LOSSLESS** ? PNG ? **UNCERTAIN** ? PNG ? **JPEG-ELIGIBLE**
 - [RULES ? the three candidate encoding rules](RULES.md)
 
 OCR evidence: rapidocr-onnxruntime 1.4.4 / onnxruntime 1.23.2, confidence filter >= 0.5, 147/147 processed, runtime 1402 s, results JSON SHA-256 `1ed2d258143934b33d4403767812a4e22a1b3bf59f562a9aae9a412ab9048cd2`. OCR is a prioritization and exclusion signal, not proof of JPEG safety.
+- [PHASE4_REPORT — Rule A/B/C comparison: all three rejected](PHASE4_REPORT.md)
+- [M3B_POLICY — Phase 5: lossless by default, exceptions deferred](M3B_POLICY.md)
+- [PHASE5_DECISION — approved decisions, rejected alternatives, sign-off](PHASE5_DECISION.md)

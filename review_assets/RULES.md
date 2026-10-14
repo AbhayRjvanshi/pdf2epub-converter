@@ -1,4 +1,12 @@
-# The three candidate encoding rules (Phase 4 comparison set)
+# The three candidate encoding rules ? ALL REJECTED FOR PRODUCTION
+
+**Phase 4 verdict (2026-10-14): all three rules are refuted by the
+147-image evidence set and are prohibited from authorizing production
+JPEG transcoding.** See [PHASE4_REPORT.md](PHASE4_REPORT.md) for the
+full comparison and [M3B_POLICY.md](M3B_POLICY.md) for the approved
+lossless-by-default policy. The rules below are retained as historical
+evidence so future work does not repeat the experiment without new
+evidence.
 
 These are the exact rule definitions as measured against the 180-source Hands-On feature set in this round ? recorded here so Phase 4 compares documented rules, not reinvented ones. All features are computed deterministically on a downsampled (<=128 px) RGB pixmap: 
 **micro** = share of adjacent horizontal pixel pairs with per-channel max difference in (0, 24]; 
