@@ -179,6 +179,71 @@ smaller than its high-resolution source scans — pre-existing
 behavior, covered by the source-passthrough backlog note in the
 inventory record.
 
+## M3b — Transcode-path classification (in progress; review gate open)
+
+**Status: no lossy encoding exists in production.** The three-outcome
+architecture (photographic → JPEG eligible only when smaller;
+line-art → lossless; uncertain → lossless) is approved. Thresholds
+are **provisional**; the no-lossy release gate stands until the human
+visual review pins them.
+
+### Feature measurement (the 180 Hands-On JPX sources)
+
+Three measurement passes (deterministic, downsampled to <=128 px):
+the size signal alone cannot classify — JPEG q90 is smaller than PNG
+on **all 180** sources (ratios 0.10–0.38, median 0.24), so a
+keep-the-smaller rule would JPEG everything with no quality gate.
+Micro-texture (share of adjacent pixel pairs with small nonzero
+deltas) and flat-run share are the real discriminators. The two
+threshold drafts classified 11 vs 163 sources as photographic —
+direct evidence of threshold sensitivity, which is why the thresholds
+are candidate-only.
+
+### OCR pre-screen (prioritization evidence — NOT proof of safety)
+
+| datum | value |
+|---|---|
+| tool | rapidocr-onnxruntime 1.4.4 on onnxruntime 1.23.2 — review-only tooling, not a product dependency |
+| detection filter | confidence >= 0.5; per word: text, confidence, region height |
+| processing | **147/147** unique sources (xref-deduplicated), zero errors, zero duplicates; runtime 1402 s (2026-10-14) |
+| results artifact | `ocr_prescreen.json` (session artifact, kept with the review set), SHA-256 `1ed2d258143934b33d4403767812a4e22a1b3bf59f562a9aae9a412ab9048cd2` |
+| finding | **111/147** candidate-photographic sources contain detected text: leaderboards ("Arena (Vision)"), UNet/diffusion diagrams, "Losses over time" charts, heatmap axis labels |
+
+The clean re-run's counts (111 + 36 = 147) reconcile exactly with the
+first pass; the clean run is the authoritative per-image record.
+
+### Withdrawal of the 73.4% projection
+
+The 47.86 MB → 12.74 MB (**73.4%**) projection computed from the
+permissive crispness-disjunct candidate is **withdrawn as
+unvalidated**: it counted the 111 text-bearing sources as
+JPEG-eligible. Retained here as historical evidence of why the
+permissive rule failed review. The conservative projection after the
+OCR-based exclusions is **34,147,262 vs 47,236,892 bytes (27.7%)** on
+the transcoded class — itself still pending the human review of the
+36 OCR-negative sources. Measured savings will be reported only
+after implementation and the fidelity gates.
+
+### Review gate (live)
+
+All 147 sources are published for visual review on the
+`review/m3b-images` branch — Image 001–147, every verdict defaulting
+to **PENDING**, with explicit full-resolution links and the OCR
+status on every entry:
+
+* index: `review_assets/REVIEW.md` on that branch
+* Image 001–036 (OCR-negative — **LIVE decisions**): `REVIEW_1.md`,
+  `REVIEW_2.md`
+* Image 037–147 (OCR-positive — UNCERTAIN/lossless by policy
+  default, reconsideration requires recorded rationale under a
+  revised policy): `REVIEW_3.md`, `REVIEW_4.md`
+
+Thresholds will be pinned only from these verdicts. The three
+candidate rules (crispness-disjunct, micro-texture-only, and a
+conservative variant routing borderline cases to uncertain) will be
+compared on the reviewed evaluation set, with classification
+correctness primary and savings secondary.
+
 ## Commands
 
 ```
