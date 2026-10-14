@@ -1,0 +1,1308 @@
+[
+ {
+  "image": 37,
+  "xref": 1156,
+  "source": "img037_x1156_source.png",
+  "ocr_count": 2,
+  "ocr_words": [
+   "Before RLHFfine-tuning",
+   "After RLHFfine-tuning"
+  ]
+ },
+ {
+  "image": 38,
+  "xref": 930,
+  "source": "img038_x930_source.png",
+  "ocr_count": 6,
+  "ocr_words": [
+   "Inputimage",
+   "\"addclownfacepaint\"",
+   "\"turnherintoabeardedman\u201d",
+   "\"giveherabigsmile\"",
+   "\"turnherintoazombie\""
+  ]
+ },
+ {
+  "image": 39,
+  "xref": 419,
+  "source": "img039_x419_source.png",
+  "ocr_count": 8,
+  "ocr_words": [
+   "Currentx(stepO)",
+   "Predicteddenoisedimages(step0)",
+   "Currentx(step10)",
+   "Predicted denoised images(step10)",
+   "Currentx(step20)"
+  ]
+ },
+ {
+  "image": 40,
+  "xref": 602,
+  "source": "img040_x602_source.png",
+  "ocr_count": 34,
+  "ocr_words": [
+   "Prompt",
+   "Timestept",
+   "Noisyx",
+   "CrossAttnDown",
+   "320channels"
+  ]
+ },
+ {
+  "image": 41,
+  "xref": 962,
+  "source": "img041_x962_source.png",
+  "ocr_count": 1,
+  "ocr_words": [
+   "M\u7c73\u7c73"
+  ]
+ },
+ {
+  "image": 42,
+  "xref": 463,
+  "source": "img042_x463_source.png",
+  "ocr_count": 9,
+  "ocr_words": [
+   "Forward",
+   "Reverse",
+   "Original",
+   "Degraded",
+   "Generated"
+  ]
+ },
+ {
+  "image": 43,
+  "xref": 513,
+  "source": "img043_x513_source.png",
+  "ocr_count": 47,
+  "ocr_words": [
+   "UNet",
+   "Embedinput",
+   "Project output",
+   "ResBlock",
+   "Upsample"
+  ]
+ },
+ {
+  "image": 44,
+  "xref": 193,
+  "source": "img044_x193_source.png",
+  "ocr_count": 54,
+  "ocr_words": [
+   "DeepSeek2.5",
+   "Llama3.2",
+   "OLMoE",
+   "SmoLM",
+   "Qwen2.5"
+  ]
+ },
+ {
+  "image": 45,
+  "xref": 520,
+  "source": "img045_x520_source.png",
+  "ocr_count": 12,
+  "ocr_words": [
+   "Inputimage",
+   "Inputimage",
+   "Inputimage",
+   "Input image",
+   "Inputimage"
+  ]
+ },
+ {
+  "image": 46,
+  "xref": 1188,
+  "source": "img046_x1188_source.png",
+  "ocr_count": 4,
+  "ocr_words": [
+   "person0.93",
+   "boat0.69",
+   "perso",
+   "boat0.351"
+  ]
+ },
+ {
+  "image": 47,
+  "xref": 788,
+  "source": "img047_x788_source.png",
+  "ocr_count": 88,
+  "ocr_words": [
+   "Arena",
+   "NEW:Arena (Vision)",
+   "Arena-Hard-Auto",
+   "Full Leaderboard",
+   "Total#models:133.Total #votes:1,717,800."
+  ]
+ },
+ {
+  "image": 49,
+  "xref": 243,
+  "source": "img049_x243_source.png",
+  "ocr_count": 17,
+  "ocr_words": [
+   "Obtainrepresentations",
+   "usinga differentmethod",
+   "Encoder",
+   "Encoder",
+   "(example:samplefroma"
+  ]
+ },
+ {
+  "image": 50,
+  "xref": 342,
+  "source": "img050_x342_source.png",
+  "ocr_count": 14,
+  "ocr_words": [
+   "3",
+   "2",
+   "2",
+   "0",
+   "5"
+  ]
+ },
+ {
+  "image": 51,
+  "xref": 302,
+  "source": "img051_x302_source.png",
+  "ocr_count": 14,
+  "ocr_words": [
+   "0",
+   "6",
+   "1",
+   "7",
+   "2"
+  ]
+ },
+ {
+  "image": 52,
+  "xref": 937,
+  "source": "img052_x937_source.png",
+  "ocr_count": 8,
+  "ocr_words": [
+   "Imageinput",
+   "Inputcannyedges",
+   "Output:",
+   "\"acapybaraonthesnow\u201d",
+   "Imageinput"
+  ]
+ },
+ {
+  "image": 53,
+  "xref": 299,
+  "source": "img053_x299_source.png",
+  "ocr_count": 12,
+  "ocr_words": [
+   "0",
+   "5",
+   "1",
+   "6",
+   "2"
+  ]
+ },
+ {
+  "image": 54,
+  "xref": 1028,
+  "source": "img054_x1028_source.png",
+  "ocr_count": 25,
+  "ocr_words": [
+   "+0dB",
+   "-10dB",
+   "4096",
+   "-20dB",
+   "2048"
+  ]
+ },
+ {
+  "image": 55,
+  "xref": 1114,
+  "source": "img055_x1114_source.png",
+  "ocr_count": 26,
+  "ocr_words": [
+   "+0dB",
+   "8192",
+   "-10dB",
+   "4096",
+   "-20dB"
+  ]
+ },
+ {
+  "image": 56,
+  "xref": 346,
+  "source": "img056_x346_source.png",
+  "ocr_count": 14,
+  "ocr_words": [
+   "4",
+   "3",
+   "2",
+   "2",
+   "0"
+  ]
+ },
+ {
+  "image": 57,
+  "xref": 1023,
+  "source": "img057_x1023_source.png",
+  "ocr_count": 27,
+  "ocr_words": [
+   "8000",
+   "+0dB",
+   "7000",
+   "-10dB",
+   "6000"
+  ]
+ },
+ {
+  "image": 58,
+  "xref": 735,
+  "source": "img058_x735_source.png",
+  "ocr_count": 25,
+  "ocr_words": [
+   "Instructionfine-tuning",
+   "Pleaseanswerthefollowingquestion:",
+   "Whatistheboilingpointofnitrogen?",
+   "-320.4\u00b0F",
+   "Answerthefollowingquestionby"
+  ]
+ },
+ {
+  "image": 59,
+  "xref": 1163,
+  "source": "img059_x1163_source.png",
+  "ocr_count": 40,
+  "ocr_words": [
+   "TestingmodelviaNeedleinaHaystack",
+   "Topof",
+   "document",
+   "100%accuracy",
+   "0%"
+  ]
+ },
+ {
+  "image": 60,
+  "xref": 1105,
+  "source": "img060_x1105_source.png",
+  "ocr_count": 32,
+  "ocr_words": [
+   "Training",
+   "Acoustic",
+   "MuLan tokensM",
+   "SemantictokensS",
+   "AcoustictokensA"
+  ]
+ },
+ {
+  "image": 63,
+  "xref": 489,
+  "source": "img063_x489_source.png",
+  "ocr_count": 3,
+  "ocr_words": [
+   "Original",
+   "Noisy\uff08t=500,size=512)",
+   "Noisy\uff08t=500,size=64\uff09"
+  ]
+ },
+ {
+  "image": 64,
+  "xref": 1118,
+  "source": "img064_x1118_source.png",
+  "ocr_count": 26,
+  "ocr_words": [
+   "+0dB",
+   "16384",
+   "-10dB",
+   "8192",
+   "-20dB"
+  ]
+ },
+ {
+  "image": 65,
+  "xref": 952,
+  "source": "img065_x952_source.png",
+  "ocr_count": 25,
+  "ocr_words": [
+   "Decoupled",
+   "cross-attention",
+   "\u7c73",
+   "\u7c73",
+   "Image"
+  ]
+ },
+ {
+  "image": 66,
+  "xref": 852,
+  "source": "img066_x852_source.png",
+  "ocr_count": 1,
+  "ocr_words": [
+   "O"
+  ]
+ },
+ {
+  "image": 67,
+  "xref": 568,
+  "source": "img067_x568_source.png",
+  "ocr_count": 25,
+  "ocr_words": [
+   "Pixelspace",
+   "Latentspace",
+   "Conditioning",
+   "Diffusionprocess",
+   "Semanticmap"
+  ]
+ },
+ {
+  "image": 68,
+  "xref": 583,
+  "source": "img068_x583_source.png",
+  "ocr_count": 16,
+  "ocr_words": [
+   "Encoderhiddenstates",
+   "(akaoutput/textembeddings)",
+   "Textmodel(stackoftransformerblocks)",
+   "Transformerblock",
+   "Transformer block"
+  ]
+ },
+ {
+  "image": 69,
+  "xref": 214,
+  "source": "img069_x214_source.png",
+  "ocr_count": 20,
+  "ocr_words": [
+   "Input",
+   "Image-",
+   "Output",
+   "classification",
+   "Label:"
+  ]
+ },
+ {
+  "image": 70,
+  "xref": 179,
+  "source": "img070_x179_source.png",
+  "ocr_count": 32,
+  "ocr_words": [
+   "Outputprobabilities",
+   "Softmax",
+   "Linear",
+   "Add&norm",
+   "Feed"
+  ]
+ },
+ {
+  "image": 71,
+  "xref": 998,
+  "source": "img071_x998_source.png",
+  "ocr_count": 9,
+  "ocr_words": [
+   "Twinkle",
+   "Twinkte",
+   "Star",
+   "Lit tle",
+   "twinkleLittle"
+  ]
+ },
+ {
+  "image": 72,
+  "xref": 493,
+  "source": "img072_x493_source.png",
+  "ocr_count": 4,
+  "ocr_words": [
+   "Scale:1.0",
+   "Scale:0.7",
+   "Scale:0.4",
+   "Scale:0.1"
+  ]
+ },
+ {
+  "image": 73,
+  "xref": 941,
+  "source": "img073_x941_source.png",
+  "ocr_count": 1,
+  "ocr_words": [
+   "\u798f"
+  ]
+ },
+ {
+  "image": 74,
+  "xref": 866,
+  "source": "img074_x866_source.png",
+  "ocr_count": 3,
+  "ocr_words": [
+   "Inputimage",
+   "MiDaSdepth",
+   "\"amecharobotswimming"
+  ]
+ },
+ {
+  "image": 75,
+  "xref": 837,
+  "source": "img075_x837_source.png",
+  "ocr_count": 18,
+  "ocr_words": [
+   "Reconstructionloss",
+   "\"A[V]dog\"",
+   "Super-resolutioncomponents:",
+   "Fine-tuning+unconditional",
+   "Text-\u219266\u00d764"
+  ]
+ },
+ {
+  "image": 76,
+  "xref": 1008,
+  "source": "img076_x1008_source.png",
+  "ocr_count": 48,
+  "ocr_words": [
+   "Sinewavewithfrequency1",
+   "Sinewavewithfrequency2",
+   "1.0",
+   "1.0",
+   "0.5"
+  ]
+ },
+ {
+  "image": 77,
+  "xref": 1044,
+  "source": "img077_x1044_source.png",
+  "ocr_count": 39,
+  "ocr_words": [
+   "Multitasktrainingformat",
+   "Special",
+   "TextTimestamp",
+   "tokens",
+   "tokens"
+  ]
+ },
+ {
+  "image": 78,
+  "xref": 1082,
+  "source": "img078_x1082_source.png",
+  "ocr_count": 11,
+  "ocr_words": [
+   "10",
+   "20",
+   "30",
+   "40",
+   "50"
+  ]
+ },
+ {
+  "image": 81,
+  "xref": 1211,
+  "source": "img081_x1211_source.png",
+  "ocr_count": 12,
+  "ocr_words": [
+   "Molmo",
+   "Multimodal OpenLanguageModel builtbyAi2",
+   "LearnaboutMolmo",
+   "What kind of music is this?",
+   "Write a story about whatis"
+  ]
+ },
+ {
+  "image": 82,
+  "xref": 354,
+  "source": "img082_x354_source.png",
+  "ocr_count": 2,
+  "ocr_words": [
+   "2",
+   "2"
+  ]
+ },
+ {
+  "image": 83,
+  "xref": 1170,
+  "source": "img083_x1170_source.png",
+  "ocr_count": 18,
+  "ocr_words": [
+   "Traditional",
+   "TransformerblockwithMoE",
+   "transformerblock",
+   "Output",
+   "ndino"
+  ]
+ },
+ {
+  "image": 84,
+  "xref": 920,
+  "source": "img084_x920_source.png",
+  "ocr_count": 8,
+  "ocr_words": [
+   "Aphotoofa",
+   "Aphotoofa",
+   "Anorigamiofa",
+   "Asketchofa",
+   "horseinthefield"
+  ]
+ },
+ {
+  "image": 85,
+  "xref": 1012,
+  "source": "img085_x1012_source.png",
+  "ocr_count": 24,
+  "ocr_words": [
+   "Waveform",
+   "Spectrum",
+   "1000",
+   "Frequency:1",
+   "1000"
+  ]
+ },
+ {
+  "image": 88,
+  "xref": 170,
+  "source": "img088_x170_source.png",
+  "ocr_count": 12,
+  "ocr_words": [
+   "Task-specificlayer",
+   "Contextualizedembeddings:[[0.31..][0.12.",
+   "nofthese",
+   "Transformerblock",
+   "FFNN"
+  ]
+ },
+ {
+  "image": 89,
+  "xref": 997,
+  "source": "img089_x997_source.png",
+  "ocr_count": 17,
+  "ocr_words": [
+   "0.3",
+   "0.2",
+   "0.1",
+   "0.0",
+   "0.1"
+  ]
+ },
+ {
+  "image": 90,
+  "xref": 977,
+  "source": "img090_x977_source.png",
+  "ocr_count": 23,
+  "ocr_words": [
+   "Input",
+   "Automatic",
+   "Output",
+   "WM",
+   "speech"
+  ]
+ },
+ {
+  "image": 91,
+  "xref": 142,
+  "source": "img091_x142_source.png",
+  "ocr_count": 8,
+  "ocr_words": [
+   "t=1",
+   "TokenTToken2Token3 Token4",
+   "t=0",
+   "t=0.4",
+   "t=3"
+  ]
+ },
+ {
+  "image": 92,
+  "xref": 701,
+  "source": "img092_x701_source.png",
+  "ocr_count": 26,
+  "ocr_words": [
+   "Normalizedconfusionmatrix",
+   "World-",
+   "0.92",
+   "0.02",
+   "0.03"
+  ]
+ },
+ {
+  "image": 93,
+  "xref": 683,
+  "source": "img093_x683_source.png",
+  "ocr_count": 16,
+  "ocr_words": [
+   "Sports",
+   "Output",
+   "Linear",
+   "H",
+   "Hiddenstates"
+  ]
+ },
+ {
+  "image": 94,
+  "xref": 499,
+  "source": "img094_x499_source.png",
+  "ocr_count": 20,
+  "ocr_words": [
+   "Skipconnection",
+   "Skipconnection",
+   "d1",
+   "32",
+   "32"
+  ]
+ },
+ {
+  "image": 95,
+  "xref": 440,
+  "source": "img095_x440_source.png",
+  "ocr_count": 20,
+  "ocr_words": [
+   "Skipconnection",
+   "Skipconnection",
+   "d1",
+   "32",
+   "32"
+  ]
+ },
+ {
+  "image": 96,
+  "xref": 425,
+  "source": "img096_x425_source.png",
+  "ocr_count": 4,
+  "ocr_words": [
+   "Originalimage",
+   "Rotated90degrees",
+   "Verticalflip",
+   "Translation"
+  ]
+ },
+ {
+  "image": 97,
+  "xref": 1076,
+  "source": "img097_x1076_source.png",
+  "ocr_count": 23,
+  "ocr_words": [
+   "Speechdecoder",
+   "Textdecoder",
+   "post-net",
+   "post-net",
+   "Speech/text"
+  ]
+ },
+ {
+  "image": 98,
+  "xref": 509,
+  "source": "img098_x509_source.png",
+  "ocr_count": 41,
+  "ocr_words": [
+   "0.10",
+   "Lossesovertime",
+   "0.0200",
+   "Losses-detai",
+   "GeneratedSampl"
+  ]
+ },
+ {
+  "image": 99,
+  "xref": 312,
+  "source": "img099_x312_source.png",
+  "ocr_count": 8,
+  "ocr_words": [
+   "Original",
+   "Reconstructed",
+   "VAE",
+   "Encoder",
+   "Latents"
+  ]
+ },
+ {
+  "image": 100,
+  "xref": 1101,
+  "source": "img100_x1101_source.png",
+  "ocr_count": 19,
+  "ocr_words": [
+   "Predictedsemantic",
+   "tokens",
+   "Semantic",
+   "modeling",
+   "Acoustic"
+  ]
+ },
+ {
+  "image": 101,
+  "xref": 752,
+  "source": "img101_x752_source.png",
+  "ocr_count": 14,
+  "ocr_words": [
+   "Duringtraining",
+   "Aftertraining",
+   "\u95e8",
+   "8",
+   "h=Wx+BAx"
+  ]
+ },
+ {
+  "image": 102,
+  "xref": 853,
+  "source": "img102_x853_source.png",
+  "ocr_count": 14,
+  "ocr_words": [
+   "Duringtraining",
+   "Aftertraining",
+   "h",
+   "B",
+   "h=Wx+BAx"
+  ]
+ },
+ {
+  "image": 103,
+  "xref": 485,
+  "source": "img103_x485_source.png",
+  "ocr_count": 16,
+  "ocr_words": [
+   "1.0",
+   "defaultschedule",
+   "cosineschedule",
+   "0.8",
+   "Lowbeta_end"
+  ]
+ },
+ {
+  "image": 104,
+  "xref": 199,
+  "source": "img104_x199_source.png",
+  "ocr_count": 18,
+  "ocr_words": [
+   "$$$incompute",
+   "Base",
+   "Pretrained",
+   "model",
+   "language"
+  ]
+ },
+ {
+  "image": 105,
+  "xref": 1005,
+  "source": "img105_x1005_source.png",
+  "ocr_count": 4,
+  "ocr_words": [
+   ">SSS",
+   "Sinewave",
+   "Violin",
+   "Piano"
+  ]
+ },
+ {
+  "image": 106,
+  "xref": 445,
+  "source": "img106_x445_source.png",
+  "ocr_count": 4,
+  "ocr_words": [
+   "Trainingloss",
+   "Traininglossfromstep400",
+   "Trainingstep",
+   "Trainingstep"
+  ]
+ },
+ {
+  "image": 107,
+  "xref": 661,
+  "source": "img107_x661_source.png",
+  "ocr_count": 7,
+  "ocr_words": [
+   "1.Identifydataset",
+   "2.Define model type",
+   "3.Selectbasemodel",
+   "4.Preprocessdataset",
+   "5.Defineevaluationmetrics"
+  ]
+ },
+ {
+  "image": 108,
+  "xref": 1091,
+  "source": "img108_x1091_source.png",
+  "ocr_count": 14,
+  "ocr_words": [
+   "Semantic",
+   "tokens",
+   "Text",
+   "Semantic",
+   "model"
+  ]
+ },
+ {
+  "image": 109,
+  "xref": 152,
+  "source": "img109_x152_source.png",
+  "ocr_count": 3,
+  "ocr_words": [
+   "top_k=5",
+   "top_p=0.94",
+   "Token1Token2Token3Token4Token5Token6Toke"
+  ]
+ },
+ {
+  "image": 110,
+  "xref": 128,
+  "source": "img110_x128_source.png",
+  "ocr_count": 25,
+  "ocr_words": [
+   "barks",
+   "0.4",
+   "bop",
+   "0.5",
+   "runs"
+  ]
+ },
+ {
+  "image": 111,
+  "xref": 132,
+  "source": "img111_x132_source.png",
+  "ocr_count": 25,
+  "ocr_words": [
+   "barks",
+   "0.4",
+   "bop",
+   "0.5",
+   "runs"
+  ]
+ },
+ {
+  "image": 112,
+  "xref": 505,
+  "source": "img112_x505_source.png",
+  "ocr_count": 3,
+  "ocr_words": [
+   "5798\u514305",
+   "17y?7",
+   "35777817"
+  ]
+ },
+ {
+  "image": 113,
+  "xref": 579,
+  "source": "img113_x579_source.png",
+  "ocr_count": 8,
+  "ocr_words": [
+   "Textembeddings",
+   "(77,1024)",
+   "Noisylatents",
+   "UNet",
+   "Noiseprediction"
+  ]
+ },
+ {
+  "image": 114,
+  "xref": 594,
+  "source": "img114_x594_source.png",
+  "ocr_count": 4,
+  "ocr_words": [
+   "Channel",
+   "Channeli",
+   "Channel2",
+   "Channel3"
+  ]
+ },
+ {
+  "image": 115,
+  "xref": 332,
+  "source": "img115_x332_source.png",
+  "ocr_count": 15,
+  "ocr_words": [
+   "loss",
+   "175",
+   "reconstruction_loss",
+   "kI_loss",
+   "150"
+  ]
+ },
+ {
+  "image": 116,
+  "xref": 759,
+  "source": "img116_x759_source.png",
+  "ocr_count": 16,
+  "ocr_words": [
+   "Sign",
+   "Range",
+   "Precision",
+   "FP32",
+   "8bits"
+  ]
+ },
+ {
+  "image": 117,
+  "xref": 333,
+  "source": "img117_x333_source.png",
+  "ocr_count": 6,
+  "ocr_words": [
+   "VAE-KLLossComponent",
+   "VAE-ReconstructionLossComponent",
+   "LoSS",
+   "S507",
+   "Step"
+  ]
+ },
+ {
+  "image": 118,
+  "xref": 247,
+  "source": "img118_x247_source.png",
+  "ocr_count": 10,
+  "ocr_words": [
+   "Input",
+   "Encoder",
+   "Latent",
+   "Decoder",
+   "Output"
+  ]
+ },
+ {
+  "image": 119,
+  "xref": 482,
+  "source": "img119_x482_source.png",
+  "ocr_count": 13,
+  "ocr_words": [
+   "1.0",
+   "0.8",
+   "0.6",
+   "Vaequivalent",
+   "V(1-at\uff09equivalent"
+  ]
+ },
+ {
+  "image": 120,
+  "xref": 479,
+  "source": "img120_x479_source.png",
+  "ocr_count": 13,
+  "ocr_words": [
+   "1.0",
+   "0.8",
+   "0.6",
+   "at",
+   "/(1-at\uff09"
+  ]
+ },
+ {
+  "image": 121,
+  "xref": 1363,
+  "source": "img121_x1363_source.png",
+  "ocr_count": 7,
+  "ocr_words": [
+   "Externalmemory",
+   "Query",
+   "Retriever",
+   "Contextrelevant",
+   "toquery"
+  ]
+ },
+ {
+  "image": 122,
+  "xref": 110,
+  "source": "img122_x110_source.png",
+  "ocr_count": 1,
+  "ocr_words": [
+   "1012121131012511814190182114149147010121"
+  ]
+ },
+ {
+  "image": 123,
+  "xref": 293,
+  "source": "img123_x293_source.png",
+  "ocr_count": 14,
+  "ocr_words": [
+   "TrainingLossCurve(twolatentdimensions)",
+   "0.30",
+   "0.25",
+   "0.20",
+   "SSO7"
+  ]
+ },
+ {
+  "image": 124,
+  "xref": 1020,
+  "source": "img124_x1020_source.png",
+  "ocr_count": 22,
+  "ocr_words": [
+   "175",
+   "Domain",
+   "150",
+   "Frequency",
+   "125"
+  ]
+ },
+ {
+  "image": 125,
+  "xref": 589,
+  "source": "img125_x589_source.png",
+  "ocr_count": 10,
+  "ocr_words": [
+   "Inputimage",
+   "VAE",
+   "Latents",
+   "VAE",
+   "Decodedimage"
+  ]
+ },
+ {
+  "image": 126,
+  "xref": 189,
+  "source": "img126_x189_source.png",
+  "ocr_count": 8,
+  "ocr_words": [
+   "Mask",
+   "A[MASK]wasbarkinga lot",
+   "Transformer",
+   "Embedding",
+   "prediction"
+  ]
+ },
+ {
+  "image": 127,
+  "xref": 343,
+  "source": "img127_x343_source.png",
+  "ocr_count": 18,
+  "ocr_words": [
+   "3",
+   "b",
+   "3",
+   "7",
+   "9"
+  ]
+ },
+ {
+  "image": 128,
+  "xref": 641,
+  "source": "img128_x641_source.png",
+  "ocr_count": 6,
+  "ocr_words": [
+   "name",
+   "output",
+   "Pedro",
+   "HelloPedro",
+   "Clear"
+  ]
+ },
+ {
+  "image": 129,
+  "xref": 989,
+  "source": "img129_x989_source.png",
+  "ocr_count": 11,
+  "ocr_words": [
+   "mm",
+   "0",
+   "0.1",
+   "0.2",
+   "0.3"
+  ]
+ },
+ {
+  "image": 130,
+  "xref": 764,
+  "source": "img130_x764_source.png",
+  "ocr_count": 8,
+  "ocr_words": [
+   "12GB",
+   "16GB",
+   "200GB",
+   "GPU",
+   "CPU"
+  ]
+ },
+ {
+  "image": 131,
+  "xref": 288,
+  "source": "img131_x288_source.png",
+  "ocr_count": 3,
+  "ocr_words": [
+   "ReLU",
+   "Sigmoid",
+   "3"
+  ]
+ },
+ {
+  "image": 132,
+  "xref": 115,
+  "source": "img132_x115_source.png",
+  "ocr_count": 18,
+  "ocr_words": [
+   "lla",
+   "ma",
+   "learn",
+   "S",
+   "running"
+  ]
+ },
+ {
+  "image": 133,
+  "xref": 1152,
+  "source": "img133_x1152_source.png",
+  "ocr_count": 3,
+  "ocr_words": [
+   "Humanfeedback",
+   "Fine-tuning",
+   "Pretraining"
+  ]
+ },
+ {
+  "image": 134,
+  "xref": 279,
+  "source": "img134_x279_source.png",
+  "ocr_count": 13,
+  "ocr_words": [
+   "AutoEncoder-TrainingLossCurve",
+   "0.5",
+   "0.4",
+   "0.3",
+   "0.2"
+  ]
+ },
+ {
+  "image": 135,
+  "xref": 138,
+  "source": "img135_x138_source.png",
+  "ocr_count": 12,
+  "ocr_words": [
+   "60%",
+   "35%",
+   "5%",
+   "apple",
+   "day"
+  ]
+ },
+ {
+  "image": 136,
+  "xref": 558,
+  "source": "img136_x558_source.png",
+  "ocr_count": 12,
+  "ocr_words": [
+   "1.0",
+   "0.8",
+   "0.6",
+   "0.4",
+   "0.2"
+  ]
+ },
+ {
+  "image": 137,
+  "xref": 1016,
+  "source": "img137_x1016_source.png",
+  "ocr_count": 12,
+  "ocr_words": [
+   "5.0",
+   "2.5",
+   "W",
+   "0.0",
+   "2.5"
+  ]
+ },
+ {
+  "image": 138,
+  "xref": 111,
+  "source": "img138_x111_source.png",
+  "ocr_count": 14,
+  "ocr_words": [
+   "a",
+   "llama",
+   "learns",
+   "running",
+   "P"
+  ]
+ },
+ {
+  "image": 139,
+  "xref": 453,
+  "source": "img139_x453_source.png",
+  "ocr_count": 5,
+  "ocr_words": [
+   "Image",
+   "(3,299,299)",
+   "CNN",
+   "Feature",
+   "maps"
+  ]
+ },
+ {
+  "image": 140,
+  "xref": 993,
+  "source": "img140_x993_source.png",
+  "ocr_count": 4,
+  "ocr_words": [
+   "OdB",
+   "10dB",
+   "120dB",
+   "310dB"
+  ]
+ },
+ {
+  "image": 141,
+  "xref": 296,
+  "source": "img141_x296_source.png",
+  "ocr_count": 21,
+  "ocr_words": [
+   "7",
+   "4",
+   "6",
+   "D",
+   "9"
+  ]
+ },
+ {
+  "image": 142,
+  "xref": 337,
+  "source": "img142_x337_source.png",
+  "ocr_count": 19,
+  "ocr_words": [
+   "7",
+   "2",
+   "h",
+   "6",
+   "D"
+  ]
+ },
+ {
+  "image": 143,
+  "xref": 282,
+  "source": "img143_x282_source.png",
+  "ocr_count": 18,
+  "ocr_words": [
+   "7",
+   "2",
+   "4",
+   "4a59",
+   "D"
+  ]
+ },
+ {
+  "image": 144,
+  "xref": 542,
+  "source": "img144_x542_source.png",
+  "ocr_count": 4,
+  "ocr_words": [
+   "0",
+   "2",
+   "7",
+   "2"
+  ]
+ },
+ {
+  "image": 145,
+  "xref": 350,
+  "source": "img145_x350_source.png",
+  "ocr_count": 9,
+  "ocr_words": [
+   "2",
+   "2",
+   "2",
+   "8",
+   "1"
+  ]
+ },
+ {
+  "image": 146,
+  "xref": 305,
+  "source": "img146_x305_source.png",
+  "ocr_count": 7,
+  "ocr_words": [
+   "AutoEncoder",
+   "o",
+   "/",
+   "1",
+   "1"
+  ]
+ },
+ {
+  "image": 147,
+  "xref": 1341,
+  "source": "img147_x1341_source.png",
+  "ocr_count": 1,
+  "ocr_words": [
+   "T"
+  ]
+ }
+]
