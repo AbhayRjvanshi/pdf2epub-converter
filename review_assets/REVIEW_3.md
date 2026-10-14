@@ -1,4 +1,4 @@
-﻿# REVIEW 3 ? OCR-positive images, Image 037?064 (policy default UNCERTAIN/lossless unless reviewed)
+# REVIEW 3 ? OCR-positive images, Image 037?064 (policy default UNCERTAIN/lossless unless reviewed)
 
 ## Image 037 ? xref 1156
 
