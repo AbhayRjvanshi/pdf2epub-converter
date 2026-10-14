@@ -1,4 +1,4 @@
-# REVIEW 3 ? OCR-positive images, Image 037?064 (policy default UNCERTAIN/lossless unless reviewed)
+﻿# REVIEW 3 ? OCR-positive images, Image 037?064 (policy default UNCERTAIN/lossless unless reviewed)
 
 ## Image 037 ? xref 1156
 
@@ -349,7 +349,7 @@
 ![Image 061 ? xref 916](full_p294_x916.png)
 
 - **Review verdict: JPEG-ELIGIBLE**
-- Reason: Genuine photographic portrait; hair, beard, glasses and grayscale tonal structure remain visually intact at q90 (mean 1.43/255, 0.7% >8/255). Documented reconsideration of the OCR-positive default.
+- Reason: Genuine photographic portrait; hair, beard, glasses and grayscale tonal structure remain visually intact at q90 (mean 1.43/255, 0.7% >8/255). Documented, reviewer-approved reconsideration of the OCR-positive default.
 - Reviewed: 2026-10-14 (reviewer verdict from inspection of the published PNG/JPEG/difference-map ZIP)
 
 ## Image 062 ? xref 1207
@@ -364,7 +364,7 @@
 ![Image 062 ? xref 1207](full_p386_x1207.png)
 
 - **Review verdict: JPEG-ELIGIBLE**
-- Reason: Food photograph; differences are distributed through photographic texture and the subject and caption remain legible (mean 1.91/255, 3.8% >8/255, max 24/255 ? noted, not disqualifying). Documented reconsideration of the OCR-positive default.
+- Reason: Food photograph; differences are distributed through photographic texture and the subject and caption remain legible (mean 1.91/255, 3.8% >8/255, max 24/255 ? noted, not disqualifying). Documented, reviewer-approved reconsideration of the OCR-positive default.
 - Reviewed: 2026-10-14 (reviewer verdict from inspection of the published PNG/JPEG/difference-map ZIP)
 
 ## Image 063 ? xref 489
