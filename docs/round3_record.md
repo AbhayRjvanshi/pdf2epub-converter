@@ -1,9 +1,8 @@
 # Round 3 Record — Image efficiency, fidelity and conversion-quality instrumentation
 
-Workstreams land as separate committed milestones; this record grows
-with the round and is consolidated at M6. All numbers are measured at
-the stated commits with the stated tools; every milestone lists its
-reproduction commands. Dates: 2026-10-13/14.
+**Status: COMPLETE** (2026-10-14). All workstreams delivered, all gates
+passed, all evidence reconciled. Reproduction commands listed per
+milestone. Dates: 2026-10-13/14.
 
 ## M0 — Release boundary: CI verification (complete)
 
@@ -179,70 +178,105 @@ smaller than its high-resolution source scans — pre-existing
 behavior, covered by the source-passthrough backlog note in the
 inventory record.
 
-## M3b — Transcode-path classification (in progress; review gate open)
+## M3b — Embedded-image transcode investigation (complete; lossless by default)
 
-**Status: no lossy encoding exists in production.** The three-outcome
-architecture (photographic → JPEG eligible only when smaller;
-line-art → lossless; uncertain → lossless) is approved. Thresholds
-are **provisional**; the no-lossy release gate stands until the human
-visual review pins them.
+**Status: investigation complete; lossless-by-default policy in force;
+no production encoder implemented; no production code change needed.**
 
-### Feature measurement (the 180 Hands-On JPX sources)
+Full evidence, policy documents, and per-image verdicts:
+`review_assets/` on `main` (merged from `review/m3b-images` at `f22369b`).
+Consolidated record: [M3B_FINAL_RECORD.md](../review_assets/M3B_FINAL_RECORD.md).
 
-Three measurement passes (deterministic, downsampled to <=128 px):
-the size signal alone cannot classify — JPEG q90 is smaller than PNG
-on **all 180** sources (ratios 0.10–0.38, median 0.24), so a
-keep-the-smaller rule would JPEG everything with no quality gate.
-Micro-texture (share of adjacent pixel pairs with small nonzero
-deltas) and flat-run share are the real discriminators. The two
-threshold drafts classified 11 vs 163 sources as photographic —
-direct evidence of threshold sensitivity, which is why the thresholds
-are candidate-only.
+### Scope
 
-### OCR pre-screen (prioritization evidence — NOT proof of safety)
+Original embedded PDF images (JPX, BMP, TIFF, WebP, and non-core-colorspace
+sources) repackaged into EPUBs. M3a's page-raster optimization is a
+separate code path and is **unchanged** by this workstream.
 
-| datum | value |
+### Review evidence
+
+147 source images from the Hands-On corpus document were OCR-screened
+(RapidOCR: 111/147 text-positive) and visually reviewed by the project
+maintainer with per-image verdicts, reasons, and dates.
+
+| Group | Count | JPEG-ELIGIBLE | LOSSLESS |
+|---|---|---|---|
+| Images 001–036 (OCR-negative) | 36 | 18 | 18 |
+| Images 037–147 (OCR-positive) | 111 | 3* | 108 |
+| **Total** | **147** | **21** | **126** |
+
+*The 3 OCR-positive JPEG approvals are documented, reviewer-approved
+reconsiderations of the lossless default — exceptions, not a precedent.
+
+**Zero PENDING, zero UNCERTAIN, zero unresolved.** All 147 images
+have explicit verdicts with recorded reasons.
+
+### Classification result: all three rules rejected
+
+Three deterministic feature-based rules were evaluated against the
+147-verdict ground truth:
+
+| Metric | Rule A | Rule B | Rule C |
+|---|---|---|---|
+| True approvals | 21 | **0** | **0** |
+| **False approvals** | **109** | **80** | **31** |
+| Missed opportunities | 0 | **21** | **21** |
+| Precision | 0.162 | **0.000** | **0.000** |
+| Recall | 1.000 | **0.000** | **0.000** |
+
+All 21 approved photographs have low micro-texture (0.0001–0.154) and
+high crisp-edge share (0.83–1.0); the lossless-required diagrams share
+the same signatures. The features cannot separate photographs from
+text-bearing diagrams in this corpus. Full comparison:
+[PHASE4_REPORT.md](../review_assets/PHASE4_REPORT.md).
+
+### Policy (Phase 5)
+
+**Lossless by default.** No automatic JPEG authorization through the
+rejected rules. Exception mechanisms deferred. Alpha always lossless.
+M3a protected. Full policy:
+[M3B_POLICY.md](../review_assets/M3B_POLICY.md).
+
+### Implementation (Phase 7): no production changes needed
+
+The current `_transcode_to_core` function already hardcodes PNG output;
+no hidden lossy path exists (verified by code inspection and grep
+across the engine). **The architecture itself enforces the policy.**
+No production encoder was built, none is needed, and the 13
+policy-enforcement tests (`tests/engine/test_m3b_policy.py`) are
+permanent regression guards on `main`.
+
+### Savings: zero realized M3b compression
+
+All projections (73.4%, 27.7%, 17.6%) are **withdrawn**. The
+transcoded class stays as lossless PNG (47.86 MB). The 21 curated
+images are evidence of potential savings under a future human-review
+workflow, not a production allowlist.
+
+### Reopening conditions
+
+Any future lossy-transcode proposal must present a validated content
+classifier beyond the four evaluated features, a defined human-review
+workflow with stable image identity, or explicit per-document user
+configuration — together with the size and fidelity gates.
+
+## Round 3 final CI evidence
+
+**CI run #29** (merged revision `f22369b`): **14/14 jobs green** —
+12 test-matrix legs (Linux/macOS/Windows × Python 3.10–3.13) all
+successful; clean-install-from-wheel successful; real EPUBCheck 5.1.0
+conformance successful. Local suite on the merged result: **757
+passed / 23 skipped / 0 failed**.
+
+## Round 3 completion summary
+
+| Workstream | Outcome |
 |---|---|
-| tool | rapidocr-onnxruntime 1.4.4 on onnxruntime 1.23.2 — review-only tooling, not a product dependency |
-| detection filter | confidence >= 0.5; per word: text, confidence, region height |
-| processing | **147/147** unique sources (xref-deduplicated), zero errors, zero duplicates; runtime 1402 s (2026-10-14) |
-| results artifact | `ocr_prescreen.json` (session artifact, kept with the review set), SHA-256 `1ed2d258143934b33d4403767812a4e22a1b3bf59f562a9aae9a412ab9048cd2` |
-| finding | **111/147** candidate-photographic sources contain detected text: leaderboards ("Arena (Vision)"), UNet/diffusion diagrams, "Losses over time" charts, heatmap axis labels |
-
-The clean re-run's counts (111 + 36 = 147) reconcile exactly with the
-first pass; the clean run is the authoritative per-image record.
-
-### Withdrawal of the 73.4% projection
-
-The 47.86 MB → 12.74 MB (**73.4%**) projection computed from the
-permissive crispness-disjunct candidate is **withdrawn as
-unvalidated**: it counted the 111 text-bearing sources as
-JPEG-eligible. Retained here as historical evidence of why the
-permissive rule failed review. The conservative projection after the
-OCR-based exclusions is **34,147,262 vs 47,236,892 bytes (27.7%)** on
-the transcoded class — itself still pending the human review of the
-36 OCR-negative sources. Measured savings will be reported only
-after implementation and the fidelity gates.
-
-### Review gate (live)
-
-All 147 sources are published for visual review on the
-`review/m3b-images` branch — Image 001–147, every verdict defaulting
-to **PENDING**, with explicit full-resolution links and the OCR
-status on every entry:
-
-* index: `review_assets/REVIEW.md` on that branch
-* Image 001–036 (OCR-negative — **LIVE decisions**): `REVIEW_1.md`,
-  `REVIEW_2.md`
-* Image 037–147 (OCR-positive — UNCERTAIN/lossless by policy
-  default, reconsideration requires recorded rationale under a
-  revised policy): `REVIEW_3.md`, `REVIEW_4.md`
-
-Thresholds will be pinned only from these verdicts. The three
-candidate rules (crispness-disjunct, micro-texture-only, and a
-conservative variant routing borderline cases to uncertain) will be
-compared on the reviewed evaluation set, with classification
-correctness primary and savings secondary.
+| M0 — CI verification | **Complete**: workflow parsing fixed (run #1); memory gate corrected to a fresh-subprocess measurement with normalized units and a measured 200 MiB budget (runs #2–#7) |
+| M0b — Image inventory | **Complete**: xref-accurate attribution; Flower Garden is the control case (fidelity-necessary PNGs, ~0% eligible headroom) |
+| M3a — Page-raster optimization | **Complete**: measured encode-both-keep-smaller; C1 scans: 86.8 MB → 27.8 MB (**−66.4%**); EPUBCheck 0 errors; Ace 0/0/0/0; reference book unchanged |
+| M3b — Embedded-image investigation | **Complete**: 147 images reviewed, 3 rules rejected, lossless-by-default policy tested; **no production code changes; 0% additional compression** |
+| Phase 7 | **Complete**: the evidence-backed outcome is *do not implement automatic lossy encoding* — the current code already enforces the safe behavior; 13 regression tests merged as permanent guards |
 
 ## Commands
 
