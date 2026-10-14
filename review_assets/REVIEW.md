@@ -18,3 +18,4 @@ The 73.4% size-reduction projection computed from the withdrawn permissive rule 
 - [REVIEW_1 ? pending 001?018](REVIEW_1.md) ? [REVIEW_2 ? pending 019?036](REVIEW_2.md) ? [REVIEW_3 ? flagged 037?064](REVIEW_3.md) ? [REVIEW_4 ? flagged 065?147](REVIEW_4.md)
 
 OCR evidence: rapidocr-onnxruntime 1.4.4 / onnxruntime 1.23.2, confidence filter >= 0.5, 147/147 processed, runtime 1402 s, results JSON SHA-256 `1ed2d258143934b33d4403767812a4e22a1b3bf59f562a9aae9a412ab9048cd2`. OCR is a prioritization and exclusion signal, not proof of JPEG safety.
+- [COMPARISONS — JPEG q90 test copies and amplified difference maps for the 19 candidates and 7 lossless validations](comparisons/COMPARISONS.md)
