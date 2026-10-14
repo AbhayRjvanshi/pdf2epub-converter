@@ -10,8 +10,9 @@
 
 ![Image 001 ? xref 926](full_p297_x926.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: JPEG-ELIGIBLE**
+- Reason: Portrait detail appears preserved at the reviewed scale.
+- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
 
 ## Image 002 ? xref 467
 
@@ -23,8 +24,9 @@
 
 ![Image 002 ? xref 467](full_p148_x467.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Butterfly markings and noise-pattern panels are content that compression may alter.
+- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
 
 ## Image 003 ? xref 470
 
@@ -36,8 +38,9 @@
 
 ![Image 003 ? xref 470](full_p149_x470.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Fine markings and noise patterns should remain unchanged.
+- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
 
 ## Image 004 ? xref 473
 
@@ -49,8 +52,9 @@
 
 ![Image 004 ? xref 473](full_p150_x473.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: High-frequency patterns and fine detail warrant preservation.
+- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
 
 ## Image 005 ? xref 956
 
@@ -62,8 +66,9 @@
 
 ![Image 005 ? xref 956](full_p305_x956.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: JPEG-ELIGIBLE**
+- Reason: Photographic still life; no obvious material degradation.
+- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
 
 ## Image 006 ? xref 834
 
@@ -75,8 +80,9 @@
 
 ![Image 006 ? xref 834](full_p267_x834.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: JPEG-ELIGIBLE**
+- Reason: Star flare, stars, and broad gradients appear intact at the reviewed scale.
+- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
 
 ## Image 007 ? xref 87
 
@@ -88,8 +94,9 @@
 
 ![Image 007 ? xref 87](full_p026_x87.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: JPEG-ELIGIBLE**
+- Reason: Photograph; no obvious material degradation.
+- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
 
 ## Image 008 ? xref 934
 
@@ -101,8 +108,9 @@
 
 ![Image 008 ? xref 934](full_p299_x934.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: JPEG-ELIGIBLE**
+- Reason: Landscape gradients and mountain edges appear acceptable.
+- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
 
 ## Image 009 ? xref 575
 
@@ -127,8 +135,9 @@
 
 ![Image 010 ? xref 436](full_p139_x436.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Comparison grid and degraded/noise panels should remain faithful to the source.
+- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
 
 ## Image 011 ? xref 452
 
@@ -140,8 +149,9 @@
 
 ![Image 011 ? xref 452](full_p144_x452.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Preserve butterfly-wing detail.
+- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
 
 ## Image 012 ? xref 448
 
@@ -153,8 +163,9 @@
 
 ![Image 012 ? xref 448](full_p143_x448.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Preserve butterfly-wing detail.
+- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
 
 ## Image 013 ? xref 631
 
@@ -166,8 +177,9 @@
 
 ![Image 013 ? xref 631](full_p197_x631.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: UNCERTAIN**
+- Reason: Painterly texture is important; retain PNG pending closer native-resolution inspection.
+- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
 
 ## Image 014 ? xref 913
 
@@ -179,8 +191,9 @@
 
 ![Image 014 ? xref 913](full_p293_x913.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: JPEG-ELIGIBLE**
+- Reason: Grayscale portrait detail appears acceptable.
+- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
 
 ## Image 015 ? xref 910
 
@@ -192,8 +205,9 @@
 
 ![Image 015 ? xref 910](full_p292_x910.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: JPEG-ELIGIBLE**
+- Reason: Grayscale portrait detail appears acceptable.
+- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
 
 ## Image 016 ? xref 907
 
@@ -205,8 +219,9 @@
 
 ![Image 016 ? xref 907](full_p291_x907.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: JPEG-ELIGIBLE**
+- Reason: Grayscale portrait detail appears acceptable.
+- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
 
 ## Image 017 ? xref 432
 
@@ -231,5 +246,6 @@
 
 ![Image 018 ? xref 367](full_p116_x367.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: JPEG-ELIGIBLE**
+- Reason: Wildlife photograph; no obvious material degradation.
+- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)

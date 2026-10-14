@@ -10,8 +10,9 @@
 
 ![Image 019 ? xref 903](full_p290_x903.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: JPEG-ELIGIBLE**
+- Reason: Mixed photographic/realistic collage; no obvious material degradation at the reviewed scale.
+- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
 
 ## Image 020 ? xref 611
 
@@ -23,8 +24,9 @@
 
 ![Image 020 ? xref 611](full_p191_x611.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: JPEG-ELIGIBLE**
+- Reason: Cat photograph; no obvious material degradation.
+- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
 
 ## Image 021 ? xref 373
 
@@ -36,8 +38,9 @@
 
 ![Image 021 ? xref 373](full_p118_x373.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: JPEG-ELIGIBLE**
+- Reason: Wildlife photograph; no obvious material degradation.
+- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
 
 ## Image 022 ? xref 218
 
@@ -49,8 +52,9 @@
 
 ![Image 022 ? xref 218](full_p068_x218.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: JPEG-ELIGIBLE**
+- Reason: Cat photograph; no obvious material degradation.
+- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
 
 ## Image 023 ? xref 618
 
@@ -62,8 +66,9 @@
 
 ![Image 023 ? xref 618](full_p193_x618.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: JPEG-ELIGIBLE**
+- Reason: Photographic strip; no obvious material degradation at the reviewed scale.
+- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
 
 ## Image 024 ? xref 625
 
@@ -114,8 +119,9 @@
 
 ![Image 027 ? xref 412](full_p132_x412.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Preserve the noise-pattern sequence and small embedded imagery.
+- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
 
 ## Image 028 ? xref 848
 
@@ -127,8 +133,9 @@
 
 ![Image 028 ? xref 848](full_p272_x848.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: JPEG-ELIGIBLE**
+- Reason: Portrait strip; no obvious material degradation.
+- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
 
 ## Image 029 ? xref 598
 
@@ -140,8 +147,9 @@
 
 ![Image 029 ? xref 598](full_p187_x598.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: JPEG-ELIGIBLE**
+- Reason: Wildlife photograph; no obvious material degradation.
+- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
 
 ## Image 030 ? xref 590
 
@@ -153,8 +161,9 @@
 
 ![Image 030 ? xref 590](full_p185_x590.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: JPEG-ELIGIBLE**
+- Reason: Wildlife photograph; no obvious material degradation.
+- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
 
 ## Image 031 ? xref 945
 
@@ -192,8 +201,9 @@
 
 ![Image 033 ? xref 416](full_p133_x416.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: JPEG-ELIGIBLE**
+- Reason: Portrait photograph; no obvious material degradation.
+- Reviewed: 2026-10-14 (provisional test verdict from the published q90 comparison inspection)
 
 ## Image 034 ? xref 1196
 

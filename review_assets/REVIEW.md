@@ -1,21 +1,20 @@
 # M3b visual review ? Hands-On photographic-classified sources
 
-**36 OCR-negative images (Image 001?036) ? LIVE decisions, pending your review.**
-**111 OCR-positive images (Image 037?147) ? UNCERTAIN/lossless by the conservative default policy; confirm or record a reconsideration.**
+## Review status (updated 2026-10-14)
 
-Report verdicts by xref (or image number). Available verdicts:
-
-| Verdict | Meaning | Encoding outcome |
+| Group | Count | Verdicts recorded |
 |---|---|---|
-| LOSSLESS | text, fine detail, or other risk present | PNG |
-| UNCERTAIN | evidence inconclusive | PNG |
-| JPEG-ELIGIBLE | reviewed and accepted under the pinned policy | JPEG may be considered, subject to size and quality gates |
-| PENDING | not yet reviewed | no lossy encoding |
+| Image 001?036 (OCR-negative) | 36 | 18 JPEG-ELIGIBLE, 1 UNCERTAIN (013, held back for native-resolution texture inspection), 7 LOSSLESS validated ? 10 PENDING |
+| Image 037?147 (OCR-positive) | 111 | PENDING ? policy default UNCERTAIN/lossless |
 
-All 147 entries default to **PENDING**. Thresholds remain provisional until these verdicts pin them.
-The 73.4% size-reduction projection computed from the withdrawn permissive rule is void; the conservative projection after OCR-based exclusions is ~27.7% on the transcoded class and is itself still pending this review.
+**Measured projection from the 18 approved candidates only** (the 86.7% figure assumed all 19 and is not the approved result):
+- 18 approved candidates: 8,219,873 ? 1,069,150 bytes (87.0% on the approved set)
+- transcoded class projection if nothing else changes: 47,236,892 ? 40,086,169 bytes (15.1% on the class) ? provisional, pending the 037?147 review and final threshold pinning
 
-- [REVIEW_1 ? pending 001?018](REVIEW_1.md) ? [REVIEW_2 ? pending 019?036](REVIEW_2.md) ? [REVIEW_3 ? flagged 037?064](REVIEW_3.md) ? [REVIEW_4 ? flagged 065?147](REVIEW_4.md)
+Verdict vocabulary: **LOSSLESS** ? PNG ? **UNCERTAIN** ? PNG ? **JPEG-ELIGIBLE** ? JPEG may be considered, subject to size and quality gates ? **PENDING** ? no lossy encoding.
+A JPEG-ELIGIBLE verdict is provisional visual approval, not a guarantee of perceptual equivalence at native resolution; the difference maps are diagnostic aids only.
+
+- [REVIEW_1 ? 001?018](REVIEW_1.md) ? [REVIEW_2 ? 019?036](REVIEW_2.md) ? [REVIEW_3 ? 037?064](REVIEW_3.md) ? [REVIEW_4 ? 065?147](REVIEW_4.md)
+- [COMPARISONS ? JPEG q90 test copies and amplified difference maps](comparisons/COMPARISONS.md)
 
 OCR evidence: rapidocr-onnxruntime 1.4.4 / onnxruntime 1.23.2, confidence filter >= 0.5, 147/147 processed, runtime 1402 s, results JSON SHA-256 `1ed2d258143934b33d4403767812a4e22a1b3bf59f562a9aae9a412ab9048cd2`. OCR is a prioritization and exclusion signal, not proof of JPEG safety.
-- [COMPARISONS — JPEG q90 test copies and amplified difference maps for the 19 candidates and 7 lossless validations](comparisons/COMPARISONS.md)
