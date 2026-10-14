@@ -46,5 +46,41 @@
   "mean_abs_diff": 1.45,
   "share_px_diff_gt8": 0.0252,
   "screen_reason": "Dog photograph sequence; check photographic detail and any meaningful frame labels"
+ },
+ {
+  "image": 79,
+  "xref": 1192,
+  "dims": "671x253",
+  "png": 311462,
+  "jpeg": 52988,
+  "saving_pct": 83.0,
+  "max_abs_diff": 34,
+  "mean_abs_diff": 1.4,
+  "share_px_diff_gt8": 0.0369,
+  "screen_reason": "Shortlisted from contact sheets; confirm photographic content and inspect details"
+ },
+ {
+  "image": 80,
+  "xref": 813,
+  "dims": "716x354",
+  "png": 308832,
+  "jpeg": 62918,
+  "saving_pct": 79.6,
+  "max_abs_diff": 25,
+  "mean_abs_diff": 0.96,
+  "share_px_diff_gt8": 0.011,
+  "screen_reason": "Shortlisted from contact sheets; confirm photographic content and inspect details"
+ },
+ {
+  "image": 87,
+  "xref": 360,
+  "dims": "545x331",
+  "png": 256404,
+  "jpeg": 54934,
+  "saving_pct": 78.6,
+  "max_abs_diff": 34,
+  "mean_abs_diff": 1.2,
+  "share_px_diff_gt8": 0.0251,
+  "screen_reason": "Shortlisted from contact sheets; confirm photographic content and inspect details"
  }
 ]
