@@ -1,4 +1,4 @@
-# REVIEW 4 ? OCR-positive images, Image 065?147 (policy default UNCERTAIN/lossless unless reviewed)
+# REVIEW 4 ? OCR-positive images, Image 065?147 (all verdicts recorded)
 
 ## Image 065 ? xref 952
 
@@ -11,8 +11,9 @@
 
 ![Image 065 ? xref 952](full_p304_x952.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Cross-attention architecture diagram with an embedded portrait, text, connectors, and labels.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 066 ? xref 852
 
@@ -25,8 +26,9 @@
 
 ![Image 066 ? xref 852](full_p273_x852.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Real portrait paired with a stylized artistic rendering; mixed photographic and illustrated content.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 067 ? xref 568
 
@@ -39,8 +41,9 @@
 
 ![Image 067 ? xref 568](full_p179_x568.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Pixel-space/latent-space process diagram with small labels, arrows, and colored blocks.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 068 ? xref 583
 
@@ -53,8 +56,9 @@
 
 ![Image 068 ? xref 583](full_p183_x583.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Transformer architecture and embedding-flow diagram with dense small text.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 069 ? xref 214
 
@@ -67,8 +71,9 @@
 
 ![Image 069 ? xref 214](full_p067_x214.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Cat-image examples paired with classification, captioning, and segmentation outputs.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 070 ? xref 179
 
@@ -81,8 +86,9 @@
 
 ![Image 070 ? xref 179](full_p056_x179.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Model-processing flowchart with small labels and connectors.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 071 ? xref 998
 
@@ -95,8 +101,9 @@
 
 ![Image 071 ? xref 998](full_p318_x998.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Waveform and spectrogram paired with text; mixed plot and audio-visualization content.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 072 ? xref 493
 
@@ -109,8 +116,9 @@
 
 ![Image 072 ? xref 493](full_p156_x493.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Denoising-scale comparison grid with noisy image variants and labels.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 073 ? xref 941
 
@@ -123,8 +131,9 @@
 
 ![Image 073 ? xref 941](full_p301_x941.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Duck photographs paired with a depth map and altered image; mixed content.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 074 ? xref 866
 
@@ -137,8 +146,9 @@
 
 ![Image 074 ? xref 866](full_p277_x866.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Photographs paired with a depth map and generated result; mixed content.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 075 ? xref 837
 
@@ -151,8 +161,9 @@
 
 ![Image 075 ? xref 837](full_p268_x837.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Reconstruction and super-resolution schematic with embedded image examples, arrows, and labels.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 076 ? xref 1008
 
@@ -165,8 +176,9 @@
 
 ![Image 076 ? xref 1008](full_p321_x1008.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Multiple sine-wave plots with axes and frequency labels.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 077 ? xref 1044
 
@@ -179,8 +191,9 @@
 
 ![Image 077 ? xref 1044](full_p333_x1044.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Multitask training-format diagram with token boxes, arrows, and small text.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 078 ? xref 1082
 
@@ -193,8 +206,9 @@
 
 ![Image 078 ? xref 1082](full_p347_x1082.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Spectrogram or signal heatmap with fine tonal structures and axis markings.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 079 ? xref 1192
 
@@ -208,8 +222,8 @@
 ![Image 079 ? xref 1192](full_p382_x1192.png)
 
 - **Review verdict: LOSSLESS**
-- Reason: Combines a photograph with a color-coded depth map, arrows and labels; the depth-map boundaries carry meaning and must not be exposed to lossy artifacts (max 34/255 reinforces caution; content type is the primary reason).
-- Reviewed: 2026-10-14 (reviewer verdict from inspection of the published PNG/JPEG/difference-map ZIP)
+- Reason: Combines a photograph with a color-coded depth map, arrows, and labels; the depth-map boundaries carry meaning.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 080 ? xref 813
 
@@ -223,8 +237,8 @@
 ![Image 080 ? xref 813](full_p260_x813.png)
 
 - **Review verdict: LOSSLESS**
-- Reason: Process diagram with small text, arrows, boxes and embedded images ? not photographic; compression artifacts around text and thin lines are avoidable.
-- Reviewed: 2026-10-14 (reviewer verdict from inspection of the published PNG/JPEG/difference-map ZIP)
+- Reason: Process diagram with small text, arrows, boxes, and embedded images; not photographic.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 081 ? xref 1211
 
@@ -237,8 +251,9 @@
 
 ![Image 081 ? xref 1211](full_p387_x1211.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Webpage/interface screenshot with text, thumbnails, and UI elements.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 082 ? xref 354
 
@@ -251,8 +266,9 @@
 
 ![Image 082 ? xref 354](full_p112_x354.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Dense grid of repeated handwritten or symbol-like examples; fine strokes and shapes matter.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 083 ? xref 1170
 
@@ -265,8 +281,9 @@
 
 ![Image 083 ? xref 1170](full_p375_x1170.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Transformer-block comparison diagram with labeled components and fine connectors.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 084 ? xref 920
 
@@ -279,8 +296,9 @@
 
 ![Image 084 ? xref 920](full_p295_x920.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Horse/zebra transformation examples combined with an origami example; mixed photographic and illustrative content.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 085 ? xref 1012
 
@@ -293,8 +311,9 @@
 
 ![Image 085 ? xref 1012](full_p322_x1012.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Waveform and spectrum plots with thin traces, axes, and frequency labels.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 086 ? xref 1200
 
@@ -308,8 +327,8 @@
 ![Image 086 ? xref 1200](full_p384_x1200.png)
 
 - **Review verdict: LOSSLESS**
-- Reason: Filmstrip-style sequence with thin rectangular borders and an embedded prompt label ? mixed photographic and diagram-like content; lossless retained rather than trading structural fidelity (max 31/255 along structural edges and text).
-- Reviewed: 2026-10-14 (reviewer verdict from inspection of the published PNG/JPEG/difference-map ZIP)
+- Reason: Filmstrip-style sequence with thin rectangular borders and an embedded prompt label; mixed photographic and diagram-like content.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 087 ? xref 360
 
@@ -323,8 +342,8 @@
 ![Image 087 ? xref 360](full_p114_x360.png)
 
 - **Review verdict: LOSSLESS**
-- Reason: Technical diagram with labels, arrows, a token matrix and a small dog photograph; the photographic inset does not make the whole image JPEG-suitable ? preserve the complete diagram losslessly.
-- Reviewed: 2026-10-14 (reviewer verdict from inspection of the published PNG/JPEG/difference-map ZIP)
+- Reason: Technical diagram with labels, arrows, a token matrix, and a small dog photograph; the inset does not make the whole image JPEG-suitable.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 088 ? xref 170
 
@@ -337,8 +356,9 @@
 
 ![Image 088 ? xref 170](full_p053_x170.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Model-processing flowchart with embedding representations and small text.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 089 ? xref 997
 
@@ -351,8 +371,9 @@
 
 ![Image 089 ? xref 997](full_p318_x997.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Waveform plot with fine amplitude changes and time-axis detail.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 090 ? xref 977
 
@@ -365,8 +386,9 @@
 
 ![Image 090 ? xref 977](full_p312_x977.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Speech-processing pipeline combining waveforms, transcript text, and model outputs.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 091 ? xref 142
 
@@ -379,8 +401,9 @@
 
 ![Image 091 ? xref 142](full_p045_x142.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Token-distribution bar charts with small labels and changing bar heights.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 092 ? xref 701
 
@@ -393,8 +416,9 @@
 
 ![Image 092 ? xref 701](full_p222_x701.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Normalized confusion matrix with numerical cell values and color distinctions.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 093 ? xref 683
 
@@ -407,8 +431,9 @@
 
 ![Image 093 ? xref 683](full_p215_x683.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Transformer/text-classification diagram with token labels and connected blocks.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 094 ? xref 499
 
@@ -421,8 +446,9 @@
 
 ![Image 094 ? xref 499](full_p158_x499.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Network architecture diagram with skip connections, thin lines, and small labels.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 095 ? xref 440
 
@@ -435,8 +461,9 @@
 
 ![Image 095 ? xref 440](full_p140_x440.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Network architecture diagram with skip connections, thin lines, and small labels.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 096 ? xref 425
 
@@ -449,8 +476,9 @@
 
 ![Image 096 ? xref 425](full_p136_x425.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Butterfly transformation comparison with rotation, flip, and translation panels; preserve fine outlines and panel boundaries.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 097 ? xref 1076
 
@@ -463,8 +491,9 @@
 
 ![Image 097 ? xref 1076](full_p345_x1076.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Speech/text decoder architecture with waveform and output examples.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 098 ? xref 509
 
@@ -477,8 +506,9 @@
 
 ![Image 098 ? xref 509](full_p161_x509.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Loss curves and generated sample grid; mixed chart and image content.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 099 ? xref 312
 
@@ -491,8 +521,9 @@
 
 ![Image 099 ? xref 312](full_p099_x312.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Parrot photograph and reconstruction embedded in a VAE schematic; mixed content.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 100 ? xref 1101
 
@@ -505,8 +536,9 @@
 
 ![Image 100 ? xref 1101](full_p353_x1101.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Semantic-token/audio-model pipeline with labeled stages, connectors, and waveform.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 101 ? xref 752
 
@@ -519,8 +551,9 @@
 
 ![Image 101 ? xref 752](full_p240_x752.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Parameter-merging diagram with text, equations, and colored blocks.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 102 ? xref 853
 
@@ -533,8 +566,9 @@
 
 ![Image 102 ? xref 853](full_p273_x853.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Parameter-merging diagram with text, equations, and colored blocks.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 103 ? xref 485
 
@@ -547,8 +581,9 @@
 
 ![Image 103 ? xref 485](full_p154_x485.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Learning-rate schedule plot with multiple curves, legend, and axes.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 104 ? xref 199
 
@@ -561,8 +596,9 @@
 
 ![Image 104 ? xref 199](full_p062_x199.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Model-training resource diagram with small text, arrows, and process blocks.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 105 ? xref 1005
 
@@ -575,8 +611,9 @@
 
 ![Image 105 ? xref 1005](full_p320_x1005.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Sine-wave, violin, and piano waveform examples; preserve thin traces and shape differences.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 106 ? xref 445
 
@@ -589,8 +626,9 @@
 
 ![Image 106 ? xref 445](full_p142_x445.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Training-loss plots with fine high-frequency variation and axes.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 107 ? xref 661
 
@@ -603,8 +641,9 @@
 
 ![Image 107 ? xref 661](full_p207_x661.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Numbered workflow diagram with text in individual boxes.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 108 ? xref 1091
 
@@ -617,8 +656,9 @@
 
 ![Image 108 ? xref 1091](full_p350_x1091.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Semantic/audio processing pipeline with labeled model blocks and token representations.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 109 ? xref 152
 
@@ -631,8 +671,9 @@
 
 ![Image 109 ? xref 152](full_p047_x152.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Token probability visualization with bars, token labels, and sampling annotations.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 110 ? xref 128
 
@@ -645,8 +686,9 @@
 
 ![Image 110 ? xref 128](full_p041_x128.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Decision-tree diagram with branch lines, labels, and numerical probabilities.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 111 ? xref 132
 
@@ -659,8 +701,9 @@
 
 ![Image 111 ? xref 132](full_p042_x132.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Decision-tree diagram with branch lines, labels, and numerical probabilities.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 112 ? xref 505
 
@@ -673,8 +716,9 @@
 
 ![Image 112 ? xref 505](full_p160_x505.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Loss curve combined with handwritten digit examples; mixed chart and sample content.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 113 ? xref 579
 
@@ -687,8 +731,9 @@
 
 ![Image 113 ? xref 579](full_p182_x579.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Text-embedding/noisy-latent denoising schematic with small labels and arrows.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 114 ? xref 594
 
@@ -701,8 +746,9 @@
 
 ![Image 114 ? xref 594](full_p186_x594.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Multichannel grayscale image visualization; channel differences are the point of the figure.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 115 ? xref 332
 
@@ -715,8 +761,9 @@
 
 ![Image 115 ? xref 332](full_p106_x332.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Loss, reconstruction-loss, and KL-loss plots with fine curves and axis detail.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 116 ? xref 759
 
@@ -729,8 +776,9 @@
 
 ![Image 116 ? xref 759](full_p242_x759.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Numeric precision/bit-allocation diagram with small labels and sharply defined segments.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 117 ? xref 333
 
@@ -743,8 +791,9 @@
 
 ![Image 117 ? xref 333](full_p106_x333.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: VAE loss-component plots with fine curve detail.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 118 ? xref 247
 
@@ -757,8 +806,9 @@
 
 ![Image 118 ? xref 247](full_p077_x247.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Autoencoder pipeline diagram with labeled blocks and arrows.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 119 ? xref 482
 
@@ -771,8 +821,9 @@
 
 ![Image 119 ? xref 482](full_p153_x482.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Line chart showing related curves and axes; preserve curve positions and crossings.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 120 ? xref 479
 
@@ -785,8 +836,9 @@
 
 ![Image 120 ? xref 479](full_p152_x479.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Line chart showing related curves and axes; preserve curve positions and crossings.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 121 ? xref 1363
 
@@ -799,8 +851,9 @@
 
 ![Image 121 ? xref 1363](full_p254_x1363.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: External-memory retrieval schematic with a person icon, connectors, and small labels.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 122 ? xref 110
 
@@ -813,8 +866,9 @@
 
 ![Image 122 ? xref 110](full_p035_x110.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Token strip with dense numerical labels and narrow individual cells.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 123 ? xref 293
 
@@ -827,8 +881,9 @@
 
 ![Image 123 ? xref 293](full_p093_x293.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Training-loss curve with fine plotted variation and axes.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 124 ? xref 1020
 
@@ -841,8 +896,9 @@
 
 ![Image 124 ? xref 1020](full_p324_x1020.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Frequency-domain spectrum plot with dense peaks and frequency labels.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 125 ? xref 589
 
@@ -855,8 +911,9 @@
 
 ![Image 125 ? xref 589](full_p185_x589.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: VAE encode/decode schematic with input and reconstructed images; mixed diagram and image content.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 126 ? xref 189
 
@@ -869,8 +926,9 @@
 
 ![Image 126 ? xref 189](full_p059_x189.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Masked-language-model diagram with text, token boxes, and a mask-prediction component.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 127 ? xref 343
 
@@ -883,8 +941,9 @@
 
 ![Image 127 ? xref 343](full_p109_x343.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Grid of handwritten digit samples; stroke shape and fine edges are meaningful.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 128 ? xref 641
 
@@ -897,8 +956,9 @@
 
 ![Image 128 ? xref 641](full_p200_x641.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: User-interface screenshot with form fields, buttons, and text.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 129 ? xref 989
 
@@ -911,8 +971,9 @@
 
 ![Image 129 ? xref 989](full_p316_x989.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Sine-wave plot with axes and marked intervals.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 130 ? xref 764
 
@@ -925,8 +986,9 @@
 
 ![Image 130 ? xref 764](full_p244_x764.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Hardware/resource requirement diagram with numeric labels, boxes, and arrows.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 131 ? xref 288
 
@@ -939,8 +1001,9 @@
 
 ![Image 131 ? xref 288](full_p091_x288.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Activation-function plot with multiple curves, axes, and legend.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 132 ? xref 115
 
@@ -953,8 +1016,9 @@
 
 ![Image 132 ? xref 115](full_p036_x115.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Token/word visualization with individual tokens and numerical annotations.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 133 ? xref 1152
 
@@ -967,8 +1031,9 @@
 
 ![Image 133 ? xref 1152](full_p370_x1152.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Human-feedback, pretraining, and fine-tuning flowchart.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 134 ? xref 279
 
@@ -981,8 +1046,9 @@
 
 ![Image 134 ? xref 279](full_p088_x279.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Autoencoder training-loss curve with axes and fine plotted detail.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 135 ? xref 138
 
@@ -995,8 +1061,9 @@
 
 ![Image 135 ? xref 138](full_p044_x138.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Bar chart combined with sampling examples and text; mixed chart and text content.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 136 ? xref 558
 
@@ -1009,8 +1076,9 @@
 
 ![Image 136 ? xref 558](full_p176_x558.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Training-loss curve with fine plotted variation.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 137 ? xref 1016
 
@@ -1023,8 +1091,9 @@
 
 ![Image 137 ? xref 1016](full_p323_x1016.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Waveform plot with two closely overlapping traces.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 138 ? xref 111
 
@@ -1037,8 +1106,9 @@
 
 ![Image 138 ? xref 111](full_p035_x111.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Token/word visualization with individual tokens and numerical annotations.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 139 ? xref 453
 
@@ -1051,8 +1121,9 @@
 
 ![Image 139 ? xref 453](full_p144_x453.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: CNN pipeline schematic with image input and feature-map blocks.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 140 ? xref 993
 
@@ -1065,8 +1136,9 @@
 
 ![Image 140 ? xref 993](full_p317_x993.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Sound-level illustration with icons, decibel labels, and positional comparisons.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 141 ? xref 296
 
@@ -1079,8 +1151,9 @@
 
 ![Image 141 ? xref 296](full_p094_x296.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Handwritten numerical strings; preserve individual strokes and character boundaries.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 142 ? xref 337
 
@@ -1093,8 +1166,9 @@
 
 ![Image 142 ? xref 337](full_p107_x337.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Handwritten numerical strings; preserve individual strokes and character boundaries.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 143 ? xref 282
 
@@ -1107,8 +1181,9 @@
 
 ![Image 143 ? xref 282](full_p089_x282.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Handwritten numerical strings; preserve individual strokes and character boundaries.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 144 ? xref 542
 
@@ -1121,8 +1196,9 @@
 
 ![Image 144 ? xref 542](full_p171_x542.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Labeled grid of clothing-category examples; small image details and class labels must remain distinct.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 145 ? xref 350
 
@@ -1135,8 +1211,9 @@
 
 ![Image 145 ? xref 350](full_p111_x350.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Handwritten numerical string with closely spaced strokes.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 146 ? xref 305
 
@@ -1149,8 +1226,9 @@
 
 ![Image 146 ? xref 305](full_p097_x305.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Handwritten numerical string with an autoencoder label; preserve strokes and small text.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 147 ? xref 1341
 
@@ -1163,5 +1241,6 @@
 
 ![Image 147 ? xref 1341](full_p017_x1341.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Red line-art scorpion inside a bounding box; thin contours and crisp boundaries are essential.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)

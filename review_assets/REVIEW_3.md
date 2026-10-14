@@ -1,4 +1,4 @@
-# REVIEW 3 ? OCR-positive images, Image 037?064 (policy default UNCERTAIN/lossless unless reviewed)
+# REVIEW 3 ? OCR-positive images, Image 037?064 (all verdicts recorded)
 
 ## Image 037 ? xref 1156
 
@@ -11,8 +11,9 @@
 
 ![Image 037 ? xref 1156](full_p371_x1156.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Mixed collage of animal photographs, a market scene, and a textured image; multiple content types.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 038 ? xref 930
 
@@ -25,8 +26,9 @@
 
 ![Image 038 ? xref 930](full_p298_x930.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Stylized portrait variations and artistic transformations, not a straightforward photographic source.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 039 ? xref 419
 
@@ -39,8 +41,9 @@
 
 ![Image 039 ? xref 419](full_p134_x419.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Denoising experiment grid combining noisy inputs, generated face outputs, and step labels.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 040 ? xref 602
 
@@ -53,8 +56,9 @@
 
 ![Image 040 ? xref 602](full_p188_x602.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Neural-network architecture diagram with small labels, connectors, and colored blocks.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 041 ? xref 962
 
@@ -67,8 +71,9 @@
 
 ![Image 041 ? xref 962](full_p307_x962.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Collage of painted or illustrated scenes; fine brush-like texture and artwork edges should be preserved.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 042 ? xref 463
 
@@ -81,8 +86,9 @@
 
 ![Image 042 ? xref 463](full_p147_x463.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Face-image processing comparison grid with labeled stages and degradation examples.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 043 ? xref 513
 
@@ -95,8 +101,9 @@
 
 ![Image 043 ? xref 513](full_p162_x513.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: UNet and related architecture diagrams with fine connectors and embedded labels.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 044 ? xref 193
 
@@ -109,8 +116,9 @@
 
 ![Image 044 ? xref 193](full_p060_x193.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Dense model-family/tree diagram with small text, colored nodes, and connecting lines.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 045 ? xref 520
 
@@ -123,8 +131,9 @@
 
 ![Image 045 ? xref 520](full_p164_x520.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Repeated butterfly examples paired with segmentation or mask outputs and labels.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 046 ? xref 1188
 
@@ -137,8 +146,9 @@
 
 ![Image 046 ? xref 1188](full_p381_x1188.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Object-detection image with bounding boxes, confidence labels, and fine overlay text.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 047 ? xref 788
 
@@ -151,8 +161,9 @@
 
 ![Image 047 ? xref 788](full_p252_x788.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Leaderboard/table screenshot containing dense text and small numerical entries.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 048 ? xref 888
 
@@ -166,8 +177,8 @@
 ![Image 048 ? xref 888](full_p285_x888.png)
 
 - **Review verdict: JPEG-ELIGIBLE**
-- Reason: Photographic astronaut sequence; the comparison shows no material loss of the sequence's visible numeric labels or meaningful detail at q90 (mean 1.30/255, 0.4% of pixels >8/255). Recorded as a documented, reviewer-approved reconsideration of the OCR-positive default.
-- Reviewed: 2026-10-14 (reviewer verdict from inspection of the published PNG/JPEG/difference-map ZIP)
+- Reason: Photographic astronaut sequence; no material loss of visible numeric labels or meaningful detail at q90. Documented, reviewer-approved reconsideration of the OCR-positive default.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 049 ? xref 243
 
@@ -180,8 +191,9 @@
 
 ![Image 049 ? xref 243](full_p076_x243.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Bird photographs embedded within an encoder/decoder and representation-learning diagram.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 050 ? xref 342
 
@@ -194,8 +206,9 @@
 
 ![Image 050 ? xref 342](full_p109_x342.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Multicolored scatter plot; small points and plot details are meaningful.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 051 ? xref 302
 
@@ -208,8 +221,9 @@
 
 ![Image 051 ? xref 302](full_p096_x302.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Multicolored scatter plot with dense point clusters and legend.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 052 ? xref 937
 
@@ -222,8 +236,9 @@
 
 ![Image 052 ? xref 937](full_p300_x937.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Mixed animal and human photographs, edge maps, and generated outputs with captions.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 053 ? xref 299
 
@@ -236,8 +251,9 @@
 
 ![Image 053 ? xref 299](full_p095_x299.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Multicolored scatter plot with fine individual points and clusters.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 054 ? xref 1028
 
@@ -250,8 +266,9 @@
 
 ![Image 054 ? xref 1028](full_p327_x1028.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Audio spectrogram with frequency/time axes and a calibrated color scale.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 055 ? xref 1114
 
@@ -264,8 +281,9 @@
 
 ![Image 055 ? xref 1114](full_p357_x1114.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Audio spectrogram with dense frequency detail and small axis labels.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 056 ? xref 346
 
@@ -278,8 +296,9 @@
 
 ![Image 056 ? xref 346](full_p110_x346.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Scatter plot with fine points and a legend.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 057 ? xref 1023
 
@@ -292,8 +311,9 @@
 
 ![Image 057 ? xref 1023](full_p325_x1023.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Spectrogram with thin frequency structures and a labeled scale.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 058 ? xref 735
 
@@ -306,8 +326,9 @@
 
 ![Image 058 ? xref 735](full_p234_x735.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Instruction-following flowchart with multiple text boxes, connectors, and small text.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 059 ? xref 1163
 
@@ -320,8 +341,9 @@
 
 ![Image 059 ? xref 1163](full_p373_x1163.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Needle-in-a-haystack heatmap with small cells, percentages, and annotations.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 060 ? xref 1105
 
@@ -334,8 +356,9 @@
 
 ![Image 060 ? xref 1105](full_p354_x1105.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Training/inference architecture schematic with small labels and connected blocks.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 061 ? xref 916
 
@@ -349,8 +372,8 @@
 ![Image 061 ? xref 916](full_p294_x916.png)
 
 - **Review verdict: JPEG-ELIGIBLE**
-- Reason: Genuine photographic portrait; hair, beard, glasses and grayscale tonal structure remain visually intact at q90 (mean 1.43/255, 0.7% >8/255). Documented, reviewer-approved reconsideration of the OCR-positive default.
-- Reviewed: 2026-10-14 (reviewer verdict from inspection of the published PNG/JPEG/difference-map ZIP)
+- Reason: Genuine photographic portrait; facial details and grayscale tonal structure remain intact at q90. Documented, reviewer-approved reconsideration of the OCR-positive default.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 062 ? xref 1207
 
@@ -364,8 +387,8 @@
 ![Image 062 ? xref 1207](full_p386_x1207.png)
 
 - **Review verdict: JPEG-ELIGIBLE**
-- Reason: Food photograph; differences are distributed through photographic texture and the subject and caption remain legible (mean 1.91/255, 3.8% >8/255, max 24/255 ? noted, not disqualifying). Documented, reviewer-approved reconsideration of the OCR-positive default.
-- Reviewed: 2026-10-14 (reviewer verdict from inspection of the published PNG/JPEG/difference-map ZIP)
+- Reason: Food photograph; differences distributed through photographic texture, subject and caption legible. Documented, reviewer-approved reconsideration of the OCR-positive default.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 063 ? xref 489
 
@@ -378,8 +401,9 @@
 
 ![Image 063 ? xref 489](full_p155_x489.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Flower photograph paired with heavily noisy image variants; mixed photographic and noise-pattern content.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)
 
 ## Image 064 ? xref 1118
 
@@ -392,5 +416,6 @@
 
 ![Image 064 ? xref 1118](full_p358_x1118.png)
 
-- **Review verdict: PENDING**
-- Reason: ?
+- **Review verdict: LOSSLESS**
+- Reason: Spectrogram with fine horizontal frequency structure and scale labels.
+- Reviewed: 2026-10-14 (reviewer screening verdict from inspection of the 104 source images)

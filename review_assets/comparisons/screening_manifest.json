@@ -7,7 +7,9 @@
   "ocr_words": [
    "Before RLHFfine-tuning",
    "After RLHFfine-tuning"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Mixed collage of animal photographs, a market scene, and a textured image; multiple content types."
  },
  {
   "image": 38,
@@ -20,7 +22,9 @@
    "\"turnherintoabeardedman\u201d",
    "\"giveherabigsmile\"",
    "\"turnherintoazombie\""
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Stylized portrait variations and artistic transformations, not a straightforward photographic source."
  },
  {
   "image": 39,
@@ -33,7 +37,9 @@
    "Currentx(step10)",
    "Predicted denoised images(step10)",
    "Currentx(step20)"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Denoising experiment grid combining noisy inputs, generated face outputs, and step labels."
  },
  {
   "image": 40,
@@ -46,7 +52,9 @@
    "Noisyx",
    "CrossAttnDown",
    "320channels"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Neural-network architecture diagram with small labels, connectors, and colored blocks."
  },
  {
   "image": 41,
@@ -55,7 +63,9 @@
   "ocr_count": 1,
   "ocr_words": [
    "M\u7c73\u7c73"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Collage of painted or illustrated scenes; fine brush-like texture and artwork edges should be preserved."
  },
  {
   "image": 42,
@@ -68,7 +78,9 @@
    "Original",
    "Degraded",
    "Generated"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Face-image processing comparison grid with labeled stages and degradation examples."
  },
  {
   "image": 43,
@@ -81,7 +93,9 @@
    "Project output",
    "ResBlock",
    "Upsample"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "UNet and related architecture diagrams with fine connectors and embedded labels."
  },
  {
   "image": 44,
@@ -94,7 +108,9 @@
    "OLMoE",
    "SmoLM",
    "Qwen2.5"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Dense model-family/tree diagram with small text, colored nodes, and connecting lines."
  },
  {
   "image": 45,
@@ -107,7 +123,9 @@
    "Inputimage",
    "Input image",
    "Inputimage"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Repeated butterfly examples paired with segmentation or mask outputs and labels."
  },
  {
   "image": 46,
@@ -119,7 +137,9 @@
    "boat0.69",
    "perso",
    "boat0.351"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Object-detection image with bounding boxes, confidence labels, and fine overlay text."
  },
  {
   "image": 47,
@@ -132,7 +152,9 @@
    "Arena-Hard-Auto",
    "Full Leaderboard",
    "Total#models:133.Total #votes:1,717,800."
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Leaderboard/table screenshot containing dense text and small numerical entries."
  },
  {
   "image": 49,
@@ -145,7 +167,9 @@
    "Encoder",
    "Encoder",
    "(example:samplefroma"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Bird photographs embedded within an encoder/decoder and representation-learning diagram."
  },
  {
   "image": 50,
@@ -158,7 +182,9 @@
    "2",
    "0",
    "5"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Multicolored scatter plot; small points and plot details are meaningful."
  },
  {
   "image": 51,
@@ -171,7 +197,9 @@
    "1",
    "7",
    "2"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Multicolored scatter plot with dense point clusters and legend."
  },
  {
   "image": 52,
@@ -184,7 +212,9 @@
    "Output:",
    "\"acapybaraonthesnow\u201d",
    "Imageinput"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Mixed animal and human photographs, edge maps, and generated outputs with captions."
  },
  {
   "image": 53,
@@ -197,7 +227,9 @@
    "1",
    "6",
    "2"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Multicolored scatter plot with fine individual points and clusters."
  },
  {
   "image": 54,
@@ -210,7 +242,9 @@
    "4096",
    "-20dB",
    "2048"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Audio spectrogram with frequency/time axes and a calibrated color scale."
  },
  {
   "image": 55,
@@ -223,7 +257,9 @@
    "-10dB",
    "4096",
    "-20dB"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Audio spectrogram with dense frequency detail and small axis labels."
  },
  {
   "image": 56,
@@ -236,7 +272,9 @@
    "2",
    "2",
    "0"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Scatter plot with fine points and a legend."
  },
  {
   "image": 57,
@@ -249,7 +287,9 @@
    "7000",
    "-10dB",
    "6000"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Spectrogram with thin frequency structures and a labeled scale."
  },
  {
   "image": 58,
@@ -262,7 +302,9 @@
    "Whatistheboilingpointofnitrogen?",
    "-320.4\u00b0F",
    "Answerthefollowingquestionby"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Instruction-following flowchart with multiple text boxes, connectors, and small text."
  },
  {
   "image": 59,
@@ -275,7 +317,9 @@
    "document",
    "100%accuracy",
    "0%"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Needle-in-a-haystack heatmap with small cells, percentages, and annotations."
  },
  {
   "image": 60,
@@ -288,7 +332,9 @@
    "MuLan tokensM",
    "SemantictokensS",
    "AcoustictokensA"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Training/inference architecture schematic with small labels and connected blocks."
  },
  {
   "image": 63,
@@ -299,7 +345,9 @@
    "Original",
    "Noisy\uff08t=500,size=512)",
    "Noisy\uff08t=500,size=64\uff09"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Flower photograph paired with heavily noisy image variants; mixed photographic and noise-pattern content."
  },
  {
   "image": 64,
@@ -312,7 +360,9 @@
    "-10dB",
    "8192",
    "-20dB"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Spectrogram with fine horizontal frequency structure and scale labels."
  },
  {
   "image": 65,
@@ -325,7 +375,9 @@
    "\u7c73",
    "\u7c73",
    "Image"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Cross-attention architecture diagram with an embedded portrait, text, connectors, and labels."
  },
  {
   "image": 66,
@@ -334,7 +386,9 @@
   "ocr_count": 1,
   "ocr_words": [
    "O"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Real portrait paired with a stylized artistic rendering; mixed photographic and illustrated content."
  },
  {
   "image": 67,
@@ -347,7 +401,9 @@
    "Conditioning",
    "Diffusionprocess",
    "Semanticmap"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Pixel-space/latent-space process diagram with small labels, arrows, and colored blocks."
  },
  {
   "image": 68,
@@ -360,7 +416,9 @@
    "Textmodel(stackoftransformerblocks)",
    "Transformerblock",
    "Transformer block"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Transformer architecture and embedding-flow diagram with dense small text."
  },
  {
   "image": 69,
@@ -373,7 +431,9 @@
    "Output",
    "classification",
    "Label:"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Cat-image examples paired with classification, captioning, and segmentation outputs."
  },
  {
   "image": 70,
@@ -386,7 +446,9 @@
    "Linear",
    "Add&norm",
    "Feed"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Model-processing flowchart with small labels and connectors."
  },
  {
   "image": 71,
@@ -399,7 +461,9 @@
    "Star",
    "Lit tle",
    "twinkleLittle"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Waveform and spectrogram paired with text; mixed plot and audio-visualization content."
  },
  {
   "image": 72,
@@ -411,7 +475,9 @@
    "Scale:0.7",
    "Scale:0.4",
    "Scale:0.1"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Denoising-scale comparison grid with noisy image variants and labels."
  },
  {
   "image": 73,
@@ -420,7 +486,9 @@
   "ocr_count": 1,
   "ocr_words": [
    "\u798f"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Duck photographs paired with a depth map and altered image; mixed content."
  },
  {
   "image": 74,
@@ -431,7 +499,9 @@
    "Inputimage",
    "MiDaSdepth",
    "\"amecharobotswimming"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Photographs paired with a depth map and generated result; mixed content."
  },
  {
   "image": 75,
@@ -444,7 +514,9 @@
    "Super-resolutioncomponents:",
    "Fine-tuning+unconditional",
    "Text-\u219266\u00d764"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Reconstruction and super-resolution schematic with embedded image examples, arrows, and labels."
  },
  {
   "image": 76,
@@ -457,7 +529,9 @@
    "1.0",
    "1.0",
    "0.5"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Multiple sine-wave plots with axes and frequency labels."
  },
  {
   "image": 77,
@@ -470,7 +544,9 @@
    "TextTimestamp",
    "tokens",
    "tokens"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Multitask training-format diagram with token boxes, arrows, and small text."
  },
  {
   "image": 78,
@@ -483,7 +559,9 @@
    "30",
    "40",
    "50"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Spectrogram or signal heatmap with fine tonal structures and axis markings."
  },
  {
   "image": 81,
@@ -496,7 +574,9 @@
    "LearnaboutMolmo",
    "What kind of music is this?",
    "Write a story about whatis"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Webpage/interface screenshot with text, thumbnails, and UI elements."
  },
  {
   "image": 82,
@@ -506,7 +586,9 @@
   "ocr_words": [
    "2",
    "2"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Dense grid of repeated handwritten or symbol-like examples; fine strokes and shapes matter."
  },
  {
   "image": 83,
@@ -519,7 +601,9 @@
    "transformerblock",
    "Output",
    "ndino"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Transformer-block comparison diagram with labeled components and fine connectors."
  },
  {
   "image": 84,
@@ -532,7 +616,9 @@
    "Anorigamiofa",
    "Asketchofa",
    "horseinthefield"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Horse/zebra transformation examples combined with an origami example; mixed photographic and illustrative content."
  },
  {
   "image": 85,
@@ -545,7 +631,9 @@
    "1000",
    "Frequency:1",
    "1000"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Waveform and spectrum plots with thin traces, axes, and frequency labels."
  },
  {
   "image": 88,
@@ -558,7 +646,9 @@
    "nofthese",
    "Transformerblock",
    "FFNN"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Model-processing flowchart with embedding representations and small text."
  },
  {
   "image": 89,
@@ -571,7 +661,9 @@
    "0.1",
    "0.0",
    "0.1"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Waveform plot with fine amplitude changes and time-axis detail."
  },
  {
   "image": 90,
@@ -584,7 +676,9 @@
    "Output",
    "WM",
    "speech"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Speech-processing pipeline combining waveforms, transcript text, and model outputs."
  },
  {
   "image": 91,
@@ -597,7 +691,9 @@
    "t=0",
    "t=0.4",
    "t=3"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Token-distribution bar charts with small labels and changing bar heights."
  },
  {
   "image": 92,
@@ -610,7 +706,9 @@
    "0.92",
    "0.02",
    "0.03"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Normalized confusion matrix with numerical cell values and color distinctions."
  },
  {
   "image": 93,
@@ -623,7 +721,9 @@
    "Linear",
    "H",
    "Hiddenstates"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Transformer/text-classification diagram with token labels and connected blocks."
  },
  {
   "image": 94,
@@ -636,7 +736,9 @@
    "d1",
    "32",
    "32"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Network architecture diagram with skip connections, thin lines, and small labels."
  },
  {
   "image": 95,
@@ -649,7 +751,9 @@
    "d1",
    "32",
    "32"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Network architecture diagram with skip connections, thin lines, and small labels."
  },
  {
   "image": 96,
@@ -661,7 +765,9 @@
    "Rotated90degrees",
    "Verticalflip",
    "Translation"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Butterfly transformation comparison with rotation, flip, and translation panels; preserve fine outlines and panel boundaries."
  },
  {
   "image": 97,
@@ -674,7 +780,9 @@
    "post-net",
    "post-net",
    "Speech/text"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Speech/text decoder architecture with waveform and output examples."
  },
  {
   "image": 98,
@@ -687,7 +795,9 @@
    "0.0200",
    "Losses-detai",
    "GeneratedSampl"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Loss curves and generated sample grid; mixed chart and image content."
  },
  {
   "image": 99,
@@ -700,7 +810,9 @@
    "VAE",
    "Encoder",
    "Latents"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Parrot photograph and reconstruction embedded in a VAE schematic; mixed content."
  },
  {
   "image": 100,
@@ -713,7 +825,9 @@
    "Semantic",
    "modeling",
    "Acoustic"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Semantic-token/audio-model pipeline with labeled stages, connectors, and waveform."
  },
  {
   "image": 101,
@@ -726,7 +840,9 @@
    "\u95e8",
    "8",
    "h=Wx+BAx"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Parameter-merging diagram with text, equations, and colored blocks."
  },
  {
   "image": 102,
@@ -739,7 +855,9 @@
    "h",
    "B",
    "h=Wx+BAx"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Parameter-merging diagram with text, equations, and colored blocks."
  },
  {
   "image": 103,
@@ -752,7 +870,9 @@
    "cosineschedule",
    "0.8",
    "Lowbeta_end"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Learning-rate schedule plot with multiple curves, legend, and axes."
  },
  {
   "image": 104,
@@ -765,7 +885,9 @@
    "Pretrained",
    "model",
    "language"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Model-training resource diagram with small text, arrows, and process blocks."
  },
  {
   "image": 105,
@@ -777,7 +899,9 @@
    "Sinewave",
    "Violin",
    "Piano"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Sine-wave, violin, and piano waveform examples; preserve thin traces and shape differences."
  },
  {
   "image": 106,
@@ -789,7 +913,9 @@
    "Traininglossfromstep400",
    "Trainingstep",
    "Trainingstep"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Training-loss plots with fine high-frequency variation and axes."
  },
  {
   "image": 107,
@@ -802,7 +928,9 @@
    "3.Selectbasemodel",
    "4.Preprocessdataset",
    "5.Defineevaluationmetrics"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Numbered workflow diagram with text in individual boxes."
  },
  {
   "image": 108,
@@ -815,7 +943,9 @@
    "Text",
    "Semantic",
    "model"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Semantic/audio processing pipeline with labeled model blocks and token representations."
  },
  {
   "image": 109,
@@ -826,7 +956,9 @@
    "top_k=5",
    "top_p=0.94",
    "Token1Token2Token3Token4Token5Token6Toke"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Token probability visualization with bars, token labels, and sampling annotations."
  },
  {
   "image": 110,
@@ -839,7 +971,9 @@
    "bop",
    "0.5",
    "runs"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Decision-tree diagram with branch lines, labels, and numerical probabilities."
  },
  {
   "image": 111,
@@ -852,7 +986,9 @@
    "bop",
    "0.5",
    "runs"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Decision-tree diagram with branch lines, labels, and numerical probabilities."
  },
  {
   "image": 112,
@@ -863,7 +999,9 @@
    "5798\u514305",
    "17y?7",
    "35777817"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Loss curve combined with handwritten digit examples; mixed chart and sample content."
  },
  {
   "image": 113,
@@ -876,7 +1014,9 @@
    "Noisylatents",
    "UNet",
    "Noiseprediction"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Text-embedding/noisy-latent denoising schematic with small labels and arrows."
  },
  {
   "image": 114,
@@ -888,7 +1028,9 @@
    "Channeli",
    "Channel2",
    "Channel3"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Multichannel grayscale image visualization; channel differences are the point of the figure."
  },
  {
   "image": 115,
@@ -901,7 +1043,9 @@
    "reconstruction_loss",
    "kI_loss",
    "150"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Loss, reconstruction-loss, and KL-loss plots with fine curves and axis detail."
  },
  {
   "image": 116,
@@ -914,7 +1058,9 @@
    "Precision",
    "FP32",
    "8bits"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Numeric precision/bit-allocation diagram with small labels and sharply defined segments."
  },
  {
   "image": 117,
@@ -927,7 +1073,9 @@
    "LoSS",
    "S507",
    "Step"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "VAE loss-component plots with fine curve detail."
  },
  {
   "image": 118,
@@ -940,7 +1088,9 @@
    "Latent",
    "Decoder",
    "Output"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Autoencoder pipeline diagram with labeled blocks and arrows."
  },
  {
   "image": 119,
@@ -953,7 +1103,9 @@
    "0.6",
    "Vaequivalent",
    "V(1-at\uff09equivalent"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Line chart showing related curves and axes; preserve curve positions and crossings."
  },
  {
   "image": 120,
@@ -966,7 +1118,9 @@
    "0.6",
    "at",
    "/(1-at\uff09"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Line chart showing related curves and axes; preserve curve positions and crossings."
  },
  {
   "image": 121,
@@ -979,7 +1133,9 @@
    "Retriever",
    "Contextrelevant",
    "toquery"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "External-memory retrieval schematic with a person icon, connectors, and small labels."
  },
  {
   "image": 122,
@@ -988,7 +1144,9 @@
   "ocr_count": 1,
   "ocr_words": [
    "1012121131012511814190182114149147010121"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Token strip with dense numerical labels and narrow individual cells."
  },
  {
   "image": 123,
@@ -1001,7 +1159,9 @@
    "0.25",
    "0.20",
    "SSO7"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Training-loss curve with fine plotted variation and axes."
  },
  {
   "image": 124,
@@ -1014,7 +1174,9 @@
    "150",
    "Frequency",
    "125"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Frequency-domain spectrum plot with dense peaks and frequency labels."
  },
  {
   "image": 125,
@@ -1027,7 +1189,9 @@
    "Latents",
    "VAE",
    "Decodedimage"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "VAE encode/decode schematic with input and reconstructed images; mixed diagram and image content."
  },
  {
   "image": 126,
@@ -1040,7 +1204,9 @@
    "Transformer",
    "Embedding",
    "prediction"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Masked-language-model diagram with text, token boxes, and a mask-prediction component."
  },
  {
   "image": 127,
@@ -1053,7 +1219,9 @@
    "3",
    "7",
    "9"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Grid of handwritten digit samples; stroke shape and fine edges are meaningful."
  },
  {
   "image": 128,
@@ -1066,7 +1234,9 @@
    "Pedro",
    "HelloPedro",
    "Clear"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "User-interface screenshot with form fields, buttons, and text."
  },
  {
   "image": 129,
@@ -1079,7 +1249,9 @@
    "0.1",
    "0.2",
    "0.3"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Sine-wave plot with axes and marked intervals."
  },
  {
   "image": 130,
@@ -1092,7 +1264,9 @@
    "200GB",
    "GPU",
    "CPU"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Hardware/resource requirement diagram with numeric labels, boxes, and arrows."
  },
  {
   "image": 131,
@@ -1103,7 +1277,9 @@
    "ReLU",
    "Sigmoid",
    "3"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Activation-function plot with multiple curves, axes, and legend."
  },
  {
   "image": 132,
@@ -1116,7 +1292,9 @@
    "learn",
    "S",
    "running"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Token/word visualization with individual tokens and numerical annotations."
  },
  {
   "image": 133,
@@ -1127,7 +1305,9 @@
    "Humanfeedback",
    "Fine-tuning",
    "Pretraining"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Human-feedback, pretraining, and fine-tuning flowchart."
  },
  {
   "image": 134,
@@ -1140,7 +1320,9 @@
    "0.4",
    "0.3",
    "0.2"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Autoencoder training-loss curve with axes and fine plotted detail."
  },
  {
   "image": 135,
@@ -1153,7 +1335,9 @@
    "5%",
    "apple",
    "day"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Bar chart combined with sampling examples and text; mixed chart and text content."
  },
  {
   "image": 136,
@@ -1166,7 +1350,9 @@
    "0.6",
    "0.4",
    "0.2"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Training-loss curve with fine plotted variation."
  },
  {
   "image": 137,
@@ -1179,7 +1365,9 @@
    "W",
    "0.0",
    "2.5"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Waveform plot with two closely overlapping traces."
  },
  {
   "image": 138,
@@ -1192,7 +1380,9 @@
    "learns",
    "running",
    "P"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Token/word visualization with individual tokens and numerical annotations."
  },
  {
   "image": 139,
@@ -1205,7 +1395,9 @@
    "CNN",
    "Feature",
    "maps"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "CNN pipeline schematic with image input and feature-map blocks."
  },
  {
   "image": 140,
@@ -1217,7 +1409,9 @@
    "10dB",
    "120dB",
    "310dB"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Sound-level illustration with icons, decibel labels, and positional comparisons."
  },
  {
   "image": 141,
@@ -1230,7 +1424,9 @@
    "6",
    "D",
    "9"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Handwritten numerical strings; preserve individual strokes and character boundaries."
  },
  {
   "image": 142,
@@ -1243,7 +1439,9 @@
    "h",
    "6",
    "D"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Handwritten numerical strings; preserve individual strokes and character boundaries."
  },
  {
   "image": 143,
@@ -1256,7 +1454,9 @@
    "4",
    "4a59",
    "D"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Handwritten numerical strings; preserve individual strokes and character boundaries."
  },
  {
   "image": 144,
@@ -1268,7 +1468,9 @@
    "2",
    "7",
    "2"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Labeled grid of clothing-category examples; small image details and class labels must remain distinct."
  },
  {
   "image": 145,
@@ -1281,7 +1483,9 @@
    "2",
    "8",
    "1"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Handwritten numerical string with closely spaced strokes."
  },
  {
   "image": 146,
@@ -1294,7 +1498,9 @@
    "/",
    "1",
    "1"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Handwritten numerical string with an autoencoder label; preserve strokes and small text."
  },
  {
   "image": 147,
@@ -1303,6 +1509,8 @@
   "ocr_count": 1,
   "ocr_words": [
    "T"
-  ]
+  ],
+  "verdict": "LOSSLESS",
+  "reason": "Red line-art scorpion inside a bounding box; thin contours and crisp boundaries are essential."
  }
 ]
