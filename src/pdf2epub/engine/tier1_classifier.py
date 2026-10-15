@@ -1493,7 +1493,7 @@ def _normalize_uri_scheme(uri: str) -> tuple[str | None, str]:
     return scheme, ""
 
 
-def extract_page_links(page: "fitz.Page") -> list[dict]:
+def extract_page_links(page: "fitz.Page", page_index: int = 0) -> list[dict]:
     """Collect and filter PDF link annotations for one page.
 
     Returns a list of dicts, each with:
@@ -1501,6 +1501,9 @@ def extract_page_links(page: "fitz.Page") -> list[dict]:
     - from: the annotation rectangle (x0, y0, x1, y1)
     - uri: the URI string (for kind="uri")
     - page: the 0-based target page index (for kind="goto")
+    - source_page: the 0-based page where this annotation was found
+    - clip_text: the text extracted from the annotation rectangle
+      (captured at extraction time when the page is available)
 
     Unsupported link kinds (LAUNCH, NAMED without resolvable targets)
     and non-whitelisted URI schemes are dropped.
@@ -1515,15 +1518,26 @@ def extract_page_links(page: "fitz.Page") -> list[dict]:
         rect = link.get("from")
         if rect is None:
             continue
+        clip_text = ""
+        try:
+            clip_text = page.get_text("text", clip=fitz.Rect(rect)).strip()
+        except Exception:
+            pass
         if kind == fitz.LINK_URI:
             uri = link.get("uri", "")
             scheme, _err = _normalize_uri_scheme(uri)
             if scheme is not None:
-                links.append({"kind": "uri", "from": tuple(rect), "uri": uri.strip()})
+                links.append({"kind": "uri", "from": tuple(rect),
+                              "uri": uri.strip(),
+                              "source_page": page_index,
+                              "clip_text": clip_text})
         elif kind == fitz.LINK_GOTO:
             target = link.get("page", -1)
             if target >= 0:
-                links.append({"kind": "goto", "from": tuple(rect), "page": target})
+                links.append({"kind": "goto", "from": tuple(rect),
+                              "page": target,
+                              "source_page": page_index,
+                              "clip_text": clip_text})
     return links
 
 
@@ -1599,13 +1613,6 @@ def build_page_stream(
     elements.extend(tables)
     # Restore spatial order: images were appended after text.
     elements.sort(key=lambda e: (round(e.bbox[1], 1), round(e.bbox[0], 1)))
-    # Phase F: extract and apply PDF link annotations (metadata only;
-    # the link wrapper is applied at render time after all stream
-    # transformations, so welding and stripping cannot create nested
-    # links or link dead content)
-    page_links = extract_page_links(page)
-    if page_links:
-        apply_link_annotations(elements, page_links)
     return elements
 
 

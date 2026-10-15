@@ -658,6 +658,9 @@ def build_epub_publication(
     cover_image: str | None = None,
     page_heights: dict[int, float] | None = None,
     preprocess: bool = True,
+    # Phase F: PDF link annotations collected during extraction.
+    # Applied as sub-span or whole-element links after welding.
+    page_annotations: list[dict] | None = None,
 ) -> PublicationBuild:
     if preprocess:
         clean_stream, furniture, welds = process_element_stream(stream, page_heights)
@@ -669,6 +672,13 @@ def build_epub_publication(
     # packaging (so segmentation, navigation and metrics all consume
     # normalized semantics). Only stream evidence is used, never
     # invented content.
+    # Phase F: apply sub-span links BEFORE normalization so that
+    # linkify_urls sees existing <a> tags and skips re-linkifying
+    # the same URLs (duplicate prevention).
+    if page_annotations:
+        from .link_mapper import map_subspan_links
+        link_stats = map_subspan_links(clean_stream, page_annotations)
+        log.info("sub-span links: %s", link_stats)
     clean_stream = normalize_semantics(clean_stream)
 
     assign_anchor_ids(clean_stream)
@@ -944,7 +954,9 @@ def internal_structure_check(epub_path: str) -> list[dict]:
                         )
                 for anchor in root.iter("{http://www.w3.org/1999/xhtml}a"):
                     href = anchor.get("href", "")
-                    if not href or href.startswith(("http:", "https:", "data:", "#")):
+                    if not href or href.startswith(
+                        ("http:", "https:", "mailto:", "data:", "#")
+                    ):
                         continue
                     target = _zip_normalise(base, href.split("#")[0])
                     if target not in available:

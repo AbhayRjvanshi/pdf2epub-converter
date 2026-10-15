@@ -546,6 +546,14 @@ def run_pipeline(
                 progress(n, len(tier1_indices), "tier1")
                 emit("page_progress", 4, page_index=idx, metadata={"label": "tier1"})
 
+        # Phase F: collect PDF link annotations from Tier 1 pages while
+        # the page objects are still available (clip_text requires page access)
+        page_annotations: list[dict] = []
+        for idx in tier1_indices:
+            page_annotations.extend(
+                tier1_classifier.extract_page_links(doc[idx], idx)
+            )
+
         handler = Tier2Handler(
             llm_client_fn=llm_adapter, model_id=model_id, cache_dir=cache_dir
         )
@@ -665,6 +673,7 @@ def run_pipeline(
             language=language,
             cover_image=cover_image,
             page_heights=page_heights,
+            page_annotations=page_annotations,
         )
         say(
             f"            {len(build.chapters)} chapter(s), "
